@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d1:session xmlns:d1="http://ns.dataone.org/service/types/v1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://ns.dataone.org/service/types/v1 dataoneTypes_v1.1.xsd">
+  <subject>CN=Tim Robertson</subject>
+  <subjectInfo>
+    <person>
+      <subject>CN=Tim Robertson</subject>
+      <givenName>Tim</givenName>
+      <familyName>Robertson</familyName>
+      <isMemberOf>O=GBIF</isMemberOf>
+      <verified>true</verified>
+    </person>
+  </subjectInfo>
+</d1:session>

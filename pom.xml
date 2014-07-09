@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2014 Global Biodiversity Information Facility (GBIF)
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.gbif</groupId>
+    <artifactId>motherpom</artifactId>
+    <version>16</version>
+  </parent>
+
+  <groupId>org.gbif.dataone</groupId>
+  <artifactId>dataone-motherpom</artifactId>
+  <version>0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>dataone-motherpom</name>
+  <description>The project that provides java libraries for DataONE</description>
+  <url>http://sites.gbif.org/dataone</url>
+
+  <!-- TODO: GBIF or DataONE -->
+  <!--scm> <connection></connection> <developerConnection></developerConnection> 
+    <url></url> </scm> -->
+
+  <issueManagement>
+    <system>jira</system>
+    <url>http://dev.gbif.org/issues/browse/D1</url>
+  </issueManagement>
+
+  <ciManagement>
+    <system>jenkins</system>
+    <url>http://builds.gbif.org/job/dataone</url>
+  </ciManagement>
+
+  <distributionManagement>
+    <site>
+      <id>gbif-site</id>
+      <name>Site for the project</name>
+      <url>scp://tools.gbif.org:/var/www/html/sites/dataone</url>
+    </site>
+  </distributionManagement>
+	
+	<!-- talk to Lars about what we should do -->
+  <repositories>
+    <!-- Required for the GBIF mother pom -->
+    <repository>
+      <id>gbif-all</id>
+      <url>http://repository.gbif.org/content/groups/gbif</url>
+    </repository>
+    <repository>
+      <id>gbif-thirdparty</id>
+      <url>http://repository.gbif.org/content/repositories/thirdparty/</url>
+    </repository>
+   <repository>
+     <id>jaxb2-plugins</id>
+     <name>JAXB2 XJC Plugin Repository</name>
+     <url>http://maven.klemm-scs.com/release</url>
+    </repository>    
+  </repositories>
+  
+    <pluginRepositories>
+    <!-- TODO: Mirror this in GBIF Needed for the builder plugin during the 
+      JAXB builder stuff -->
+    <pluginRepository>
+      <!--releases> <enabled>true</enabled> <updatePolicy>always</updatePolicy> 
+        <checksumPolicy>warn</checksumPolicy> </releases -->
+      <id>jaxb2-plugins</id>
+      <name>JAXB2 XJC Plugin Repository</name>
+      <url>http://maven.klemm-scs.com/release</url>
+    </pluginRepository>
+  </pluginRepositories>
+
+  <modules>
+    <module>dataone-api</module>
+    <module>dataone-auth</module>
+    <module>dataone-membernode</module>
+    <module>dataone-membernode-hadoop</module>
+  </modules>
+
+  <!-- 
+    The policies of this project:
+    - all versions are declared in this motherpom
+    - we explicitly name all dependencies used, rather than depend on 
+      transitive dependencies
+    - we fix all versions to the same as dropwizard (the primary framework)
+  -->
+  <properties>
+    <dataone-api.version>0.1-SNAPSHOT</dataone-api.version>
+    <dataone-auth.version>0.1-SNAPSHOT</dataone-auth.version>
+    <dataone-membernode.version>0.1-SNAPSHOT</dataone-membernode.version>    
+		
+		<!-- libs -->
+    <dropwizard.version>0.7.1</dropwizard.version>
+    <slf4j.version>1.7.6</slf4j.version>
+    <guava.version>17.0</guava.version>
+    <metrics3.version>3.0.2</metrics3.version>
+    <jersey.version>1.18.1</jersey.version>
+    <jackson.api.version>2.3.0</jackson.api.version>
+    <jackson.version>2.3.3</jackson.version>
+    <logback.version>1.1.2</logback.version>
+    <jsr305.version>2.0.3</jsr305.version>
+    <joda-time.version>2.3</joda-time.version>
+    <metrics.version>3.0.2</metrics.version>
+    <validation-api.version>1.1.0.Final</validation-api.version>
+    <jetty.orbit-javax.servlet.version>3.0.0.v201112011016</jetty.orbit-javax.servlet.version>
+    <bcprov-jdk16.version>1.46</bcprov-jdk16.version>
+    <servlet-api.version>3.1.0</servlet-api.version>
+
+    <!-- tests -->
+    <junit.version>4.11</junit.version>
+    <mockito.version>1.9.5</mockito.version>
+    <hamcrest.date.version>0.9.5</hamcrest.date.version>
+
+    <!-- plugins -->
+    <maven-shade-plugin.version>1.6</maven-shade-plugin.version>
+    <maven-jar-plugin.version>2.4</maven-jar-plugin.version>
+    <jaxb2-rich-contract-plugin.version>1.2.3</jaxb2-rich-contract-plugin.version>
+    <maven-jaxb2-plugin.version>0.9.0</maven-jaxb2-plugin.version>
+    <slf4j.version>1.7.7</slf4j.version>
+    <jaxb2_commons.version>0.6.3</jaxb2_commons.version>
+    <xjc-guava-plugin.version>0.3</xjc-guava-plugin.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.gbif.dataone</groupId>
+        <artifactId>dataone-api</artifactId>
+        <version>${dataone-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.gbif.dataone</groupId>
+        <artifactId>dataone-auth</artifactId>
+        <version>${dataone-auth.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.gbif.dataone</groupId>
+        <artifactId>dataone-membernode</artifactId>
+        <version>${dataone-membernode.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard</groupId>
+        <artifactId>dropwizard-core</artifactId>
+        <version>${dropwizard.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard</groupId>
+        <artifactId>dropwizard-jersey</artifactId>
+        <version>${dropwizard.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>${logback.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>${guava.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>jsr305</artifactId>
+        <version>${jsr305.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey.contribs</groupId>
+        <artifactId>jersey-multipart</artifactId>
+        <version>${jersey.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-core</artifactId>
+        <version>${jersey.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.jersey</groupId>
+        <artifactId>jersey-server</artifactId>
+        <version>${jersey.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>joda-time</groupId>
+        <artifactId>joda-time</artifactId>
+        <version>${joda-time.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.codahale.metrics</groupId>
+        <artifactId>metrics-annotation</artifactId>
+        <version>${metrics.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.codahale.metrics</groupId>
+        <artifactId>metrics-healthchecks</artifactId>
+        <version>${metrics.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.validation</groupId>
+        <artifactId>validation-api</artifactId>
+        <version>${validation-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId> org.eclipse.jetty.orbit</groupId>
+        <artifactId>javax.servlet</artifactId>
+        <version>${jetty.orbit-javax.servlet.version}</version>
+      </dependency>     
+      <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>javax.servlet-api</artifactId>
+        <version>${servlet-api.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcprov-jdk16</artifactId>
+        <version>${bcprov-jdk16.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>${junit.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>${mockito.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>uk.co.modular-it</groupId>
+        <artifactId>hamcrest-date</artifactId>
+        <version>${hamcrest.date.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard</groupId>
+        <artifactId>dropwizard-testing</artifactId>
+        <version>${dropwizard.version}</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+  
+ <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${maven-jar-plugin.version}</version>
+          <configuration>
+            <archive>
+              <manifest>
+                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              </manifest>
+            </archive>
+          </configuration>
+        </plugin>
+        <!-- 1.7 required for hamcrest -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>2.1</version>
+          <configuration>
+            <source>1.7</source>
+            <target>1.7</target>
+          </configuration>
+        </plugin>        
+      </plugins>
+    </pluginManagement>
+ </build>
+        
+</project>

@@ -1,0 +1,15 @@
+# HTTPS setup
+server:
+  applicationConnectors:
+    - type: http
+      port: 8080
+    - type: https
+      port: 8443
+      keyStorePath: conf/certificates/server.p12
+      keyStoreType: PKCS12
+      keyStorePassword: password
+      trustStorePath: conf/certificates/truststore.jks
+      trustStorePassword: password
+      needClientAuth: false
+      wantClientAuth: true
+

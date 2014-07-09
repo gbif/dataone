@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ns1:systemMetadata xmlns:ns1="http://ns.dataone.org/service/types/v1">
+  <identifier>XYZ33256</identifier>
+  <formatId>eml://ecoinformatics.org/eml-2.0.1</formatId>
+  <size>22936</size>
+  <checksum algorithm="MD5">2ec0084d1e11e0d5c9a46ba6a230aa85</checksum>
+  <submitter>CN=Dave Vieglais T799,O=Google,C=US,DC=cilogon,DC=org</submitter>
+  <rightsHolder>CN=Dave Vieglais T799,O=Google,C=US,DC=cilogon,DC=org</rightsHolder>
+  <accessPolicy>
+    <allow>
+      <subject>public</subject>
+      <permission>read</permission>
+    </allow>
+    <allow>
+      <subject>CN=Dave Vieglais T799,O=Google,C=US,DC=cilogon,DC=org</subject>
+      <permission>changePermission</permission>
+    </allow>
+  </accessPolicy>
+  <replicationPolicy replicationAllowed="true"/>
+  <dateUploaded>2012-02-20T20:39:19.664495</dateUploaded>
+  <dateSysMetadataModified>2012-02-20T20:39:19.70598</dateSysMetadataModified>
+</ns1:systemMetadata>

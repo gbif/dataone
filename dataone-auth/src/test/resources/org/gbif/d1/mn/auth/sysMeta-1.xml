@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d1:systemMetadata xmlns:d1="http://ns.dataone.org/service/types/v1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://ns.dataone.org/service/types/v1 http://repository.dataone.org/software/cicore/trunk/d1_schemas/dataoneTypes_v1.1.xsd">
+  <identifier>1</identifier>
+  <formatId>doc</formatId>
+  <size>100</size>
+  <checksum algorithm="fake">1</checksum>
+  <rightsHolder>CN=Tim Robertson</rightsHolder>
+  <authoritativeMemberNode>CN=MemberNode_2</authoritativeMemberNode>
+  <accessPolicy>
+    <allow>
+      <subject>CN=Dave Vieglas</subject>
+      <permission>changePermission</permission>
+    </allow>
+    <allow>
+      <subject>CN=Matt Jones</subject>
+      <permission>write</permission>
+    </allow>
+    <allow>
+      <subject>O=DataONE</subject>
+      <permission>read</permission>
+    </allow>
+    <allow>
+      <subject>O=Microsoft</subject>
+      <permission>read</permission>
+    </allow>
+  </accessPolicy>
+</d1:systemMetadata>

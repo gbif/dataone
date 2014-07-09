@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d1:subjectInfo xmlns:d1="http://ns.dataone.org/service/types/v1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://ns.dataone.org/service/types/v1 dataoneTypes_v1.1.xsd">
+  <person>
+    <subject>CN=Timo</subject>
+    <givenName>Tim</givenName>
+    <familyName>Robertson</familyName>
+    <isMemberOf>O=GBIF</isMemberOf>
+  </person>
+</d1:subjectInfo>

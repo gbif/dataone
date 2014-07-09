@@ -1,0 +1,26 @@
+
+# HBase backend table definition
+
+# HTTPS setup
+server:
+  applicationConnectors:
+    - type: http
+      port: 8080
+    - type: https
+      port: 8443
+      keyStorePath: conf/server.p12
+      keyStorePassword: password
+      keyStoreType: PKCS12
+      trustStorePath: conf/truststore.jks
+      trustStorePassword: password
+#      keyStorePath: cert2/server.jks
+#      keyStorePassword: changeit
+#      trustStorePath: conf/servertrust.jks
+#      trustStorePassword: changeit
+      validateCerts: false
+      validatePeers: false
+      needClientAuth: true
+      wantClientAuth: true
+#     certAlias: localhost
+
+port: 24

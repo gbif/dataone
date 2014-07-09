@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d1:session xmlns:d1="http://ns.dataone.org/service/types/v1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://ns.dataone.org/service/types/v1 dataoneTypes_v1.1.xsd">
+  <subject>CN=Tim Robertson</subject>
+  <subjectInfo>
+    <person>
+      <subject>CN=Tim Robertson</subject>
+      <givenName>Tim</givenName>
+      <givenName>James</givenName>
+      <familyName>Robertson</familyName>
+      <email>trobertson@gbif.org</email>
+      <email>timrobertson100@gmail.com</email>
+      <isMemberOf>O=GBIF</isMemberOf>
+      <!-- Note: Not mentioned in the group below -->
+      <isMemberOf>O=Acme</isMemberOf>
+      <equivalentIdentity>CN=Timo</equivalentIdentity>
+      <equivalentIdentity>CN=Timothy</equivalentIdentity>
+      <verified>true</verified>
+    </person>
+    <!-- This person has nothing to do with the primary subject -->
+    <person>
+      <subject>CN=Katy Perry</subject>
+      <givenName>Katy</givenName>
+      <familyName>Perry</familyName>
+      <isMemberOf>O=Snoops crew</isMemberOf>
+      <equivalentIdentity>CN=KP</equivalentIdentity>
+      <verified>false</verified>
+    </person>
+    <group>
+      <subject>O=GBIF</subject>
+      <groupName>The GBIF Organization</groupName>
+      <hasMember>CN=Tim Robertson</hasMember>
+      <hasMember>CN=Federico Mendez</hasMember>
+      <rightsHolder>CN=Tim Robertson</rightsHolder>
+      <rightsHolder>CN=Oliver Meyn</rightsHolder>
+    </group>
+    <group>
+      <subject>O=DataONE</subject>
+      <groupName>The DataONE Organization</groupName>
+      <hasMember>CN=Dave Vieglas</hasMember>
+      <!-- Note: this is an equivalent identity for the principle subject. 
+        thus the group is considered as included -->
+      <hasMember>CN=Timo</hasMember>
+      <rightsHolder>CN=Dave Vieglas</rightsHolder>
+    </group>
+  </subjectInfo>
+</d1:session>

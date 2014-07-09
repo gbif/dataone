@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d1:subjectInfo xmlns:d1="http://ns.dataone.org/service/types/v1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://ns.dataone.org/service/types/v1 dataoneTypes_v1.1.xsd">
+  <group>
+    <subject>o=GBIF</subject>
+    <groupName>The GBIF Organization</groupName>
+    <hasMember>CN=Tim Robertson</hasMember>
+    <hasMember>CN=Federico Mendez</hasMember>
+    <rightsHolder>CN=Tim Robertson</rightsHolder>
+    <rightsHolder>CN=Oliver Meyn</rightsHolder>
+  </group>
+  <group>
+    <subject>o=DataONE</subject>
+    <groupName>The DataONE Organization</groupName>
+    <hasMember>CN=Dave Vieglas</hasMember>
+    <hasMember>CN=Tim Robertson</hasMember>
+    <hasMember>CN=Timo</hasMember>
+    <rightsHolder>CN=Dave Vieglas</rightsHolder>
+  </group>
+</d1:subjectInfo>

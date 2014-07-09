@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d1:session xmlns:d1="http://ns.dataone.org/service/types/v1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://ns.dataone.org/service/types/v1 dataoneTypes_v1.1.xsd">
+  <subject>CN=Timo</subject>
+  <subjectInfo>
+    <person>
+      <subject>CN=Timo</subject>
+      <givenName>Tim</givenName>
+      <givenName>James</givenName>
+      <familyName>Robertson</familyName>
+      <email>trobertson@gbif.org</email>
+      <email>timrobertson100@gmail.com</email>
+      <equivalentIdentity>CN=Tim Robertson</equivalentIdentity>
+      <verified>true</verified>
+    </person>
+  </subjectInfo>
+</d1:session>
