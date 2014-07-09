@@ -57,11 +57,6 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
   private final CertificateUtils certificateUtils;
 
   /**
-   * The OID for DataONE extensions which was registered with cilogon.org.
-   */
-  public static final String DEFAULT_OID_SUBJECT_INFO = "1.3.6.1.4.1.34998.2.1";
-
-  /**
    * Builds a new instance using the default OID.
    */
   AuthorizationManagerImpl(SystemMetadataProvider systemMetadataProvider, CoordinatingNode cn, Node self) {
