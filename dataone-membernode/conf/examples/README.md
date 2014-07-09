@@ -1,4 +1,4 @@
-# Example curl calls
+### Example curl calls
 
 This holds some sample calls which illustrate usage using curl.
 

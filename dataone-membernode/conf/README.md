@@ -1,4 +1,4 @@
-# Example configuration 
+### Example configuration 
 
 > The example configuration is suitable only for **testing purposes**.
 
@@ -9,6 +9,6 @@ To start the server from the project root directory use something along the line
   java -jar target/dataone-membernode-0.1-SNAPSHOT-in-memory.jar server conf/config.yml 
 ```
 
-## See also
+#### See also
 - [examples](examples/README.md) for examples of using curl to call the server
 - [certificates](certificates/README.md) for instructions on recreating certificates for the server

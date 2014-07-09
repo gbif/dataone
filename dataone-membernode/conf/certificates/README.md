@@ -1,11 +1,11 @@
-# Certificate generation
+### Certificate generation
 
 This application uses SSL and certificate based authorization.  
 
 This directory contains the configuration required to run in development mode.  Thus there are the following:
-1. A certificate for the server to present when requests come in
-2. A certificate that the client will send
-3. A truststore that server uses as the list of certificates that it should trust - loaded with both the client and the server certificates
+  1. A certificate for the server to present when requests come in
+  2. A certificate that the client will send
+  3. A truststore that server uses as the list of certificates that it should trust - loaded with both the client and the server certificates
 
 The following provides details about how they were generated. 
 

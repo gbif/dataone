@@ -1,4 +1,4 @@
-# The Member Node framework
+### The Member Node framework
 
 This is a full tier 4 implementation of the RESTful Member Node API defined on http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html.
 
@@ -14,5 +14,5 @@ cd dataone-membernode
 java -jar target/dataone-membernode-0.1-SNAPSHOT-in-memory.jar server conf/config.yml 
 ```
 
-## See also
+#### See also
 - The [example configuration](conf/README.md) to understand the configuration with which this will start
