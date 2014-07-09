@@ -5,6 +5,7 @@
 This is a project led by GBIF to help enable adopters to develop Java based DataONE Member Node stacks.
 
 **This project depends on source code that is generate from schemas during build time**
+
 To build the project run ```mvn package``` and ensure that the src/main/java-generated (dataone-api) is on your classpath in your IDE.
 
 
