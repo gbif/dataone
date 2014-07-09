@@ -45,7 +45,7 @@ final class CertificateUtils {
 
   private static final Logger LOG = LoggerFactory.getLogger(CertificateUtils.class);
   private static final String HTTPS_SCHEME = "https";
-  private static final String REQ_X509Certificate = "javax.servlet.request.X509Certificate";
+  private static final String REQ_X509CERTIFICATE = "javax.servlet.request.X509Certificate";
   private static final JAXBContext SUBJECT_INFO_CONTEXT = initJaxbContext(); // confirmed threadsafe
 
   private final List<String> extensionOIDs;
@@ -99,12 +99,12 @@ final class CertificateUtils {
     return decoded;
   }
 
-  final Session newSession(HttpServletRequest request, String detailCode) throws InvalidRequest, InvalidCredentials,
+  Session newSession(HttpServletRequest request, String detailCode) throws InvalidRequest, InvalidCredentials,
     InvalidToken {
     Preconditions.checkNotNull(request, "A request must be provided"); // indicates invalid use
 
     if (HTTPS_SCHEME.equals(request.getScheme().toLowerCase())) {
-      Certificate[] certs = (Certificate[]) request.getAttribute(REQ_X509Certificate);
+      Certificate[] certs = (Certificate[]) request.getAttribute(REQ_X509CERTIFICATE);
 
       if (certs != null && certs.length == 1) {
         // session subject is the primary principle of the certificate
@@ -122,7 +122,7 @@ final class CertificateUtils {
     }
   }
 
-  final Session newSession(String detailCode, X509Certificate x509Cert) throws InvalidToken {
+  Session newSession(String detailCode, X509Certificate x509Cert) throws InvalidToken {
     Session.Builder<Void> session = Session.builder();
     X500Principal principal = x509Cert.getSubjectX500Principal();
     String dn = principal.getName(X500Principal.RFC2253); // LDAPv3 format

@@ -44,8 +44,7 @@ import org.slf4j.LoggerFactory;
  * <p>
  * This class is conditionally thread-safe and depends on the thread-safety of the provided
  * {@link SystemMetadataProvider} and {@link CoordinatingNode}. If they are thread-safe as they should be, this class is
- * unconditionally thread-safe. If they are not then users must synchronize access. In most cases this will not be
- * required.
+ * unconditionally thread-safe. If they are not then users must synchronize access.
  */
 final class AuthorizationManagerImpl implements AuthorizationManager {
 
@@ -63,6 +62,13 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
     this(systemMetadataProvider, cn, self, ImmutableList.of(DEFAULT_OID_SUBJECT_INFO));
   }
 
+  /**
+   * @param systemMetadataProvider The provider of system metadata
+   * @param cn The coordinating node
+   * @param self The Node object representing ourselves as a running Node in DataONE
+   * @param subjectInfoExtensionOIDs The names of extensions within the certificate to use to find SubjectInfo
+   *        information
+   */
   AuthorizationManagerImpl(SystemMetadataProvider systemMetadataProvider, CoordinatingNode cn, Node self,
     List<String> subjectInfoExtensionOIDs) {
     Preconditions.checkNotNull(systemMetadataProvider, "The systemMetadataProvider is required");
@@ -72,7 +78,7 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
     Preconditions.checkState(!self.getSubject().isEmpty(),
       "The subject identifiers for this running node are required to be populated");
     Preconditions.checkNotNull(subjectInfoExtensionOIDs,
-      "The OIDs to the subject info extensions wihtin certificates is required");
+      "The OIDs to the subject info extensions within certificates is required");
 
     this.systemMetadataProvider = systemMetadataProvider;
     this.cn = cn;
@@ -97,10 +103,11 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
    */
   @Override
   public void checkIsAuthorized(HttpServletRequest request, Identifier identifier, Permission permission,
-    String detailCode) throws NotAuthorized, NotFound, ServiceFailure, InvalidToken, NotImplemented,
-    InsufficientResources, InvalidRequest, InvalidCredentials {
+    String detailCode) throws NotAuthorized, NotFound, ServiceFailure, InvalidToken, InsufficientResources,
+    InvalidRequest, InvalidCredentials {
     Preconditions.checkNotNull(request, "A request must be provided");
-    Preconditions.checkNotNull(request, "An identifier must be provided");
+    Preconditions.checkNotNull(identifier, "An identifier must be provided");
+    Preconditions.checkNotNull(identifier.getValue(), "An identifier must be provided");
     Preconditions.checkNotNull(permission, "A permission must be provided");
 
     SystemMetadata sysMetadata = systemMetadataProvider.getSystemMetadata(identifier.getValue());

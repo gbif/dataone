@@ -1,7 +1,6 @@
 package org.gbif.d1.mn.auth;
 
 import java.util.Collection;
-import java.util.Set;
 
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -18,7 +17,7 @@ final class Permissions {
   /**
    * Expands permissions which are hierarchical i.e. CHANGE permits WRITE permits READ.
    */
-  static Set<Permission> expand(Collection<Permission> permissions) {
+  static ImmutableSet<Permission> expand(Collection<Permission> permissions) {
     ImmutableSet.Builder<Permission> builder = new ImmutableSet.Builder<Permission>();
     for (Permission p : permissions) {
       switch (p) {

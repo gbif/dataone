@@ -8,38 +8,50 @@ import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotFound;
-import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Permission;
 
 /**
  * The interface to objects that are able to enforce DataONE authorization rules.
- * Implementations of this class should target thread-safety, and document as such.
+ * Implementations of this class must be unconditionally thread-safe and document as such.
  */
 public interface AuthorizationManager {
 
   /**
    * The OID for DataONE extensions which was registered with cilogon.org.
    */
-  public static final String DEFAULT_OID_SUBJECT_INFO = "1.3.6.1.4.1.34998.2.1";
+  String DEFAULT_OID_SUBJECT_INFO = "1.3.6.1.4.1.34998.2.1";
 
   /**
-   * TODO: document
-   * Extracts the certificate from the request, which must be present and runs the authentication routine.
-   * This will either complete indicating that the subject is authorized or a NotAuthorized exception will be thrown.
+   * Verifies that the given request is authorized to perform the given permission on the identified object. If the
+   * request should not be authorized then an exception is thrown.
+   * <p>
+   * The high level procedure for this is to extract all the subjects from the certificate presented with the request
+   * and then succeed if any of the following conditions are met.
+   * <ul>
+   * <li>The object has an explicit access rule granting permission</li>
+   * <li>The request originates from rights holder of the object</li>
+   * <li>The request originates from the same server that is servicing the request</li>
+   * <li>The request originates from known coordinating node</li>
+   * </ul>
+   * <p>
+   * Note that some of these requests require callbacks to the coordinating nodes in the DataONE network.
    * 
-   * @throws InsufficientResources
-   * @throws NotImplemented
-   * @throws InvalidToken
-   * @throws ServiceFailure
-   * @throws NotFound
-   * @throws NotAuthorized
-   * @throws InvalidCredentials
-   * @throws InvalidRequest
+   * @param request Which must have a certificate
+   * @param identifier Of the object the caller wishes to access
+   * @param permission The level of access sought
+   * @param detailCode The detail code to pass into the exception if one is being raised
+   * @throws NotAuthorized If the checks ran to completion and the caller is not authorized
+   * @throws NotFound If the identified object is not found on this node
+   * @throws ServiceFailure If an error occurs, including connecting to a coordinating node
+   * @throws InvalidToken If a DataONE specific extension in the certificate was not readable
+   * @throws InsufficientResources If the implementation decides it is refusing access due to a resource limit
+   * @throws InvalidRequest If the request is not an HTTPS request
+   * @throws InvalidCredentials If the credentials are invalid or missing from the request
    */
   void checkIsAuthorized(HttpServletRequest request, Identifier identifier, Permission permission,
-    String detailCode) throws NotAuthorized, NotFound, ServiceFailure, InvalidToken, NotImplemented,
-    InsufficientResources, InvalidRequest, InvalidCredentials;
+    String detailCode) throws NotAuthorized, NotFound, ServiceFailure, InvalidToken, InsufficientResources,
+    InvalidRequest, InvalidCredentials;
 
 }

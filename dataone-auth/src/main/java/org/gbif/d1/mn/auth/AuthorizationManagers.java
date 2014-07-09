@@ -9,7 +9,7 @@ import org.dataone.ns.service.types.v1.Node;
 /**
  * Factories for creating instances of {@link AuthorizationManager}.
  */
-public class AuthorizationManagers {
+public final class AuthorizationManagers {
 
   public static AuthorizationManager
     newAuthorizationManager(SystemMetadataProvider systemMetadataProvider, CoordinatingNode cn, Node self) {
@@ -20,5 +20,4 @@ public class AuthorizationManagers {
     CoordinatingNode cn, Node self, List<String> subjectInfoExtensionOIDs) {
     return new AuthorizationManagerImpl(systemMetadataProvider, cn, self, subjectInfoExtensionOIDs);
   }
-
 }

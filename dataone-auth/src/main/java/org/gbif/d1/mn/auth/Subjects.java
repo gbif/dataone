@@ -8,6 +8,7 @@ import javax.annotation.concurrent.ThreadSafe;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -40,11 +41,13 @@ final class Subjects {
   }
 
   /**
-   * TODO: document complex procedure here!
+   * The session object holds a primary subject and can have extra information indicating alternative identities for the
+   * subject and their groups. This returns all subjects that can be expanded upon for the principle subject
+   * based on the session object provided.
    * 
    * @return The subjects from the session in an immutable set
    */
-  static Set<String> allSubjects(Session session) {
+  static ImmutableSet<String> allSubjects(Session session) {
     Preconditions.checkNotNull(session, "Session required to extract subjects");
 
     // public symbolic subject is always added
@@ -86,7 +89,7 @@ final class Subjects {
   /**
    * @return The subjects as an immutable Set
    */
-  static Set<String> fromNode(Node node) {
+  static ImmutableSet<String> fromNode(Node node) {
     Preconditions.checkNotNull(node, "Node is required");
     Preconditions.checkNotNull(node.getSubject(), "Node subject is required");
     ImmutableSet.Builder<String> builder = ImmutableSet.builder();
@@ -102,7 +105,7 @@ final class Subjects {
    * Builds an index of any groups with a key for the subject and the value listing the groups they are contained in.
    */
   @VisibleForTesting
-  static Map<String, Set<String>> indexGroupMembership(SubjectInfo info) {
+  static ImmutableMap<String, Set<String>> indexGroupMembership(SubjectInfo info) {
     Map<String, Set<String>> index = Maps.newHashMap();
     if (info != null) {
       for (Group group : info.getGroup()) {
@@ -125,7 +128,7 @@ final class Subjects {
         }
       }
     }
-    return index;
+    return ImmutableMap.copyOf(index);
   }
 
   /**
