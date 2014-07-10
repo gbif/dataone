@@ -2,6 +2,7 @@ package org.gbif.d1.mn.rest;
 
 import org.gbif.d1.mn.auth.AuthorizationManager;
 import org.gbif.d1.mn.backend.MNBackend;
+import org.gbif.d1.mn.rest.provider.Authenticate;
 
 import java.io.InputStream;
 import java.util.Date;
@@ -16,7 +17,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import com.codahale.metrics.annotation.Timed;
@@ -87,7 +87,7 @@ public final class MemberNodeResource implements MemberNode {
   @Path("archive/{pid}")
   @Timed
   @Override
-  public Identifier archive(@Context Session session, @PathParam("pid") String pid) throws InvalidToken,
+  public Identifier archive(@Authenticate("code") Session session, @PathParam("pid") String pid) throws InvalidToken,
     ServiceFailure,
     NotAuthorized, NotFound, NotImplemented {
     return null;
@@ -98,7 +98,7 @@ public final class MemberNodeResource implements MemberNode {
   @Path("object")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Timed
-  public Identifier create(@Context Session session, @FormDataParam("pid") String pid,
+  public Identifier create(@Authenticate("code") Session session, @FormDataParam("pid") String pid,
     @FormDataParam("object") InputStream object,
     @FormDataParam("sysmeta") SystemMetadata sysmeta) throws IdentifierNotUnique, InsufficientResources,
     InvalidRequest, InvalidSystemMetadata, InvalidToken, NotAuthorized, NotImplemented, ServiceFailure, UnsupportedType {
@@ -110,7 +110,8 @@ public final class MemberNodeResource implements MemberNode {
   @Path("object/{pid}")
   @Timed
   @Override
-  public Identifier delete(@Context Session session, @PathParam("pid") String pid) throws InvalidToken, ServiceFailure,
+  public Identifier delete(@Authenticate("code") Session session, @PathParam("pid") String pid) throws InvalidToken,
+    ServiceFailure,
     NotAuthorized, NotFound, NotImplemented {
     return null;
   }
@@ -119,7 +120,8 @@ public final class MemberNodeResource implements MemberNode {
   @Path("object/{pid}")
   @Timed
   @Override
-  public DescribeResponse describe(@Context Session session, @PathParam("pid") String pid) throws InvalidToken,
+  public DescribeResponse describe(@Authenticate("code") Session session, @PathParam("pid") String pid)
+    throws InvalidToken,
     NotAuthorized,
     NotImplemented, ServiceFailure, NotFound {
     return null;
@@ -129,7 +131,8 @@ public final class MemberNodeResource implements MemberNode {
   @Path("generate")
   @Timed
   @Override
-  public Identifier generateIdentifier(@Context Session session, String scheme, String fragment) throws InvalidToken,
+  public Identifier generateIdentifier(@Authenticate("code") Session session, String scheme, String fragment)
+    throws InvalidToken,
     ServiceFailure,
     NotAuthorized, NotImplemented, InvalidRequest {
     return null;
@@ -140,7 +143,8 @@ public final class MemberNodeResource implements MemberNode {
   @Produces(MediaType.APPLICATION_OCTET_STREAM)
   @Timed
   @Override
-  public InputStream get(@Context Session session, @PathParam("pid") String pid) throws InvalidToken, NotAuthorized,
+  public InputStream get(@Authenticate("code") Session session, @PathParam("pid") String pid) throws InvalidToken,
+    NotAuthorized,
     NotImplemented, ServiceFailure, NotFound, InsufficientResources {
     try {
       return null; // backend.get(securityContext.getUserPrincipal(), pid);
@@ -153,14 +157,14 @@ public final class MemberNodeResource implements MemberNode {
   @GET
   @Timed
   @Override
-  public Node getCapabilities(@Context Session session) throws NotImplemented, ServiceFailure {
+  public Node getCapabilities(@Authenticate("code") Session session) throws NotImplemented, ServiceFailure {
     return selfNode;
   }
 
   // Note: specification dictates /node returns same as /
   @GET
   @Path("node")
-  public Node getCapabilitiesWithNodePath(@Context Session session) throws NotImplemented, ServiceFailure {
+  public Node getCapabilitiesWithNodePath(@Authenticate("code") Session session) throws NotImplemented, ServiceFailure {
     return getCapabilities(session);
   }
 
@@ -168,7 +172,7 @@ public final class MemberNodeResource implements MemberNode {
   @Path("checksum/{pid}")
   @Timed
   @Override
-  public Checksum getChecksum(@Context Session session, @PathParam("pid") String pid,
+  public Checksum getChecksum(@Authenticate("code") Session session, @PathParam("pid") String pid,
     @QueryParam("checksumAlgorithm") String checksumAlgorithm) throws InvalidRequest, InvalidToken, NotAuthorized,
     NotImplemented, ServiceFailure, NotFound {
     return null;
@@ -178,7 +182,7 @@ public final class MemberNodeResource implements MemberNode {
   @Path("log")
   @Timed
   @Override
-  public Log getLogRecords(@Context Session session, @QueryParam("fromDate") Date fromDate,
+  public Log getLogRecords(@Authenticate("code") Session session, @QueryParam("fromDate") Date fromDate,
     @QueryParam("toDate") Date toDate,
     @QueryParam("event") Event event, @QueryParam("pidFilter") String pidFilter, @QueryParam("start") Integer start,
     @QueryParam("count") Integer count) throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented,
@@ -195,7 +199,8 @@ public final class MemberNodeResource implements MemberNode {
   @Path("replica/{pid}")
   @Timed
   @Override
-  public InputStream getReplica(@Context Session session, @PathParam("pid") String pid) throws InvalidToken,
+  public InputStream getReplica(@Authenticate("code") Session session, @PathParam("pid") String pid)
+    throws InvalidToken,
     NotAuthorized,
     NotImplemented, ServiceFailure, NotFound, InsufficientResources {
     return null;
@@ -205,7 +210,7 @@ public final class MemberNodeResource implements MemberNode {
   @GET
   @Path("meta/{pid}")
   @Timed
-  public SystemMetadata getSystemMetadata(@Context Session session, @PathParam("pid") String pid) {
+  public SystemMetadata getSystemMetadata(@Authenticate("code") Session session, @PathParam("pid") String pid) {
     return null;
   }
 
@@ -213,7 +218,7 @@ public final class MemberNodeResource implements MemberNode {
   @Path("isAuthorized/{pid}")
   @Timed
   @Override
-  public boolean isAuthorized(@Context Session session, @PathParam("pid") String pid,
+  public boolean isAuthorized(@Authenticate("code") Session session, @PathParam("pid") String pid,
     @QueryParam("action") Permission action)
     throws ServiceFailure, InvalidRequest, InvalidToken, NotFound, NotAuthorized, NotImplemented {
     // checkIsAuthorized(request, backend, action, pid, IS_AUTHORIZED_NOT_AUTHORIZED);
@@ -224,7 +229,7 @@ public final class MemberNodeResource implements MemberNode {
   @Path("object")
   @Timed
   @Override
-  public ObjectList listObjects(@Context Session session, @QueryParam("fromDate") Date fromDate,
+  public ObjectList listObjects(@Authenticate("code") Session session, @QueryParam("fromDate") Date fromDate,
     @QueryParam("toDate") Date toDate,
     @QueryParam("formatId") String formatId, @QueryParam("replicaStatus") Boolean replicaStatus,
     @QueryParam("start") Integer start, @QueryParam("count") Integer count) throws InvalidRequest, InvalidToken,
@@ -242,8 +247,7 @@ public final class MemberNodeResource implements MemberNode {
   @Produces(MediaType.TEXT_PLAIN)
   @Timed
   @Override
-  public String ping(@Context Session session) {
-
+  public String ping(@Authenticate("code") Session session) {
     return DTF.print(new DateTime());
   }
 
@@ -252,7 +256,7 @@ public final class MemberNodeResource implements MemberNode {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Timed
   @Override
-  public boolean replicate(@Context Session session, @FormDataParam("sysmeta") SystemMetadata sysmeta,
+  public boolean replicate(@Authenticate("code") Session session, @FormDataParam("sysmeta") SystemMetadata sysmeta,
     @FormDataParam("sourceNode") String sourceNode) throws NotImplemented, ServiceFailure, NotAuthorized,
     InvalidRequest, InvalidToken, InsufficientResources, UnsupportedType {
     return false;
@@ -262,7 +266,8 @@ public final class MemberNodeResource implements MemberNode {
   @Path("error")
   @Timed
   @Override
-  public boolean synchronizationFailed(@Context Session session, SynchronizationFailed message) throws InvalidToken,
+  public boolean synchronizationFailed(@Authenticate("code") Session session, SynchronizationFailed message)
+    throws InvalidToken,
     NotAuthorized,
     NotImplemented, ServiceFailure {
     return false;
@@ -272,9 +277,9 @@ public final class MemberNodeResource implements MemberNode {
   @Path("dirtySystemMetadata")
   @Timed
   @Override
-  public boolean systemMetadataChanged(@Context Session session, Identifier pid, long serialVersion,
-    Date dateSystemMetadataLastModified)
-    throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest {
+  public boolean systemMetadataChanged(@Authenticate("code") Session session, Identifier pid, long serialVersion,
+    Date dateSystemMetadataLastModified) throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented,
+    InvalidRequest {
     return false;
   }
 
@@ -283,7 +288,7 @@ public final class MemberNodeResource implements MemberNode {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Timed
   @Override
-  public Identifier update(@Context Session session, @PathParam("pid") String pid,
+  public Identifier update(@Authenticate("code") Session session, @PathParam("pid") String pid,
     @FormDataParam("file") InputStream object,
     @FormDataParam("newPid") String newPid, @FormDataParam("sysmeta") SystemMetadata sysmeta)
     throws IdentifierNotUnique, InsufficientResources, InvalidRequest, InvalidSystemMetadata, InvalidToken,
