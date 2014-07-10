@@ -19,103 +19,78 @@ package org.dataone.ns.service.types.v1;
 import java.math.BigInteger;
 import java.util.Date;
 
-/**
- * The DataONE Type to represent the metadata returned from a 'describe' request.
- * Describe provides a lighter weight mechanism than MN_crud.getSystemMetadata()
- * for a client to determine basic properties of the referenced object.
- * The response should indicate properties that are typically returned in a
- * HTTP HEAD request: the date late modified, the size of the object,
- * the type of the object (the SystemMetadata.objectFormat).
- * It is not serializable
- * Example of a HEAD response on object “ABC123”:
- * curl -I http://mn1.dataone.org/mn/object/ABC123
- * HTTP/1.1 200 OK
- * Last-Modified: Wed, 16 Dec 2009 13:58:34 GMT
- * Content-Length: 10400
- * Content-Type: application/octet-stream
- * DataONE-fmtid: eml://ecoinformatics.org/eml-2.0.1
- * DataONE-Checksum: SHA-1,2e01e17467891f7c933dbaa00e1459d23db3fe4f
- * DataONE-SerialVersion: 1234
- * 
- * @author Matthew Jones
- */
-// String replaced to String!!!
-public class DescribeResponse
-{
+import javax.annotation.concurrent.Immutable;
 
-  private final String dataONE_ObjectFormatID;
-  private final BigInteger content_Length;
-  private final Date last_Modified;
-  private final Checksum dataONE_Checksum;
+import com.google.common.base.Objects;
+
+/**
+ * The DataONE Type to represent the metadata returned from a describe request.
+ */
+@Immutable
+public class DescribeResponse {
+
+  private final String objectFormatID;
+  private final BigInteger contentLength;
+  private final Date lastModified;
+  private final Checksum checksum;
   private final BigInteger serialVersion;
 
-  /**
-   * instantiate a DescribeResponse object
-   * 
-   * @author Robert Waltz
-   * @param format value of the SystemMetadata.objectFormat entry available in the SystemMetadata.
-   * @param content_length Size of the object in bytes, the value of SystemMetadata.size from SystemMetadata.
-   * @param last_modified DateTime value that indicates when the system metadata associated with the object was last
-   *        modified, i.e. the value of SystemMetadata.dateSysMetadataModified for the object.
-   * @param checksum The algorithm (SystemMetadata.algorithm) and Checksum (SystemMetadata.checksum) of the object being
-   *        examined, drawn from the SystemMetadata. The algorithm and checksum are separated by a single comma with the
-   *        algorithm first.
-   * @param serialVersion The serialVersion of the object's SystemMetadata
-   */
-  public DescribeResponse(String objectFormatID, BigInteger content_length, Date last_modified,
-    Checksum checksum, BigInteger serialVersion) {
-    this.dataONE_ObjectFormatID = objectFormatID;
-    this.content_Length = content_length;
-    this.last_Modified = last_modified;
-    this.dataONE_Checksum = checksum;
+  public DescribeResponse(String objectFormatID, BigInteger contentLength, Date lastModified, Checksum checksum,
+    BigInteger serialVersion) {
+    this.objectFormatID = objectFormatID;
+    this.contentLength = contentLength;
+    this.lastModified = lastModified;
+    this.checksum = checksum;
     this.serialVersion = serialVersion;
   }
 
-  /**
-   * get the Size of the object in bytes, the value of SystemMetadata.size from SystemMetadata.
-   * 
-   * @return Size of the object in bytes
-   */
-  public BigInteger getContent_Length() {
-    return content_Length;
+  @Override
+  public boolean equals(Object object) {
+    if (object instanceof DescribeResponse) {
+      DescribeResponse that = (DescribeResponse) object;
+      return Objects.equal(this.objectFormatID, that.objectFormatID)
+        && Objects.equal(this.contentLength, that.contentLength)
+        && Objects.equal(this.lastModified, that.lastModified)
+        && Objects.equal(this.checksum, that.checksum)
+        && Objects.equal(this.serialVersion, that.serialVersion);
+    }
+    return false;
   }
 
-  /**
-   * get The algorithm (SystemMetadata.algorithm) and Checksum (SystemMetadata.checksum) of the object being examined,
-   * drawn from the SystemMetadata. The algorithm and checksum are separated by a single comma with the algorithm first.
-   * 
-   * @return Checksum of the object
-   */
-  public Checksum getDataONE_Checksum() {
-    return dataONE_Checksum;
+  public Checksum getChecksum() {
+    return checksum;
   }
 
-  /**
-   * get The value of the SystemMetadata.String entry available in the SystemMetadata.
-   * 
-   * @return objectFormat of the object
-   */
-  public String getDataONE_String() {
-    return dataONE_ObjectFormatID;
+  public BigInteger getContentLength() {
+    return contentLength;
   }
 
-  /**
-   * get DateTime value that indicates when the system metadata associated with the object was last modified, i.e. the
-   * value of SystemMetadata.dateSysMetadataModified for the object.
-   * 
-   * @return last modified date of object
-   */
-  public Date getLast_Modified() {
-    return last_Modified;
+  public Date getLastModified() {
+    return lastModified;
   }
 
-  /**
-   * get the SerialVersion of the object SystemMetadata
-   * 
-   * @return serialVersion of the object
-   */
+  public String getObjectFormatID() {
+    return objectFormatID;
+  }
+
   public BigInteger getSerialVersion() {
     return serialVersion;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(objectFormatID, contentLength, lastModified, checksum, serialVersion);
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("objectFormatID", objectFormatID)
+      .add("contentLength", contentLength)
+      .add("lastModified", lastModified)
+      .add("checksum", checksum)
+      .add("serialVersion", serialVersion)
+      .toString();
   }
 
 }

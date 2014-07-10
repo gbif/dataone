@@ -7,6 +7,7 @@ import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.exceptions.UnsupportedType;
+import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
 
 /**
@@ -27,7 +28,7 @@ public interface MemberNodeReplication extends MemberNodeStorage {
    * <p>
    * Access control for this method MUST be configured to allow calling by Coordinating Nodes.
    */
-  boolean replicate(SystemMetadata sysmeta,
+  boolean replicate(Session session, SystemMetadata sysmeta,
     String sourceNode) throws NotImplemented, ServiceFailure, NotAuthorized,
     InvalidRequest, InvalidToken, InsufficientResources, UnsupportedType;
 }

@@ -9,11 +9,13 @@ import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Permission;
+import org.dataone.ns.service.types.v1.Session;
 import org.omg.CosNaming.NamingContextPackage.NotFound;
 
 /**
  * Interface definition for the Tier 2 services.
  * TODO: Used String for Identifier; consider using Identifier instead
+ * It is a <strong>requirement</strong> that implementations of this be thread-safe.
  * 
  * @see <a
  *      href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html</a>
@@ -23,13 +25,15 @@ public interface MemberNodeAuthorization extends MemberNodeRead {
   /**
    * Test if the user identified by the provided session has authorization for operation on the specified object.
    */
-  boolean isAuthorized(String pid, Permission action) throws ServiceFailure, InvalidRequest, InvalidToken, NotFound,
+  boolean isAuthorized(Session session, String pid, Permission action) throws ServiceFailure, InvalidRequest,
+    InvalidToken, NotFound,
     NotAuthorized, NotImplemented;
 
   /**
    * Notifies the Member Node that the authoritative copy of system metadata on the Coordinating Nodes has changed.
    */
-  boolean systemMetadataChanged(Identifier pid, long serialVersion, Date dateSystemMetadataLastModified)
-    throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest;
+  boolean
+    systemMetadataChanged(Session session, Identifier pid, long serialVersion, Date dateSystemMetadataLastModified)
+      throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest;
 
 }

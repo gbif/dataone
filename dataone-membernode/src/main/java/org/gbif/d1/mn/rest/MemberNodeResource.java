@@ -18,7 +18,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
@@ -43,6 +42,7 @@ import org.dataone.ns.service.types.v1.Log;
 import org.dataone.ns.service.types.v1.Node;
 import org.dataone.ns.service.types.v1.ObjectList;
 import org.dataone.ns.service.types.v1.Permission;
+import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -77,46 +77,31 @@ public final class MemberNodeResource implements MemberNode {
   private final MNBackend backend;
   private final Node selfNode;
 
-  /**
-   * The request is accessible to allow for access to the certificate.
-   */
-  @Context
-  private Request request;
-
   public MemberNodeResource(MNBackend backend, Node selfNode) {
     this.backend = backend;
     this.selfNode = selfNode;
-    this.authorizationManager = null;
+    this.authorizationManager = null; // TODO
   }
 
   @PUT
   @Path("archive/{pid}")
   @Timed
   @Override
-  public Identifier archive(@PathParam("pid") String pid) throws InvalidToken, ServiceFailure,
+  public Identifier archive(@Context Session session, @PathParam("pid") String pid) throws InvalidToken,
+    ServiceFailure,
     NotAuthorized, NotFound, NotImplemented {
     return null;
   }
 
+  @Override
   @POST
   @Path("object")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Timed
-  @Override
-  public Identifier create(@FormDataParam("pid") String pid, @FormDataParam("object") InputStream object,
+  public Identifier create(@Context Session session, @FormDataParam("pid") String pid,
+    @FormDataParam("object") InputStream object,
     @FormDataParam("sysmeta") SystemMetadata sysmeta) throws IdentifierNotUnique, InsufficientResources,
     InvalidRequest, InvalidSystemMetadata, InvalidToken, NotAuthorized, NotImplemented, ServiceFailure, UnsupportedType {
-
-// Ignore: Current exploring why HttpServletRequest is not testable
-// if (request instanceof HttpServletRequest) {
-// HttpServletRequest httpRequest = (HttpServletRequest)request;
-// Certificate[] certs = (Certificate[]) httpRequest.getAttribute("javax.servlet.request.X509Certificate");
-//
-// if (certs != null && certs.length == 1) {
-// X509Certificate x509Cert = (X509Certificate) certs[0];
-// System.out.println("Called by: " + x509Cert.getSubjectDN());
-// }
-// }
 
     return Identifier.builder().withValue(pid).build();
   }
@@ -125,7 +110,7 @@ public final class MemberNodeResource implements MemberNode {
   @Path("object/{pid}")
   @Timed
   @Override
-  public Identifier delete(@PathParam("pid") String pid) throws InvalidToken, ServiceFailure,
+  public Identifier delete(@Context Session session, @PathParam("pid") String pid) throws InvalidToken, ServiceFailure,
     NotAuthorized, NotFound, NotImplemented {
     return null;
   }
@@ -134,7 +119,8 @@ public final class MemberNodeResource implements MemberNode {
   @Path("object/{pid}")
   @Timed
   @Override
-  public DescribeResponse describe(@PathParam("pid") String pid) throws InvalidToken, NotAuthorized,
+  public DescribeResponse describe(@Context Session session, @PathParam("pid") String pid) throws InvalidToken,
+    NotAuthorized,
     NotImplemented, ServiceFailure, NotFound {
     return null;
   }
@@ -143,7 +129,8 @@ public final class MemberNodeResource implements MemberNode {
   @Path("generate")
   @Timed
   @Override
-  public Identifier generateIdentifier(String scheme, String fragment) throws InvalidToken, ServiceFailure,
+  public Identifier generateIdentifier(@Context Session session, String scheme, String fragment) throws InvalidToken,
+    ServiceFailure,
     NotAuthorized, NotImplemented, InvalidRequest {
     return null;
   }
@@ -153,7 +140,7 @@ public final class MemberNodeResource implements MemberNode {
   @Produces(MediaType.APPLICATION_OCTET_STREAM)
   @Timed
   @Override
-  public InputStream get(@PathParam("pid") String pid) throws InvalidToken, NotAuthorized,
+  public InputStream get(@Context Session session, @PathParam("pid") String pid) throws InvalidToken, NotAuthorized,
     NotImplemented, ServiceFailure, NotFound, InsufficientResources {
     try {
       return null; // backend.get(securityContext.getUserPrincipal(), pid);
@@ -166,22 +153,22 @@ public final class MemberNodeResource implements MemberNode {
   @GET
   @Timed
   @Override
-  public Node getCapabilities() throws NotImplemented, ServiceFailure {
+  public Node getCapabilities(@Context Session session) throws NotImplemented, ServiceFailure {
     return selfNode;
   }
 
   // Note: specification dictates /node returns same as /
   @GET
   @Path("node")
-  public Node getCapabilitiesWithNodePath() throws NotImplemented, ServiceFailure {
-    return getCapabilities();
+  public Node getCapabilitiesWithNodePath(@Context Session session) throws NotImplemented, ServiceFailure {
+    return getCapabilities(session);
   }
 
   @GET
   @Path("checksum/{pid}")
   @Timed
   @Override
-  public Checksum getChecksum(@PathParam("pid") String pid,
+  public Checksum getChecksum(@Context Session session, @PathParam("pid") String pid,
     @QueryParam("checksumAlgorithm") String checksumAlgorithm) throws InvalidRequest, InvalidToken, NotAuthorized,
     NotImplemented, ServiceFailure, NotFound {
     return null;
@@ -191,7 +178,8 @@ public final class MemberNodeResource implements MemberNode {
   @Path("log")
   @Timed
   @Override
-  public Log getLogRecords(@QueryParam("fromDate") Date fromDate, @QueryParam("toDate") Date toDate,
+  public Log getLogRecords(@Context Session session, @QueryParam("fromDate") Date fromDate,
+    @QueryParam("toDate") Date toDate,
     @QueryParam("event") Event event, @QueryParam("pidFilter") String pidFilter, @QueryParam("start") Integer start,
     @QueryParam("count") Integer count) throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented,
     ServiceFailure {
@@ -207,7 +195,8 @@ public final class MemberNodeResource implements MemberNode {
   @Path("replica/{pid}")
   @Timed
   @Override
-  public InputStream getReplica(@PathParam("pid") String pid) throws InvalidToken, NotAuthorized,
+  public InputStream getReplica(@Context Session session, @PathParam("pid") String pid) throws InvalidToken,
+    NotAuthorized,
     NotImplemented, ServiceFailure, NotFound, InsufficientResources {
     return null;
   }
@@ -216,7 +205,7 @@ public final class MemberNodeResource implements MemberNode {
   @GET
   @Path("meta/{pid}")
   @Timed
-  public SystemMetadata getSystemMetadata(@PathParam("pid") String pid) {
+  public SystemMetadata getSystemMetadata(@Context Session session, @PathParam("pid") String pid) {
     return null;
   }
 
@@ -224,7 +213,8 @@ public final class MemberNodeResource implements MemberNode {
   @Path("isAuthorized/{pid}")
   @Timed
   @Override
-  public boolean isAuthorized(@PathParam("pid") String pid, @QueryParam("action") Permission action)
+  public boolean isAuthorized(@Context Session session, @PathParam("pid") String pid,
+    @QueryParam("action") Permission action)
     throws ServiceFailure, InvalidRequest, InvalidToken, NotFound, NotAuthorized, NotImplemented {
     // checkIsAuthorized(request, backend, action, pid, IS_AUTHORIZED_NOT_AUTHORIZED);
     return false;
@@ -234,7 +224,8 @@ public final class MemberNodeResource implements MemberNode {
   @Path("object")
   @Timed
   @Override
-  public ObjectList listObjects(@QueryParam("fromDate") Date fromDate, @QueryParam("toDate") Date toDate,
+  public ObjectList listObjects(@Context Session session, @QueryParam("fromDate") Date fromDate,
+    @QueryParam("toDate") Date toDate,
     @QueryParam("formatId") String formatId, @QueryParam("replicaStatus") Boolean replicaStatus,
     @QueryParam("start") Integer start, @QueryParam("count") Integer count) throws InvalidRequest, InvalidToken,
     NotAuthorized, NotImplemented, ServiceFailure {
@@ -251,7 +242,8 @@ public final class MemberNodeResource implements MemberNode {
   @Produces(MediaType.TEXT_PLAIN)
   @Timed
   @Override
-  public String ping() {
+  public String ping(@Context Session session) {
+
     return DTF.print(new DateTime());
   }
 
@@ -260,7 +252,7 @@ public final class MemberNodeResource implements MemberNode {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Timed
   @Override
-  public boolean replicate(@FormDataParam("sysmeta") SystemMetadata sysmeta,
+  public boolean replicate(@Context Session session, @FormDataParam("sysmeta") SystemMetadata sysmeta,
     @FormDataParam("sourceNode") String sourceNode) throws NotImplemented, ServiceFailure, NotAuthorized,
     InvalidRequest, InvalidToken, InsufficientResources, UnsupportedType {
     return false;
@@ -270,7 +262,8 @@ public final class MemberNodeResource implements MemberNode {
   @Path("error")
   @Timed
   @Override
-  public boolean synchronizationFailed(SynchronizationFailed message) throws InvalidToken, NotAuthorized,
+  public boolean synchronizationFailed(@Context Session session, SynchronizationFailed message) throws InvalidToken,
+    NotAuthorized,
     NotImplemented, ServiceFailure {
     return false;
   }
@@ -279,7 +272,8 @@ public final class MemberNodeResource implements MemberNode {
   @Path("dirtySystemMetadata")
   @Timed
   @Override
-  public boolean systemMetadataChanged(Identifier pid, long serialVersion, Date dateSystemMetadataLastModified)
+  public boolean systemMetadataChanged(@Context Session session, Identifier pid, long serialVersion,
+    Date dateSystemMetadataLastModified)
     throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest {
     return false;
   }
@@ -289,7 +283,8 @@ public final class MemberNodeResource implements MemberNode {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Timed
   @Override
-  public Identifier update(@PathParam("pid") String pid, @FormDataParam("file") InputStream object,
+  public Identifier update(@Context Session session, @PathParam("pid") String pid,
+    @FormDataParam("file") InputStream object,
     @FormDataParam("newPid") String newPid, @FormDataParam("sysmeta") SystemMetadata sysmeta)
     throws IdentifierNotUnique, InsufficientResources, InvalidRequest, InvalidSystemMetadata, InvalidToken,
     NotAuthorized, NotImplemented, ServiceFailure, UnsupportedType, NotFound {

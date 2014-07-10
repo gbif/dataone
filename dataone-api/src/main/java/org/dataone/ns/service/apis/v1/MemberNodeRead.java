@@ -16,6 +16,8 @@ import org.dataone.ns.service.types.v1.Event;
 import org.dataone.ns.service.types.v1.Log;
 import org.dataone.ns.service.types.v1.Node;
 import org.dataone.ns.service.types.v1.ObjectList;
+import org.dataone.ns.service.types.v1.Session;
+import org.dataone.ns.service.types.v1.SystemMetadata;
 import org.omg.CosNaming.NamingContextPackage.NotFound;
 
 /**
@@ -25,7 +27,7 @@ import org.omg.CosNaming.NamingContextPackage.NotFound;
  * @see <a
  *      href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html</a>
  */
-public interface MemberNodeRead extends SystemMetadataProvider {
+public interface MemberNodeRead {
 
   /**
    * This method provides a lighter weight mechanism than {@link MemberNodeRead.getSystemMetadata()} for a client to
@@ -33,18 +35,20 @@ public interface MemberNodeRead extends SystemMetadataProvider {
    * returned in a HTTP HEAD request: the date late modified, the size of the object, the type of the object (the
    * SystemMetadata.formatId).
    */
-  DescribeResponse describe(String pid) throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure, NotFound;
+  DescribeResponse describe(Session session, String pid) throws InvalidToken, NotAuthorized, NotImplemented,
+    ServiceFailure, NotFound;
 
   /**
    * Retrieve an object identified by id from the node.
    */
-  InputStream get(String pid) throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure, NotFound,
+  InputStream get(Session session, String pid) throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure,
+    NotFound,
     InsufficientResources;
 
   /**
    * Returns a document describing the capabilities of the Member Node.
    */
-  Node getCapabilities() throws NotImplemented, ServiceFailure;
+  Node getCapabilities(Session session) throws NotImplemented, ServiceFailure;
 
   /**
    * Returns {@link Checksum} for the specified object using an accepted hashing algorithm. The result is used to
@@ -52,14 +56,16 @@ public interface MemberNodeRead extends SystemMetadataProvider {
    * returned checksum is valid for the referenced object either by computing it on the fly or by using a cached value
    * that is certain to be correct.
    */
-  Checksum getChecksum(String pid, String checksumAlgorithm) throws InvalidRequest, InvalidToken, NotAuthorized,
+  Checksum getChecksum(Session session, String pid, String checksumAlgorithm) throws InvalidRequest, InvalidToken,
+    NotAuthorized,
     NotImplemented, ServiceFailure, NotFound;
 
   /**
    * Retrieve log information from the Member Node for the specified slice parameters. Log entries will only return
    * PIDs.
    */
-  Log getLogRecords(Date fromDate, Date toDate, Event event, String pidFilter, Integer start, Integer count)
+  Log getLogRecords(Session session, Date fromDate, Date toDate, Event event, String pidFilter, Integer start,
+    Integer count)
     throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented, ServiceFailure;
 
   /**
@@ -67,8 +73,15 @@ public interface MemberNodeRead extends SystemMetadataProvider {
    * {@link MemberNodeReplication.replicate()}. This is a request to make a replica copy of the object, and differs from
    * a call to GET /object in that it should be logged as a replication event rather than a read event on that object.
    */
-  InputStream getReplica(String pid) throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure, NotFound,
+  InputStream getReplica(Session session, String pid) throws InvalidToken, NotAuthorized, NotImplemented,
+    ServiceFailure, NotFound,
     InsufficientResources;
+
+  /**
+   * Describes the object identified by id by returning the associated system metadata object.
+   */
+  SystemMetadata getSystemMetadata(Session session, String identifier) throws NotAuthorized, NotFound, ServiceFailure,
+    InvalidToken, InsufficientResources;
 
   /**
    * Retrieve the list of objects present on the MN that match the calling parameters.
@@ -85,19 +98,21 @@ public interface MemberNodeRead extends SystemMetadataProvider {
    * Access control for this method MUST be configured to allow calling by Coordinating Nodes and MAY be configured to
    * allow more general access.
    */
-  ObjectList listObjects(Date fromDate, Date toDate, String formatId, Boolean replicaStatus, Integer start,
+  ObjectList listObjects(Session session, Date fromDate, Date toDate, String formatId, Boolean replicaStatus,
+    Integer start,
     Integer count) throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented, ServiceFailure;
 
   /**
    * Returns a human readable form of the time for easy debugging since the specification is ambiguous.
    */
-  String ping() throws NotImplemented, ServiceFailure, InsufficientResources;
+  String ping(Session session) throws NotImplemented, ServiceFailure, InsufficientResources;
 
   /**
    * This is a callback method used by a CN to indicate to a MN that it cannot complete synchronization of the science
    * metadata identified by pid. When called, the MN should take steps to record the problem description and notify an
    * administrator or the data owner of the issue.
    */
-  boolean synchronizationFailed(SynchronizationFailed message) throws InvalidToken, NotAuthorized, NotImplemented,
+  boolean synchronizationFailed(Session session, SynchronizationFailed message) throws InvalidToken, NotAuthorized,
+    NotImplemented,
     ServiceFailure;
 }

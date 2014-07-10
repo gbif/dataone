@@ -21,7 +21,7 @@ public interface SystemMetadataProvider {
   /**
    * Describes the object identified by id by returning the associated system metadata object.
    */
-  SystemMetadata getSystemMetadata(String identifier) throws NotAuthorized, NotFound, ServiceFailure, InvalidToken,
-    InsufficientResources;
+  SystemMetadata getSystemMetadata(String identifier) throws NotAuthorized, NotFound, ServiceFailure,
+    InvalidToken, InsufficientResources;
 
 }

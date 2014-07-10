@@ -30,26 +30,30 @@ public class MemberNodeResourceTest {
 
   private static final MNBackend backend = mock(MNBackend.class);
 
+  /**
+   * We mock sessions because we can't access the HttpServletRequest using the Jersey InMemory container, and we don't
+   * need to test authentication.
+   */
   @ClassRule
   public static final ResourceTestRule resources = ResourceTestRule.builder()
     .addResource(new MemberNodeResource(backend, mockNode()))
-    .addProvider(new MockRequestProvider())
+    .addProvider(new MockSessionProvider())
     .build();
-
-  /**
-   * To use this: clientResource().path("ping").get().
-   * 
-   * @return A client resource that can be used as the base for all test.
-   */
-  private static WebResource clientResource() {
-    return resources.client().resource(BASE_URL);
-  }
 
   /**
    * TODO: read from a file - consider move the TestFiles from the auth package into the API?
    */
   private static Node mockNode() {
     return Node.builder().withBaseURL("https://localhost:8443/d1/mn").build();
+  }
+
+  /**
+   * To use this: clientResource().path("ping").get().
+   * 
+   * @return A client resource that can be used as the base for all test.
+   */
+  private WebResource clientResource() {
+    return resources.client().resource(BASE_URL);
   }
 
   @Before

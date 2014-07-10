@@ -37,11 +37,11 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Utilities to deal with X509 certificates to produce the represented Session.
- * This functionality is core to the authorization model and hence has highly restricted access.
+ * <p>
  * Methods marked with @VisibleForTesting are not intended to be used outside of this class.
  */
 @ThreadSafe
-final class CertificateUtils {
+public final class CertificateUtils {
 
   private static final Logger LOG = LoggerFactory.getLogger(CertificateUtils.class);
   private static final String HTTPS_SCHEME = "https";
@@ -66,11 +66,11 @@ final class CertificateUtils {
   /**
    * @return an instance using the {@link AuthorizationManager.DEFAULT_OID_SUBJECT_INFO} only
    */
-  static CertificateUtils newInstance() {
+  public static CertificateUtils newInstance() {
     return new CertificateUtils(ImmutableList.of(AuthorizationManager.DEFAULT_OID_SUBJECT_INFO));
   }
 
-  static CertificateUtils newInstance(List<String> extensionOIDs) {
+  public static CertificateUtils newInstance(List<String> extensionOIDs) {
     Preconditions.checkNotNull(extensionOIDs, "Extensions OIDs are required");
     return new CertificateUtils(extensionOIDs);
   }
@@ -99,7 +99,7 @@ final class CertificateUtils {
     return decoded;
   }
 
-  Session newSession(HttpServletRequest request, String detailCode) throws InvalidRequest, InvalidCredentials,
+  public Session newSession(HttpServletRequest request, String detailCode) throws InvalidRequest, InvalidCredentials,
     InvalidToken {
     Preconditions.checkNotNull(request, "A request must be provided"); // indicates invalid use
 

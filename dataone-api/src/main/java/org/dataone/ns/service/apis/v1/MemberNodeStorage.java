@@ -12,6 +12,7 @@ import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.exceptions.UnsupportedType;
 import org.dataone.ns.service.types.v1.Identifier;
+import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
 import org.omg.CosNaming.NamingContextPackage.NotFound;
 
@@ -40,13 +41,13 @@ public interface MemberNodeStorage extends MemberNodeAuthorization {
    * node servicing the request, then an Exceptions.NotFound exception is raised. The message body of the exception
    * SHOULD contain a hint as to the location of the CNRead.resolve() method.
    */
-  Identifier archive(String pid) throws InvalidToken, ServiceFailure,
+  Identifier archive(Session session, String pid) throws InvalidToken, ServiceFailure,
     NotAuthorized, NotFound, NotImplemented;
 
   /**
    * Called by a client to adds a new object to the Member Node.
    */
-  Identifier create(String pid, InputStream object,
+  Identifier create(Session session, String pid, InputStream object,
     SystemMetadata sysmeta) throws IdentifierNotUnique, InsufficientResources,
     InvalidRequest, InvalidSystemMetadata, InvalidToken, NotAuthorized, NotImplemented, ServiceFailure, UnsupportedType;
 
@@ -64,12 +65,13 @@ public interface MemberNodeStorage extends MemberNodeAuthorization {
    * If the object does not exist on the node servicing the request, then an Exceptions.NotFound exception is raised.
    * The message body of the exception SHOULD contain a hint as to the location of the CNRead.resolve() method.
    */
-  Identifier delete(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented;
+  Identifier delete(Session session, String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound,
+    NotImplemented;
 
   /**
    * Given a scheme and optional fragment, generates an identifier with that scheme and fragment that is unique.
    */
-  Identifier generateIdentifier(String scheme, String fragment) throws InvalidToken, ServiceFailure,
+  Identifier generateIdentifier(Session session, String scheme, String fragment) throws InvalidToken, ServiceFailure,
     NotAuthorized, NotImplemented, InvalidRequest;
 
   /**
@@ -89,7 +91,8 @@ public interface MemberNodeStorage extends MemberNodeAuthorization {
    * A new, unique Types.SystemMetadata.seriesId may be included when beginning a series, or a series may be extended if
    * the newPid obsoletes the existing pid.
    */
-  Identifier update(String pid, InputStream object, String newPid, SystemMetadata sysmeta) throws IdentifierNotUnique,
+  Identifier update(Session session, String pid, InputStream object, String newPid, SystemMetadata sysmeta)
+    throws IdentifierNotUnique,
     InsufficientResources, InvalidRequest, InvalidSystemMetadata, InvalidToken, NotAuthorized, NotImplemented,
     ServiceFailure, UnsupportedType, NotFound;
 
