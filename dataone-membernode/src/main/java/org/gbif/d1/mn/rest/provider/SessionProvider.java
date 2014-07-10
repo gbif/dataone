@@ -18,8 +18,7 @@ import com.sun.jersey.spi.inject.InjectableProvider;
 import org.dataone.ns.service.types.v1.Session;
 
 /**
- * This class exists because {@link Authenticated} is used in the MN interface method arguments and is mapped
- * to query params.
+ * A provider of sessions which are built from the certificate presented with client requests.
  */
 @Provider
 public final class SessionProvider implements InjectableProvider<Context, Type>, Injectable<Session> {
