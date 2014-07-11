@@ -90,21 +90,20 @@ public final class DataONEException extends Exception {
     return Objects.hashCode(super.hashCode(), type, message, detailCode, pid, cause);
   }
 
-  public DataONEException newNotFoundException(Type type, String message, String detailCode, String pid) {
-    return new DataONEException(type, message, detailCode, pid, null);
+  public DataONEException newNotFoundException(String message, String detailCode, String pid) {
+    return new DataONEException(Type.NOT_FOUND, message, detailCode, pid, null);
   }
 
-  public DataONEException newServiceFailureException(Type type, String message, String detailCode) {
-    return new DataONEException(type, message, detailCode, null, null);
+  public DataONEException newNotFoundException(String message, String detailCode, String pid, Exception cause) {
+    return new DataONEException(Type.NOT_FOUND, message, detailCode, pid, cause);
   }
 
-  public DataONEException newServiceFailureException(Type type, String message, String detailCode, Exception cause) {
-    return new DataONEException(type, message, detailCode, null, cause);
+  public DataONEException newServiceFailureException(String message, String detailCode) {
+    return new DataONEException(Type.SERVICE_FAILURE, message, detailCode, null, null);
   }
 
-  public DataONEException newServiceFailureException(Type type, String message, String detailCode, String pid,
-    Exception cause) {
-    return new DataONEException(type, message, detailCode, pid, cause);
+  public DataONEException newServiceFailureException(String message, String detailCode, Exception cause) {
+    return new DataONEException(Type.SERVICE_FAILURE, message, detailCode, null, cause);
   }
 
   @Override
