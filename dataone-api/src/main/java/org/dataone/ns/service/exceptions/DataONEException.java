@@ -8,8 +8,8 @@ import com.google.common.base.Objects;
 /**
  * Represents an exception that will be emitted from a DataONE node.
  * <p>
- * The exceptions documented in the DataONE Exceptions guide are numberous in number and many methods are required to
- * throw all of them. In all cases, these exceptions are thrown across the HTTP interface. As such it does not make for
+ * The exceptions documented in the DataONE specification are numberous in number and many methods are required to throw
+ * all of them. In all cases, these exceptions are retuend across the HTTP interface. As such it does not make for
  * elegant code to have a whole host of exception definitions, none of which will be actioned upon within this JVM.
  * <p>
  * This design takes a different approach, where a single exception is declared for components, which has enough
@@ -38,8 +38,8 @@ public final class DataONEException extends Exception {
   private final Exception cause;
 
   // not for instantiation
-  private DataONEException(Type type, String message, String detailCode, String pid, Exception cause) {
-    super();
+  private DataONEException(Type type, String message, String detailCode, @Nullable String pid, @Nullable Exception cause) {
+    super(message, cause);
     this.type = type;
     this.message = message;
     this.detailCode = detailCode;
@@ -49,10 +49,10 @@ public final class DataONEException extends Exception {
 
   @Override
   public boolean equals(Object object) {
+    if (this == object) {
+      return true;
+    }
     if (object instanceof DataONEException) {
-      if (!super.equals(object)) {
-        return false;
-      }
       DataONEException that = (DataONEException) object;
       return Objects.equal(this.type, that.type)
         && Objects.equal(this.message, that.message)
@@ -104,7 +104,6 @@ public final class DataONEException extends Exception {
 
   public DataONEException newServiceFailureException(Type type, String message, String detailCode, String pid,
     Exception cause) {
-    DataONEException e = new DataONEException(type, message, detailCode, pid, cause);
     return new DataONEException(type, message, detailCode, pid, cause);
   }
 
