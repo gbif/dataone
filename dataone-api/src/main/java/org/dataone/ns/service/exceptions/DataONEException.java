@@ -106,14 +106,4 @@ public final class DataONEException extends Exception {
     return new DataONEException(Type.SERVICE_FAILURE, message, detailCode, null, cause);
   }
 
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-      .add("type", type)
-      .add("message", message)
-      .add("detailCode", detailCode)
-      .add("pid", pid)
-      .add("cause", cause)
-      .toString();
-  }
 }
