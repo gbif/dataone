@@ -1,8 +1,9 @@
 package org.gbif.d1.mn.rest;
 
+import org.gbif.d1.mn.rest.provider.Authenticate;
+
 import java.lang.reflect.Type;
 
-import javax.ws.rs.core.Context;
 import javax.ws.rs.ext.Provider;
 
 import com.sun.jersey.core.spi.component.ComponentContext;
@@ -18,13 +19,13 @@ import org.dataone.ns.service.types.v1.Subject;
  * Servlet container dependencies.
  */
 @Provider
-public class MockSessionProvider implements InjectableProvider<Context, Type>, Injectable<Session> {
+public class MockSessionProvider implements InjectableProvider<Authenticate, Type>, Injectable<Session> {
 
   public MockSessionProvider() {
   }
 
   @Override
-  public Injectable<Session> getInjectable(ComponentContext ic, Context a, Type c) {
+  public Injectable<Session> getInjectable(ComponentContext ic, Authenticate a, Type c) {
     if (c.equals(Session.class)) {
       return this;
     }
