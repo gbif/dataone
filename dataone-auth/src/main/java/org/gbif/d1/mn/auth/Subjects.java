@@ -32,12 +32,76 @@ final class Subjects {
   private static final Logger LOG = LoggerFactory.getLogger(Subjects.class);
 
   // symbolic subjects (visible for testing)
-  final static String PUBLIC_SUBJECT = "public";
-  final static String AUTHENTICATED_SUBJECT = "authenticatedUser";
-  final static String VERIFIED_SUBJECT = "verifiedUser";
+  static final String PUBLIC_SUBJECT = "public";
+  static final String AUTHENTICATED_SUBJECT = "authenticatedUser";
+  static final String VERIFIED_SUBJECT = "verifiedUser";
 
   // Not for instantiation
   private Subjects() {
+  }
+
+  /**
+   * Utility to add subjects provided they exist and contain a value otherwise skips silently.
+   */
+  private static void appendIfNotNull(Subject s, Set<String> collection) {
+    Preconditions.checkNotNull(collection, "Cannot append to collection if it is null");
+    if (s != null && s.getValue() != null) {
+      collection.add(s.getValue());
+    }
+  }
+
+  /**
+   * Recursive calling over the people list looking for the target identity. When found the person is added to the
+   * subjects, all groups they belong to are added and then we find any equivalent identities for them and start over
+   * until exhausted.
+   */
+  private static void recurseAllPeople(List<Person> people, String target, Set<String> subjects,
+    Map<String, Set<String>> groupMembership) {
+    Preconditions.checkNotNull(people, "Cannot recurse over missing lists");
+    Preconditions.checkNotNull(target, "Cannot find a person if non specified");
+    Preconditions.checkNotNull(subjects, "Cannot append to subjects if missing");
+    Preconditions.checkNotNull(groupMembership, "Cannot find groups with no index");
+
+    LOG.debug("Recursing subject: {}", target);
+
+    // always ensure the target is stored [it may have no Person objects]
+    subjects.add(target);
+
+    // For safety: the model supports a membership on the group object in addition to on the person.
+    // The target might actually be an equivalent identity with no person object.
+    if (groupMembership.containsKey(target)) {
+      subjects.addAll(groupMembership.get(target));
+    }
+
+    for (Person person : people) {
+      if (person.getSubject() != null && target.equals(person.getSubject().getValue())) {
+
+        // add the symbolic subject if verified
+        if (Boolean.TRUE.equals(person.isVerified())) {
+          subjects.add(VERIFIED_SUBJECT);
+        }
+
+        // add group membership listed on the person
+        for (Subject group : person.getIsMemberOf()) {
+          appendIfNotNull(group, subjects);
+        }
+
+        // For safety again: the model supports a membership on the group object in addition to on the person.
+        // Add any group the subject is associated with here, noting that SubjectInfo can come from
+        // the certificate, so the generation of it is outside of our control.
+        if (groupMembership.containsKey(person.getSubject().getValue())) {
+          subjects.addAll(groupMembership.get(person.getSubject().getValue()));
+        }
+
+        // recurse into equivalent identities (aliases)
+        for (Subject alias : person.getEquivalentIdentity()) {
+          if (alias != null && alias.getValue() != null) {
+            // start over, this time using the alias
+            recurseAllPeople(people, alias.getValue(), subjects, groupMembership);
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -74,16 +138,6 @@ final class Subjects {
     }
 
     return ImmutableSet.copyOf(subjects);
-  }
-
-  /**
-   * Utility to add subjects provided they exist and contain a value otherwise skips silently.
-   */
-  private static void appendIfNotNull(Subject s, Set<String> collection) {
-    Preconditions.checkNotNull(collection, "Cannot append to collection if it is null");
-    if (s != null && s.getValue() != null) {
-      collection.add(s.getValue());
-    }
   }
 
   /**
@@ -140,60 +194,6 @@ final class Subjects {
       return session.getSubject().getValue();
     } else {
       return null;
-    }
-  }
-
-  /**
-   * Recursive calling over the people list looking for the target identity. When found the person is added to the
-   * subjects, all groups they belong to are added and then we find any equivalent identities for them and start over
-   * until exhausted.
-   */
-  private static void recurseAllPeople(List<Person> people, String target, Set<String> subjects,
-    Map<String, Set<String>> groupMembership) {
-    Preconditions.checkNotNull(people, "Cannot recurse over missing lists");
-    Preconditions.checkNotNull(target, "Cannot find a person if non specified");
-    Preconditions.checkNotNull(subjects, "Cannot append to subjects if missing");
-    Preconditions.checkNotNull(groupMembership, "Cannot find groups with no index");
-
-    LOG.debug("Recursing subject: {}", target);
-
-    // always ensure the target is stored [it may have no Person objects]
-    subjects.add(target);
-
-    // For safety: the model supports a membership on the group object in addition to on the person.
-    // The target might actually be an equivalent identity with no person object.
-    if (groupMembership.containsKey(target)) {
-      subjects.addAll(groupMembership.get(target));
-    }
-
-    for (Person person : people) {
-      if (person.getSubject() != null && target.equals(person.getSubject().getValue())) {
-
-        // add the symbolic subject if verified
-        if (Boolean.TRUE.equals(person.isVerified())) {
-          subjects.add(VERIFIED_SUBJECT);
-        }
-
-        // add group membership listed on the person
-        for (Subject group : person.getIsMemberOf()) {
-          appendIfNotNull(group, subjects);
-        }
-
-        // For safety again: the model supports a membership on the group object in addition to on the person.
-        // Add any group the subject is associated with here, noting that SubjectInfo can come from
-        // the certificate, so the generation of it is outside of our control.
-        if (groupMembership.containsKey(person.getSubject().getValue())) {
-          subjects.addAll(groupMembership.get(person.getSubject().getValue()));
-        }
-
-        // recurse into equivalent identities (aliases)
-        for (Subject alias : person.getEquivalentIdentity()) {
-          if (alias != null && alias.getValue() != null) {
-            // start over, this time using the alias
-            recurseAllPeople(people, alias.getValue(), subjects, groupMembership);
-          }
-        }
-      }
     }
   }
 }

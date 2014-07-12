@@ -289,10 +289,10 @@ public final class MemberNodeResource implements MemberNode {
   @Timed
   @Override
   public Identifier update(@Authenticate("code") Session session, @PathParam("pid") String pid,
-    @FormDataParam("file") InputStream object,
-    @FormDataParam("newPid") String newPid, @FormDataParam("sysmeta") SystemMetadata sysmeta)
-    throws IdentifierNotUnique, InsufficientResources, InvalidRequest, InvalidSystemMetadata, InvalidToken,
-    NotAuthorized, NotImplemented, ServiceFailure, UnsupportedType, NotFound {
+    @FormDataParam("file") InputStream object, @FormDataParam("newPid") String newPid,
+    @FormDataParam("sysmeta") SystemMetadata sysmeta) throws IdentifierNotUnique, InsufficientResources,
+    InvalidRequest, InvalidSystemMetadata, InvalidToken, NotAuthorized, NotImplemented, ServiceFailure,
+    UnsupportedType, NotFound {
     return null;
   }
 }

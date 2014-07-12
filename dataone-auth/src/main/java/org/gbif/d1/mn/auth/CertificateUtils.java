@@ -55,16 +55,8 @@ public final class CertificateUtils {
     this.extensionOIDs = ImmutableList.copyOf(extensionOIDs);
   }
 
-  private static JAXBContext initJaxbContext() {
-    try {
-      return JAXBContext.newInstance(SubjectInfo.class);
-    } catch (JAXBException e) {
-      throw Throwables.propagate(e); // we are hosed
-    }
-  }
-
   /**
-   * @return an instance using the {@link AuthorizationManager.DEFAULT_OID_SUBJECT_INFO} only
+   * @return an instance using the {@link AuthorizationManager#DEFAULT_OID_SUBJECT_INFO} only
    */
   public static CertificateUtils newInstance() {
     return new CertificateUtils(ImmutableList.of(AuthorizationManager.DEFAULT_OID_SUBJECT_INFO));
@@ -75,28 +67,12 @@ public final class CertificateUtils {
     return new CertificateUtils(extensionOIDs);
   }
 
-  /**
-   * Retrieves the extension value given by the object id.
-   * Not intended for client use - visible only for testing.
-   * 
-   * @see http://stackoverflow.com/questions/2409618/how-do-i-decode-a-der-encoded-string-in-java
-   */
-  @VisibleForTesting
-  String getExtension(X509Certificate X509Certificate, String oid) throws IOException {
-    String decoded = null;
-    byte[] extensionValue = X509Certificate.getExtensionValue(oid);
-    if (extensionValue != null) {
-      DERObject derObject = toDERObject(extensionValue);
-      if (derObject instanceof DEROctetString) {
-        DEROctetString derOctetString = (DEROctetString) derObject;
-        derObject = toDERObject(derOctetString.getOctets());
-        if (derObject instanceof DERUTF8String) {
-          DERUTF8String s = DERUTF8String.getInstance(derObject);
-          decoded = s.getString();
-        }
-      }
+  private static JAXBContext initJaxbContext() {
+    try {
+      return JAXBContext.newInstance(SubjectInfo.class);
+    } catch (JAXBException e) {
+      throw Throwables.propagate(e); // we are hosed
     }
-    return decoded;
   }
 
   public Session newSession(HttpServletRequest request, String detailCode) throws InvalidRequest, InvalidCredentials,
@@ -120,6 +96,68 @@ public final class CertificateUtils {
     } else {
       throw new InvalidRequest("Https is required for all authentication", detailCode);
     }
+  }
+
+  private SubjectInfo parseSubjectInfo(String subjectInfoAsXMLString) throws IOException, JAXBException {
+    LOG.debug("SubjectInfo as XML: {}", subjectInfoAsXMLString);
+    if (subjectInfoAsXMLString != null) {
+      Unmarshaller unmarshaller = SUBJECT_INFO_CONTEXT.createUnmarshaller();
+      // not strictly required for a StringReader, but good practice
+      Closer closer = Closer.create();
+      try {
+        StringReader reader = closer.register(new StringReader(subjectInfoAsXMLString));
+        return (SubjectInfo) unmarshaller.unmarshal(reader);
+
+      } catch (Throwable e) { // required for Closer
+        throw closer.rethrow(e);
+      } finally {
+        closer.close();
+      }
+    }
+    return null;
+  }
+
+  /**
+   * @see <a
+   *      href="http://stackoverflow.com/questions/2409618/how-do-i-decode-a-der-encoded-string-in-java">StackOverflow</a>
+   */
+  private DERObject toDERObject(byte[] data) throws IOException {
+    Closer closer = Closer.create();
+    try {
+      ByteArrayInputStream in = closer.register(new ByteArrayInputStream(data));
+      ASN1InputStream asn1In = closer.register(new ASN1InputStream(in));
+      return asn1In.readObject();
+    } catch (Throwable e) { // required for Closer
+      throw closer.rethrow(e);
+    } finally {
+      closer.close();
+    }
+  }
+
+  /**
+   * Retrieves the extension value given by the object id.
+   * Not intended for client use - visible only for testing.
+   * 
+   * @see @see <a
+   *      href="http://stackoverflow.com/questions/2409618/how-do-i-decode-a-der-encoded-string-in-java">StackOverflow
+   *      </a>
+   */
+  @VisibleForTesting
+  String getExtension(X509Certificate X509Certificate, String oid) throws IOException {
+    String decoded = null;
+    byte[] extensionValue = X509Certificate.getExtensionValue(oid);
+    if (extensionValue != null) {
+      DERObject derObject = toDERObject(extensionValue);
+      if (derObject instanceof DEROctetString) {
+        DEROctetString derOctetString = (DEROctetString) derObject;
+        derObject = toDERObject(derOctetString.getOctets());
+        if (derObject instanceof DERUTF8String) {
+          DERUTF8String s = DERUTF8String.getInstance(derObject);
+          decoded = s.getString();
+        }
+      }
+    }
+    return decoded;
   }
 
   Session newSession(String detailCode, X509Certificate x509Cert) throws InvalidToken {
@@ -159,41 +197,5 @@ public final class CertificateUtils {
     }
 
     return session.build();
-  }
-
-  private SubjectInfo parseSubjectInfo(String subjectInfoAsXMLString) throws IOException, JAXBException {
-    LOG.debug("SubjectInfo as XML: {}", subjectInfoAsXMLString);
-    if (subjectInfoAsXMLString != null) {
-      Unmarshaller unmarshaller = SUBJECT_INFO_CONTEXT.createUnmarshaller();
-      // not strictly required for a StringReader, but good practice
-      Closer closer = Closer.create();
-      try {
-        StringReader reader = closer.register(new StringReader(subjectInfoAsXMLString));
-        SubjectInfo subjectInfo = (SubjectInfo) unmarshaller.unmarshal(reader);
-        return subjectInfo;
-
-      } catch (Throwable e) { // required for Closer
-        throw closer.rethrow(e);
-      } finally {
-        closer.close();
-      }
-    }
-    return null;
-  }
-
-  /**
-   * @see http://stackoverflow.com/questions/2409618/how-do-i-decode-a-der-encoded-string-in-java
-   */
-  private DERObject toDERObject(byte[] data) throws IOException {
-    Closer closer = Closer.create();
-    try {
-      ByteArrayInputStream in = closer.register(new ByteArrayInputStream(data));
-      ASN1InputStream asn1In = closer.register(new ASN1InputStream(in));
-      return asn1In.readObject();
-    } catch (Throwable e) { // required for Closer
-      throw closer.rethrow(e);
-    } finally {
-      closer.close();
-    }
   }
 }

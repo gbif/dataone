@@ -32,12 +32,12 @@ public final class MNLogEntry {
   }
 
   @Override
-  public boolean equals(Object object) {
-    if (this == object) {
+  public boolean equals(Object obj) {
+    if (this == obj) {
       return true;
     }
-    if (object instanceof MNLogEntry) {
-      MNLogEntry that = (MNLogEntry) object;
+    if (obj instanceof MNLogEntry) {
+      MNLogEntry that = (MNLogEntry) obj;
       return Objects.equal(this.key, that.key)
         && Objects.equal(this.identifier, that.identifier)
         && Objects.equal(this.ipAddress, that.ipAddress)

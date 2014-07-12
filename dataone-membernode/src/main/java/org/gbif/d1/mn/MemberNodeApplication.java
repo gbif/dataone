@@ -37,13 +37,6 @@ public class MemberNodeApplication<T extends MemberNodeConfiguration> extends Ap
     new MemberNodeApplication<MemberNodeConfiguration>().run(args);
   }
 
-  /**
-   * Creates the backend using the configuration. Developers implementing custom backends will override this method.
-   */
-  protected MNBackend getBackend(T configuration) {
-    return new InMemoryBackend();
-  }
-
   @Override
   public String getName() {
     return APPLICATION_NAME;
@@ -51,25 +44,6 @@ public class MemberNodeApplication<T extends MemberNodeConfiguration> extends Ap
 
   @Override
   public final void initialize(Bootstrap<T> bootstrap) {
-  }
-
-  /**
-   * Strips the default Dropwizard Exception handling and replaces with our own.
-   * 
-   * @see http://thoughtspark.org/2013/02/25/dropwizard-and-jersey-exceptionmappers/
-   */
-  private void removeDropwizardExceptionMappers(JerseyEnvironment environment) {
-    ResourceConfig jrConfig = environment.getResourceConfig();
-    Set<Object> dwSingletons = jrConfig.getSingletons();
-    Iterator<Object> iter = dwSingletons.iterator();
-
-    // remove any of the dropwizard ExceptionMappers
-    while (iter.hasNext()) {
-      Object s = iter.next();
-      if (s instanceof ExceptionMapper && s.getClass().getName().startsWith("io.dropwizard.jersey.")) {
-        dwSingletons.add(s);
-      }
-    }
   }
 
   @Override
@@ -92,6 +66,27 @@ public class MemberNodeApplication<T extends MemberNodeConfiguration> extends Ap
   }
 
   /**
+   * Strips the default Dropwizard Exception handling and replaces with our own.
+   * <p>
+   * TODO: remove this?
+   * 
+   * @see <a href="http://thoughtspark.org/2013/02/25/dropwizard-and-jersey-exceptionmappers/">More information</a>
+   */
+  private void removeDropwizardExceptionMappers(JerseyEnvironment environment) {
+    ResourceConfig jrConfig = environment.getResourceConfig();
+    Set<Object> dwSingletons = jrConfig.getSingletons();
+    Iterator<Object> iter = dwSingletons.iterator();
+
+    // remove any of the dropwizard ExceptionMappers
+    while (iter.hasNext()) {
+      Object s = iter.next();
+      if (s instanceof ExceptionMapper && s.getClass().getName().startsWith("io.dropwizard.jersey.")) {
+        dwSingletons.remove(s);
+      }
+    }
+  }
+
+  /**
    * Returns a Node representing this installation, based on the configuration.
    * TODO: extract config
    */
@@ -111,4 +106,10 @@ public class MemberNodeApplication<T extends MemberNodeConfiguration> extends Ap
         .build()).build();
   }
 
+  /**
+   * Creates the backend using the configuration. Developers implementing custom backends will override this method.
+   */
+  protected MNBackend getBackend(T configuration) {
+    return new InMemoryBackend();
+  }
 }

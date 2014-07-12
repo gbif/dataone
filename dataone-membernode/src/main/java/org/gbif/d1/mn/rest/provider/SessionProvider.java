@@ -30,7 +30,7 @@ public final class SessionProvider implements InjectableProvider<Authenticate, T
 
     private final String detailCode;
 
-    public SessionInjectable(String detailCode) {
+    private SessionInjectable(String detailCode) {
       this.detailCode = detailCode;
     }
 

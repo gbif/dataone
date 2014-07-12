@@ -112,7 +112,7 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
 
     SystemMetadata sysMetadata = systemMetadataProvider.getSystemMetadata(identifier.getValue());
     if (sysMetadata == null) {
-      throw new NotFound("Cannot perform action since object not found", detailCode);
+      throw new NotFound("Cannot perform action since object not found", detailCode, identifier.getValue());
     }
 
     Session session = certificateUtils.newSession(request, detailCode); // throws exception if could not be built
@@ -120,6 +120,30 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
     if (!approved) {
       throw new NotAuthorized("No subject represented by the certificate have permission to perform action", detailCode);
     }
+  }
+
+  /**
+   * @return true if subjects contains the target
+   */
+  private boolean contains(List<Subject> subjects, final String target) {
+    return Iterables.any(subjects, new Predicate<Subject>() {
+
+      @Override
+      public boolean apply(Subject input) {
+        return target.equals(input.getValue());
+      }
+    });
+  }
+
+  /**
+   * Returns true if the rights holder in the system metadata is one of the subjects passed in.
+   */
+  private boolean isRightsHolder(SystemMetadata sysMetadata, Set<String> subjects) {
+    Subject rightsHolder = sysMetadata.getRightsHolder();
+    Preconditions.checkNotNull(rightsHolder, "An object cannot exist without a rights holder");
+    boolean approved = subjects.contains(rightsHolder.getValue());
+    LOG.debug("Subject[{}] does not contain the rights holder[{}]", subjects, rightsHolder.getValue());
+    return approved;
   }
 
   /**
@@ -156,31 +180,16 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
 
       // any CN or the authoritative MN is granted permission, but requires a network call to a CN
       if (isAuthorityNodeOrCN(primary, sysMetadata)) {
-        LOG.debug("The session[{}] originates from the CN or the authoritative member node", sysMetadata, session);
+        LOG.debug("The session[{}] originates from the CN or the authoritative member node", session);
         return true;
       }
 
-      LOG.debug("The session[{}] is not permitted", sysMetadata, session);
+      LOG.debug("The session[{}] is not permitted", session);
       return false;
 
     } catch (ServiceFailure e) {
-      // log specifics, but surface minimal detail and the detail code supplied (which the specification mandates)
-      LOG.error("Unable to call the coordinating node", e);
-      throw new ServiceFailure(e.getMessage(), detailCode);
+      throw new ServiceFailure(e.getMessage(), detailCode, e);
     }
-  }
-
-  /**
-   * @return true if subjects contains the target
-   */
-  private boolean contains(List<Subject> subjects, final String target) {
-    return Iterables.any(subjects, new Predicate<Subject>() {
-
-      @Override
-      public boolean apply(Subject input) {
-        return target.equals(input.getValue());
-      }
-    });
   }
 
   /**
@@ -251,17 +260,6 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
       }
     }
     return false;
-  }
-
-  /**
-   * Returns true if the rights holder in the system metadata is one of the subjects passed in.
-   */
-  private boolean isRightsHolder(SystemMetadata sysMetadata, Set<String> subjects) {
-    Subject rightsHolder = sysMetadata.getRightsHolder();
-    Preconditions.checkNotNull(rightsHolder, "An object cannot exist without a rights holder");
-    boolean approved = subjects.contains(rightsHolder.getValue());
-    LOG.debug("Subject[{}] does not contain the rights holder[{}]", subjects, rightsHolder.getValue());
-    return approved;
   }
 
 }

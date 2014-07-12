@@ -8,6 +8,7 @@ import javax.xml.bind.JAXBException;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import org.dataone.ns.service.types.v1.Builders;
 import org.dataone.ns.service.types.v1.Session;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -40,28 +41,28 @@ public class SubjectsTest {
   public void testAllSubjects1() throws Exception {
     // the simplest of all possibilities
     runSubjectExpansionTest(
-      TestFiles.newSession("org/gbif/d1/mn/auth/session-1.xml"),
+      Builders.newSession("org/gbif/d1/mn/auth/session-1.xml"),
       ImmutableSet.of(PUBLIC_SUBJECT, AUTHENTICATED_SUBJECT, "CN=Tim Robertson"));
   }
 
   @Test
   public void testAllSubjects2() throws Exception {
     runSubjectExpansionTest(
-      TestFiles.newSession("org/gbif/d1/mn/auth/session-2.xml"),
+      Builders.newSession("org/gbif/d1/mn/auth/session-2.xml"),
       ImmutableSet.of(PUBLIC_SUBJECT, AUTHENTICATED_SUBJECT, "CN=Tim Robertson", "O=GBIF"));
   }
 
   @Test
   public void testAllSubjects3() throws Exception {
     runSubjectExpansionTest(
-      TestFiles.newSession("org/gbif/d1/mn/auth/session-3.xml"),
+      Builders.newSession("org/gbif/d1/mn/auth/session-3.xml"),
       ImmutableSet.of(PUBLIC_SUBJECT, AUTHENTICATED_SUBJECT, VERIFIED_SUBJECT, "CN=Tim Robertson", "O=GBIF"));
   }
 
   @Test
   public void testAllSubjects4() throws Exception {
     runSubjectExpansionTest(
-      TestFiles.newSession("org/gbif/d1/mn/auth/session-4.xml"),
+      Builders.newSession("org/gbif/d1/mn/auth/session-4.xml"),
       ImmutableSet.of(PUBLIC_SUBJECT, AUTHENTICATED_SUBJECT, "CN=Tim Robertson"));
   }
 
@@ -70,7 +71,7 @@ public class SubjectsTest {
     // this example highlights equivalent identities and the case where groups have users where only the equivalent
     // identity is added to the group membership
     runSubjectExpansionTest(
-      TestFiles.newSession("org/gbif/d1/mn/auth/session-5.xml"),
+      Builders.newSession("org/gbif/d1/mn/auth/session-5.xml"),
       ImmutableSet.of(PUBLIC_SUBJECT, AUTHENTICATED_SUBJECT, VERIFIED_SUBJECT,
         "CN=Tim Robertson",
         "O=GBIF",
@@ -84,7 +85,7 @@ public class SubjectsTest {
   @Test
   public void testIndexGroupMembership() throws JAXBException, IOException {
     Map<String, Set<String>> index =
-      Subjects.indexGroupMembership(TestFiles.newSubjectInfo("org/gbif/d1/mn/auth/subjectInfo-2.xml"));
+      Subjects.indexGroupMembership(Builders.newSubjectInfo("org/gbif/d1/mn/auth/subjectInfo-2.xml"));
     assertEquals(4, index.keySet().size());
     assertTrue(index.containsKey("CN=Tim Robertson"));
     assertTrue(index.containsKey("CN=Federico Mendez"));

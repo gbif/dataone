@@ -16,12 +16,12 @@ public final class D1MNHadoopApplication extends MemberNodeApplication<D1MNConfi
   }
 
   @Override
-  protected MNBackend getBackend(D1MNConfiguration d1MNConfiguration) {
-    return new InMemoryBackend();
+  public String getName() {
+    return APPLICATION_NAME;
   }
 
   @Override
-  public String getName() {
-    return APPLICATION_NAME;
+  protected MNBackend getBackend(D1MNConfiguration d1MNConfiguration) {
+    return new InMemoryBackend();
   }
 }

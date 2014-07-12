@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import org.dataone.ns.service.apis.v1.CoordinatingNode;
 import org.dataone.ns.service.apis.v1.SystemMetadataProvider;
 import org.dataone.ns.service.exceptions.ServiceFailure;
+import org.dataone.ns.service.types.v1.Builders;
 import org.dataone.ns.service.types.v1.Node;
 import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
@@ -35,7 +36,7 @@ public class AuthorizationManagerTest {
    */
   @BeforeClass
   public static void setupClass() throws Exception {
-    selfNode = TestFiles.newNode("org/gbif/d1/mn/auth/node-1.xml");
+    selfNode = Builders.newNode("org/gbif/d1/mn/auth/node-1.xml");
   }
 
   /**
@@ -54,16 +55,16 @@ public class AuthorizationManagerTest {
   public void testCNDownBehavior() throws Exception {
     when(cn.listNodes()).thenThrow(new ServiceFailure("1", "I'm not available"));
     AuthorizationManagerImpl auth = new AuthorizationManagerImpl(systemMetadataProvider, cn, selfNode);
-    SystemMetadata sysMetadata = TestFiles.newSystemMetadata("org/gbif/d1/mn/auth/sysMeta-1.xml");
+    SystemMetadata sysMetadata = Builders.newSystemMetadata("org/gbif/d1/mn/auth/sysMeta-1.xml");
     // this will force a CN call to list nodes
     auth.isAuthorityNodeOrCN("CN=Nobody", sysMetadata);
   }
 
   @Test
   public void testIsAuthorityNodeOrCN1() throws Exception {
-    when(cn.listNodes()).thenReturn(TestFiles.newNodeList("org/gbif/d1/mn/auth/nodeList-1.xml"));
+    when(cn.listNodes()).thenReturn(Builders.newNodeList("org/gbif/d1/mn/auth/nodeList-1.xml"));
     AuthorizationManagerImpl auth = new AuthorizationManagerImpl(systemMetadataProvider, cn, selfNode);
-    SystemMetadata sysMetadata = TestFiles.newSystemMetadata("org/gbif/d1/mn/auth/sysMeta-1.xml");
+    SystemMetadata sysMetadata = Builders.newSystemMetadata("org/gbif/d1/mn/auth/sysMeta-1.xml");
 
     // ensure the authority MN is granted permission if listed explicitly
     assertTrue(auth.isAuthorityNodeOrCN("CN=MemberNode_2", sysMetadata));
@@ -86,36 +87,36 @@ public class AuthorizationManagerTest {
 
   @Test
   public void testIsAuthorized() throws Exception {
-    when(cn.listNodes()).thenReturn(TestFiles.newNodeList("org/gbif/d1/mn/auth/nodeList-1.xml"));
+    when(cn.listNodes()).thenReturn(Builders.newNodeList("org/gbif/d1/mn/auth/nodeList-1.xml"));
     AuthorizationManagerImpl auth = new AuthorizationManagerImpl(systemMetadataProvider, cn, selfNode);
 
     // use a complex system metadata that we can use to test various subjects against
-    SystemMetadata sysMetadata = TestFiles.newSystemMetadata("org/gbif/d1/mn/auth/sysMeta-1.xml");
+    SystemMetadata sysMetadata = Builders.newSystemMetadata("org/gbif/d1/mn/auth/sysMeta-1.xml");
 
     // the subject is ourselves
-    Session session = TestFiles.newSession("org/gbif/d1/mn/auth/session-8.xml");
+    Session session = Builders.newSession("org/gbif/d1/mn/auth/session-8.xml");
     assertTrue(auth.checkIsAuthorized(session, sysMetadata, Permission.CHANGE_PERMISSION, "1"));
     verify(cn, times(0)).listNodes(); // no CN calls needed
 
     // the subject is the rights holder
-    session = TestFiles.newSession("org/gbif/d1/mn/auth/session-1.xml");
+    session = Builders.newSession("org/gbif/d1/mn/auth/session-1.xml");
     assertTrue(auth.checkIsAuthorized(session, sysMetadata, Permission.CHANGE_PERMISSION, "1"));
     verify(cn, times(0)).listNodes(); // no CN calls needed
 
     // the subject is part of an org listed in the access rules for READ only
-    session = TestFiles.newSession("org/gbif/d1/mn/auth/session-6.xml");
+    session = Builders.newSession("org/gbif/d1/mn/auth/session-6.xml");
     assertFalse(auth.checkIsAuthorized(session, sysMetadata, Permission.CHANGE_PERMISSION, "1"));
     verify(cn, times(1)).listNodes(); // failed, so ran through to the end and called a CN
     assertTrue(auth.checkIsAuthorized(session, sysMetadata, Permission.READ, "1"));
     verify(cn, times(1)).listNodes(); // did not require another call
 
     // session is a CN
-    session = TestFiles.newSession("org/gbif/d1/mn/auth/session-9.xml");
+    session = Builders.newSession("org/gbif/d1/mn/auth/session-9.xml");
     assertTrue(auth.checkIsAuthorized(session, sysMetadata, Permission.CHANGE_PERMISSION, "1"));
     verify(cn, times(2)).listNodes(); // required a call to the CN
 
     // session is an alias of the listed authority MN
-    session = TestFiles.newSession("org/gbif/d1/mn/auth/session-10.xml");
+    session = Builders.newSession("org/gbif/d1/mn/auth/session-10.xml");
     assertTrue(auth.checkIsAuthorized(session, sysMetadata, Permission.CHANGE_PERMISSION, "1"));
     verify(cn, times(3)).listNodes(); // required a call to the CN
   }
@@ -131,9 +132,9 @@ public class AuthorizationManagerTest {
       // note this throws with detailCode "1" which is internal and should not be surfaced
       when(cn.listNodes()).thenThrow(new ServiceFailure("1", "I'm not available"));
       AuthorizationManagerImpl auth = new AuthorizationManagerImpl(systemMetadataProvider, cn, selfNode);
-      SystemMetadata sysMetadata = TestFiles.newSystemMetadata("org/gbif/d1/mn/auth/sysMeta-1.xml");
+      SystemMetadata sysMetadata = Builders.newSystemMetadata("org/gbif/d1/mn/auth/sysMeta-1.xml");
       // session-9.xml represents a CN, so this will force a CN call during auth
-      Session session = TestFiles.newSession("org/gbif/d1/mn/auth/session-9.xml");
+      Session session = Builders.newSession("org/gbif/d1/mn/auth/session-9.xml");
       auth.checkIsAuthorized(session, sysMetadata, Permission.READ, expectedDetailCode);
       fail("Expected a ServiceFailure exception");
     } catch (ServiceFailure e) { // expected
@@ -145,7 +146,7 @@ public class AuthorizationManagerTest {
   @Test
   public void testIsGrantedByAccessPolicy() throws Exception {
     AuthorizationManagerImpl auth = new AuthorizationManagerImpl(systemMetadataProvider, cn, selfNode);
-    SystemMetadata sysMetadata = TestFiles.newSystemMetadata("org/gbif/d1/mn/auth/sysMeta-1.xml");
+    SystemMetadata sysMetadata = Builders.newSystemMetadata("org/gbif/d1/mn/auth/sysMeta-1.xml");
 
     // READ
     assertTrue(auth.isGrantedByAccessPolicy(sysMetadata, ImmutableSet.of("CN=Dave Vieglas"), Permission.READ));

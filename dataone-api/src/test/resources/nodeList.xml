@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d1:nodeList xmlns:d1="http://ns.dataone.org/service/types/v1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://ns.dataone.org/service/types/v1 http://repository.dataone.org/software/cicore/trunk/d1_schemas/dataoneTypes_v1.1.xsd">
+
+  <!-- 2 CNs and a 2 MNs, one of which is ourselves -->
+
+  <node replicate="true" synchronize="true" type="cn" state="up">
+    <identifier>urn:node:CN1</identifier>
+    <name>CN number 1</name>
+    <description>CN number 1 for unit tests</description>
+    <baseURL>http://cn1.org/cn/v1/</baseURL>
+    <subject>CN=CoordinatingNode_1</subject>
+    <contactSubject>CN=Dave Vieglas</contactSubject>
+  </node>
+
+  <node replicate="true" synchronize="true" type="cn" state="up">
+    <identifier>urn:node:CN2</identifier>
+    <name>CN number 2</name>
+    <description>CN number 2 for unit tests</description>
+    <baseURL>http://cn2.org/cn/v2/</baseURL>
+    <subject>CN=CoordinatingNode_2</subject>
+    <contactSubject>CN=Dave Vieglas</contactSubject>
+  </node>
+
+  <!-- This is ourselves -->
+  <node replicate="true" synchronize="true" type="mn" state="up">
+    <identifier>urn:node:MN1</identifier>
+    <name>MN number 1</name>
+    <description>MN number 1 for unit tests</description>
+    <baseURL>http://localhost:8080/mn/v1/</baseURL>
+    <subject>CN=MemberNode_1</subject>
+    <contactSubject>CN=Tim Robertson</contactSubject>
+  </node>
+
+  <!-- This is some other MN -->
+  <node replicate="true" synchronize="true" type="mn" state="up">
+    <identifier>urn:node:MN2</identifier>
+    <name>MN number 2</name>
+    <description>MN number 2 for unit tests</description>
+    <baseURL>http://mn2.org/mn/v1/</baseURL>
+    <subject>CN=MemberNode_2</subject>
+    <subject>CN=AliasForMN2</subject>
+    <contactSubject>CN=Markus Döring</contactSubject>
+  </node>
+
+</d1:nodeList>

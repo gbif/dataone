@@ -30,10 +30,10 @@ import org.omg.CosNaming.NamingContextPackage.NotFound;
 public interface MemberNodeRead {
 
   /**
-   * This method provides a lighter weight mechanism than {@link MemberNodeRead.getSystemMetadata()} for a client to
-   * determine basic properties of the referenced object. The response should indicate properties that are typically
-   * returned in a HTTP HEAD request: the date late modified, the size of the object, the type of the object (the
-   * SystemMetadata.formatId).
+   * This method provides a lighter weight mechanism than {@link MemberNodeRead#getSystemMetadata(Session, String)} ()}
+   * for a client to determine basic properties of the referenced object. The response should indicate properties that
+   * are typically returned in a HTTP HEAD request: the date late modified, the size of the object, the type of the
+   * object (the SystemMetadata.formatId).
    */
   DescribeResponse describe(Session session, String pid) throws InvalidToken, NotAuthorized, NotImplemented,
     ServiceFailure, NotFound;
@@ -69,13 +69,13 @@ public interface MemberNodeRead {
     throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented, ServiceFailure;
 
   /**
-   * Called by a target Member Node to fullfill the replication request originated by a Coordinating Node calling
-   * {@link MemberNodeReplication.replicate()}. This is a request to make a replica copy of the object, and differs from
-   * a call to GET /object in that it should be logged as a replication event rather than a read event on that object.
+   * Called by a target Member Node to fulfill the replication request originated by a Coordinating Node calling
+   * {@link MemberNodeReplication#replicate(Session, SystemMetadata, String)}. This is a request to make a replica copy
+   * of the object, and differs from a call to GET /object in that it should be logged as a replication event rather
+   * than a read event on that object.
    */
   InputStream getReplica(Session session, String pid) throws InvalidToken, NotAuthorized, NotImplemented,
-    ServiceFailure, NotFound,
-    InsufficientResources;
+    ServiceFailure, NotFound, InsufficientResources;
 
   /**
    * Describes the object identified by id by returning the associated system metadata object.
@@ -99,8 +99,7 @@ public interface MemberNodeRead {
    * allow more general access.
    */
   ObjectList listObjects(Session session, Date fromDate, Date toDate, String formatId, Boolean replicaStatus,
-    Integer start,
-    Integer count) throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented, ServiceFailure;
+    Integer start, Integer count) throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented, ServiceFailure;
 
   /**
    * Returns a human readable form of the time for easy debugging since the specification is ambiguous.

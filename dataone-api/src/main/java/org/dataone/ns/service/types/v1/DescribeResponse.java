@@ -45,9 +45,9 @@ public class DescribeResponse {
   }
 
   @Override
-  public boolean equals(Object object) {
-    if (object instanceof DescribeResponse) {
-      DescribeResponse that = (DescribeResponse) object;
+  public boolean equals(Object obj) {
+    if (obj instanceof DescribeResponse) {
+      DescribeResponse that = (DescribeResponse) obj;
       return Objects.equal(this.objectFormatID, that.objectFormatID)
         && Objects.equal(this.contentLength, that.contentLength)
         && Objects.equal(this.lastModified, that.lastModified)

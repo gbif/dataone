@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d1:node xmlns:d1="http://ns.dataone.org/service/types/v1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://ns.dataone.org/service/types/v1 http://repository.dataone.org/software/cicore/trunk/d1_schemas/dataoneTypes_v1.1.xsd"
+  replicate="true" synchronize="true" type="mn" state="up">
+  <identifier>urn:node:TestNode</identifier>
+  <name>Test member node</name>
+  <description>This member node config is intended for unit tests only
+  </description>
+  <baseURL>http://localhost:8080/mn/v1/</baseURL>
+  <services>
+    <service available="true" name="MNCore" version="v1"></service>
+    <service name="MNRead" version="v1"></service>
+    <service name="MNAuthorization" version="v1"></service>
+    <service name="MNStorage" version="v1"></service>
+    <service name="MNReplication" version="v1"></service>
+  </services>
+  <!-- Identified as 2 subjects -->
+  <subject>CN=MemberNode_1</subject>
+  <subject>CN=TimsNode</subject>
+  <contactSubject>CN=Tim Robertson</contactSubject>
+</d1:node>

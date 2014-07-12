@@ -1,7 +1,5 @@
 package org.gbif.d1.mn.auth;
 
-import java.util.Collection;
-
 import javax.annotation.concurrent.ThreadSafe;
 
 import com.google.common.collect.ImmutableSet;
@@ -17,8 +15,10 @@ final class Permissions {
   /**
    * Expands permissions which are hierarchical i.e. CHANGE permits WRITE permits READ.
    */
-  static ImmutableSet<Permission> expand(Collection<Permission> permissions) {
+  static ImmutableSet<Permission> expand(Iterable<Permission> permissions) {
     ImmutableSet.Builder<Permission> builder = new ImmutableSet.Builder<Permission>();
+
+    // TODO: Fallthrough is always suspicious so consider a better implementation
     for (Permission p : permissions) {
       switch (p) {
         case CHANGE_PERMISSION:

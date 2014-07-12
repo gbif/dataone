@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.collect.Lists;
 import com.sun.jersey.api.client.WebResource;
 import io.dropwizard.testing.junit.ResourceTestRule;
-import org.dataone.ns.service.types.v1.Node;
+import org.dataone.ns.service.types.v1.Builders;
 import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -36,16 +36,9 @@ public class MemberNodeResourceTest {
    */
   @ClassRule
   public static final ResourceTestRule resources = ResourceTestRule.builder()
-    .addResource(new MemberNodeResource(backend, mockNode()))
+    .addResource(new MemberNodeResource(backend, Builders.newNode("node.xml")))
     .addProvider(new MockSessionProvider())
     .build();
-
-  /**
-   * TODO: read from a file - consider move the TestFiles from the auth package into the API?
-   */
-  private static Node mockNode() {
-    return Node.builder().withBaseURL("https://localhost:8443/d1/mn").build();
-  }
 
   /**
    * To use this: clientResource().path("ping").get().

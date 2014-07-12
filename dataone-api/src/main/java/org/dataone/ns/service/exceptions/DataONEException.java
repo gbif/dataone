@@ -1,3 +1,19 @@
+/**
+ * This work was created by participants in the DataONE project, and is
+ * jointly copyrighted by participating institutions in DataONE. For
+ * more information on DataONE, see our web site at http://dataone.org.
+ * Copyright ${year}
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.dataone.ns.service.exceptions;
 
 import javax.annotation.Nullable;
@@ -6,104 +22,95 @@ import javax.annotation.concurrent.ThreadSafe;
 import com.google.common.base.Objects;
 
 /**
- * Represents an exception that will be emitted from a DataONE node.
+ * A DataONEException is the root of all DataONE service class exception messages.
  * <p>
- * The exceptions documented in the DataONE specification are numberous in number and many methods are required to throw
- * all of them. In all cases, these exceptions are retuend across the HTTP interface. As such it does not make for
- * elegant code to have a whole host of exception definitions, none of which will be actioned upon within this JVM.
- * <p>
- * This design takes a different approach, where a single exception is declared for components, which has enough
- * information to generate appropriate HTTP responses for exceptional circumstances.
- * <p>
- * This class inherits the mutability present in {@link Exception}, and thus is mutable only on the stack trace and
- * cause.
- * 
- * @see https://mule1.dataone.org/ArchitectureDocs-current/apis/Exceptions.html
+ * All D1 exceptions are checked. Arguably some might be served as unchecked exceptions as they could be unrecoverable
+ * by any client, but the design is to <b>enforce</b> that clients code defensively for these scenarios.
  */
 @ThreadSafe
-public final class DataONEException extends Exception {
+public class DataONEException extends Exception {
 
-  public enum Type {
-    SERVICE_FAILURE, NOT_FOUND
-  }
+  private static final long serialVersionUID = -8001672483615361690L;
 
-  private static final long serialVersionUID = 6633336141436940865L;;
-
-  private final Type type;
-  private final String message;
   private final String detailCode;
-  @Nullable
-  private final String pid;
-  @Nullable
-  private final Exception cause;
 
-  // not for instantiation
-  private DataONEException(Type type, String message, String detailCode, @Nullable String pid, @Nullable Exception cause) {
-    super(message, cause);
-    this.type = type;
-    this.message = message;
+  @Nullable
+  private final String pid; // the persistent identifier for the object if applicable
+
+  @Nullable
+  private final String nodeId; // node identifier of the machine that raised the exception
+
+  protected DataONEException(String message, String detailCode) {
+    super(message);
     this.detailCode = detailCode;
+    this.nodeId = null;
+    this.pid = null;
+  }
+
+  protected DataONEException(String message, String detailCode, String nodeId) {
+    super(message);
+    this.detailCode = detailCode;
+    this.nodeId = nodeId;
+    this.pid = null;
+  }
+
+  protected DataONEException(String message, String detailCode, String nodeId, String pid) {
+    super(message);
+    this.detailCode = detailCode;
+    this.nodeId = nodeId;
     this.pid = pid;
-    this.cause = cause;
   }
 
-  @Override
-  public boolean equals(Object object) {
-    if (this == object) {
-      return true;
-    }
-    if (object instanceof DataONEException) {
-      DataONEException that = (DataONEException) object;
-      return Objects.equal(this.type, that.type)
-        && Objects.equal(this.message, that.message)
-        && Objects.equal(this.detailCode, that.detailCode)
-        && Objects.equal(this.pid, that.pid)
-        && Objects.equal(this.cause, that.cause);
-    }
-    return false;
+  protected DataONEException(String message, String detailCode, String nodeId, String pid, Throwable cause) {
+    super(message, cause);
+    this.detailCode = detailCode;
+    this.nodeId = nodeId;
+    this.pid = pid;
   }
 
-  @Override
-  public Exception getCause() {
-    return cause;
+  protected DataONEException(String message, String detailCode, String nodeId, Throwable cause) {
+    super(message, cause);
+    this.detailCode = detailCode;
+    this.nodeId = nodeId;
+    this.pid = null;
+  }
+
+  protected DataONEException(String message, String detailCode, Throwable cause) {
+    super(message, cause);
+    this.detailCode = detailCode;
+    this.nodeId = null;
+    this.pid = null;
   }
 
   public String getDetailCode() {
     return detailCode;
   }
 
-  @Override
-  public String getMessage() {
-    return message;
+  /**
+   * The identifier for the node in the DataONE network that raised the exception. If the exception is created from a
+   * response to a call over the network (e.g. in a web service client), this will always be populated otherwise it will
+   * likely be null.
+   */
+  @Nullable
+  public String getNodeId() {
+    return nodeId;
   }
 
+  /**
+   * The identifier for the object this exception relates to if applicable.
+   */
+  @Nullable
   public String getPid() {
     return pid;
   }
 
-  public Type getType() {
-    return type;
-  }
-
   @Override
-  public int hashCode() {
-    return Objects.hashCode(super.hashCode(), type, message, detailCode, pid, cause);
+  public String toString() {
+    // append to super to inherit the familiar default "classname: message" format first
+    return super.toString() + Objects.toStringHelper(this)
+      .add("detailCode", detailCode)
+      .add("pid", pid)
+      .add("nodeId", nodeId)
+      .toString();
   }
-
-  public DataONEException newNotFoundException(String message, String detailCode, String pid) {
-    return new DataONEException(Type.NOT_FOUND, message, detailCode, pid, null);
-  }
-
-  public DataONEException newNotFoundException(String message, String detailCode, String pid, Exception cause) {
-    return new DataONEException(Type.NOT_FOUND, message, detailCode, pid, cause);
-  }
-
-  public DataONEException newServiceFailureException(String message, String detailCode) {
-    return new DataONEException(Type.SERVICE_FAILURE, message, detailCode, null, null);
-  }
-
-  public DataONEException newServiceFailureException(String message, String detailCode, Exception cause) {
-    return new DataONEException(Type.SERVICE_FAILURE, message, detailCode, null, cause);
-  }
-
 }
