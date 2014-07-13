@@ -24,11 +24,19 @@ import com.google.common.base.Objects;
 /**
  * A DataONEException is the root of all DataONE service class exception messages.
  * <p>
- * All D1 exceptions are checked. Arguably some might be served as unchecked exceptions as they could be unrecoverable
- * by any client, but the design is to <b>enforce</b> that clients code defensively for these scenarios.
+ * Because DataONE specify that exceptional cases are associated with a detail codes which vary depending on the
+ * execution (e.g. method being called) we cannot use the more familiar existing Java exceptions such as
+ * {@link UnsupportedOperationException}.
+ * <p>
+ * All D1 exceptions are unchecked. Arguably some might be served as checked exceptions but it is anticipated that all
+ * are unrecoverable in practice. These exceptions are low level exceptions and not intended for end users.
+ * <ul>
+ * <li>A server implementation will pass all exceptions through and serve as HTTP errors</li>
+ * <li>A client implementation will likely throw a more suitable higher level checked exception</li>
+ * </ul>
  */
 @ThreadSafe
-public class DataONEException extends Exception {
+public class DataONEException extends RuntimeException {
 
   private static final long serialVersionUID = -8001672483615361690L;
 

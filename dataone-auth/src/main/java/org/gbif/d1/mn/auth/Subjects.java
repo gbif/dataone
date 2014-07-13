@@ -23,7 +23,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Provides utilities for dealing with Subjects.
+ * <p>
  * This functionality is core to the authorization model and hence has highly restricted access.
+ * <p>
  * Methods marked with @VisibleForTesting are not intended to be used outside of this class.
  */
 @ThreadSafe

@@ -1,5 +1,6 @@
 package org.gbif.d1.mn.rest;
 
+import org.gbif.d1.mn.auth.AuthorizationManager;
 import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.backend.model.MNLogEntry;
 
@@ -29,6 +30,7 @@ public class MemberNodeResourceTest {
   private static final String BASE_URL = "/mn/v1";
 
   private static final MNBackend backend = mock(MNBackend.class);
+  private static final AuthorizationManager authorizationManager = mock(AuthorizationManager.class);
 
   /**
    * We mock sessions because we can't access the HttpServletRequest using the Jersey InMemory container, and we don't
@@ -36,18 +38,9 @@ public class MemberNodeResourceTest {
    */
   @ClassRule
   public static final ResourceTestRule resources = ResourceTestRule.builder()
-    .addResource(new MemberNodeResource(backend, Builders.newNode("node.xml")))
+    .addResource(new MemberNodeResource(Builders.newNode("node.xml"), authorizationManager, backend))
     .addProvider(new MockSessionProvider())
     .build();
-
-  /**
-   * To use this: clientResource().path("ping").get().
-   * 
-   * @return A client resource that can be used as the base for all test.
-   */
-  private WebResource clientResource() {
-    return resources.client().resource(BASE_URL);
-  }
 
   @Before
   public void setup() {
@@ -56,9 +49,18 @@ public class MemberNodeResourceTest {
 
   @Test
   public void testPing() {
-    // if a ping takes longer than 5 secs I'd say we're hosed
+    // if a ping takes longer than 5 secs we're hosed
     String pong = clientResource().path("monitor/ping").get(String.class);
     Date result = MemberNodeResource.DTF.parseDateTime(pong).toDate();
     MatcherAssert.assertThat(result, DateMatchers.within(5, TimeUnit.SECONDS, new Date()));
+  }
+
+  /**
+   * To use this: clientResource().path("ping").get().
+   * 
+   * @return A client resource that can be used as the base for all test.
+   */
+  private WebResource clientResource() {
+    return resources.client().resource(BASE_URL);
   }
 }

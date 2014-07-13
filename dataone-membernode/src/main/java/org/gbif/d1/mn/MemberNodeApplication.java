@@ -1,5 +1,7 @@
 package org.gbif.d1.mn;
 
+import org.gbif.d1.mn.auth.AuthorizationManager;
+import org.gbif.d1.mn.auth.AuthorizationManagers;
 import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.backend.memory.InMemoryBackend;
 import org.gbif.d1.mn.health.BackendHealthCheck;
@@ -17,7 +19,10 @@ import io.dropwizard.Application;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.dataone.ns.service.apis.v1.CoordinatingNode;
+import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.Node;
+import org.dataone.ns.service.types.v1.NodeList;
 import org.dataone.ns.service.types.v1.NodeReference;
 import org.dataone.ns.service.types.v1.Service;
 import org.dataone.ns.service.types.v1.Services;
@@ -48,9 +53,6 @@ public class MemberNodeApplication<T extends MemberNodeConfiguration> extends Ap
 
   @Override
   public final void run(T configuration, Environment environment) {
-    // note: the method is typically overriden by a subclass
-    MNBackend backend = getBackend(configuration);
-
     // exception handling
     // removeDropwizardExceptionMappers(environment.jersey());
     environment.jersey().register(new DefaultExceptionMapper());
@@ -59,10 +61,25 @@ public class MemberNodeApplication<T extends MemberNodeConfiguration> extends Ap
     environment.jersey().register(SessionProvider.newWithDefaults());
 
     // RESTful resources
-    environment.jersey().register(new MemberNodeResource(backend, thisNode(configuration)));
+    Node self = self(configuration);
+    CoordinatingNode cn = coordinatingNode(configuration);
+    MNBackend backend = getBackend(configuration);
+    AuthorizationManager auth = AuthorizationManagers.newAuthorizationManager(backend, cn, self);
+    environment.jersey().register(new MemberNodeResource(self, auth, backend));
 
     // health checks
     environment.healthChecks().register("backend", new BackendHealthCheck(backend));
+  }
+
+  // TODO: implement
+  private CoordinatingNode coordinatingNode(MemberNodeConfiguration configuration) {
+    return new CoordinatingNode() {
+
+      @Override
+      public NodeList listNodes() throws ServiceFailure {
+        return NodeList.builder().build();
+      }
+    };
   }
 
   /**
@@ -87,10 +104,10 @@ public class MemberNodeApplication<T extends MemberNodeConfiguration> extends Ap
   }
 
   /**
-   * Returns a Node representing this installation, based on the configuration.
+   * Returns a Node representing this installation, based on the provided configuration.
    * TODO: extract config
    */
-  private Node thisNode(MemberNodeConfiguration configuration) {
+  private Node self(MemberNodeConfiguration configuration) {
     // nonsense for now
     return Node.builder()
       .withIdentifier(NodeReference.builder().withValue("urn:node:GBIFS").build())

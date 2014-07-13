@@ -3,7 +3,6 @@ package org.gbif.d1.mn.auth;
 import javax.servlet.http.HttpServletRequest;
 
 import org.dataone.ns.service.exceptions.InsufficientResources;
-import org.dataone.ns.service.exceptions.InvalidCredentials;
 import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
@@ -36,7 +35,7 @@ public interface AuthorizationManager {
    * <li>The request originates from known coordinating node</li>
    * </ul>
    * <p>
-   * Note that some of these requests require callbacks to the coordinating nodes in the DataONE network.
+   * Note that some of these requests require a callback to the coordinating nodes in the DataONE network.
    * 
    * @param request Which must have a certificate
    * @param identifier Of the object the caller wishes to access
@@ -45,13 +44,9 @@ public interface AuthorizationManager {
    * @throws NotAuthorized If the checks ran to completion and the caller is not authorized
    * @throws NotFound If the identified object is not found on this node
    * @throws ServiceFailure If an error occurs, including connecting to a coordinating node
-   * @throws InvalidToken If a DataONE specific extension in the certificate was not readable
+   * @throws InvalidToken If a DataONE specific extension in the certificate was not readable or the request malformed
    * @throws InsufficientResources If the implementation decides it is refusing access due to a resource limit
-   * @throws InvalidRequest If the request is not an HTTPS request
-   * @throws InvalidCredentials If the credentials are invalid or missing from the request
+   * @throws InvalidRequest If the request is not well formed for any reason other than an InvalidToken
    */
-  void checkIsAuthorized(HttpServletRequest request, Identifier identifier, Permission permission,
-    String detailCode) throws NotAuthorized, NotFound, ServiceFailure, InvalidToken, InsufficientResources,
-    InvalidRequest, InvalidCredentials;
-
+  void checkIsAuthorized(HttpServletRequest request, Identifier identifier, Permission permission, String detailCode);
 }

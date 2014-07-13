@@ -50,6 +50,18 @@ public class CertificateUtilsTest {
   private static X509Certificate caCertificate;
 
   /**
+   * Sets up some keys used for the various tests.
+   */
+  @BeforeClass
+  public static void setup() throws Exception {
+    Security.addProvider(new BouncyCastleProvider());
+    // creates a random new key pair each time
+    personalKeyPair = KeyPairGenerator.getInstance("RSA", BOUNCY_CASTLE_PROVIDER).generateKeyPair();
+    KeyPair caKeyPair = KeyPairGenerator.getInstance("RSA", BOUNCY_CASTLE_PROVIDER).generateKeyPair();
+    caCertificate = newCertificate("O=Trustme Inc.", caKeyPair, null, null); // self signed and no extension
+  }
+
+  /**
    * Builds a new certificate for the given values, self signing unless the optional certificate for the certificate
    * authority is provided. If an optional d1Extension (SubjectInfo as XML) is provided it will be added.
    */
@@ -83,30 +95,16 @@ public class CertificateUtilsTest {
   }
 
   /**
-   * Sets up some keys used for the various tests.
-   */
-  @BeforeClass
-  public static void setup() throws Exception {
-    Security.addProvider(new BouncyCastleProvider());
-    // creates a random new key pair each time
-    personalKeyPair = KeyPairGenerator.getInstance("RSA", BOUNCY_CASTLE_PROVIDER).generateKeyPair();
-    KeyPair caKeyPair = KeyPairGenerator.getInstance("RSA", BOUNCY_CASTLE_PROVIDER).generateKeyPair();
-    caCertificate = newCertificate("O=Trustme Inc.", caKeyPair, null, null); // self signed and no extension
-  }
-
-  /**
    * Ensure that the expected error is thrown for non XML, nonsense extension.
    */
   @Test
   public void testExtractSubjectInfoFailureNonsense() throws Exception {
     try {
-      CertificateUtils.newInstance().newSession("1",
-        newCertificate("CN=Tim Robertson", personalKeyPair, caCertificate, "Not even XML"));
+      CertificateUtils.newInstance().newSession(
+        newCertificate("CN=Tim Robertson", personalKeyPair, caCertificate, "Not even XML"), "1");
       fail("Invalid extensions should raise exception");
     } catch (InvalidToken e) {
       assertEquals("1", e.getDetailCode());
-    } catch (Exception e) {
-      assertEquals(InvalidToken.class, e.getClass());
     }
   }
 
@@ -117,13 +115,11 @@ public class CertificateUtilsTest {
   public void testExtractSubjectInfoFailureXML() throws Exception {
     // valid but unexpected XML
     try {
-      CertificateUtils.newInstance().newSession("1",
-        newCertificate("CN=Tim Robertson", personalKeyPair, caCertificate, "<Test/>"));
+      CertificateUtils.newInstance().newSession(
+        newCertificate("CN=Tim Robertson", personalKeyPair, caCertificate, "<Test/>"), "1");
       fail("Invalid extensions should raise exception");
     } catch (InvalidToken e) {
       assertEquals("1", e.getDetailCode());
-    } catch (Exception e) {
-      assertEquals(InvalidToken.class, e.getClass());
     }
   }
 
@@ -141,7 +137,7 @@ public class CertificateUtilsTest {
 
     String dn = "CN=Tim Robertson";
     Session session =
-      CertificateUtils.newInstance().newSession("1", newCertificate(dn, personalKeyPair, caCertificate, extension));
+      CertificateUtils.newInstance().newSession(newCertificate(dn, personalKeyPair, caCertificate, extension), "1");
     assertNotNull(session);
     assertNotNull(session.getSubject());
     assertEquals(dn, session.getSubject().getValue());
@@ -154,7 +150,7 @@ public class CertificateUtilsTest {
     String dn = "CN=Tim Robertson";
     // no extension passed in
     Session session =
-      CertificateUtils.newInstance().newSession("1", newCertificate(dn, personalKeyPair, caCertificate, null));
+      CertificateUtils.newInstance().newSession(newCertificate(dn, personalKeyPair, caCertificate, null), "1");
     assertNotNull(session);
     assertNotNull(session.getSubject());
     assertEquals(dn, session.getSubject().getValue());

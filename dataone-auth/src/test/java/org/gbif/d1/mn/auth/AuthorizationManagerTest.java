@@ -57,7 +57,7 @@ public class AuthorizationManagerTest {
     AuthorizationManagerImpl auth = new AuthorizationManagerImpl(systemMetadataProvider, cn, selfNode);
     SystemMetadata sysMetadata = Builders.newSystemMetadata("org/gbif/d1/mn/auth/sysMeta-1.xml");
     // this will force a CN call to list nodes
-    auth.isAuthorityNodeOrCN("CN=Nobody", sysMetadata);
+    auth.isAuthorityNodeOrCN("CN=Nobody", sysMetadata, "detailCode.1");
   }
 
   @Test
@@ -67,21 +67,21 @@ public class AuthorizationManagerTest {
     SystemMetadata sysMetadata = Builders.newSystemMetadata("org/gbif/d1/mn/auth/sysMeta-1.xml");
 
     // ensure the authority MN is granted permission if listed explicitly
-    assertTrue(auth.isAuthorityNodeOrCN("CN=MemberNode_2", sysMetadata));
+    assertTrue(auth.isAuthorityNodeOrCN("CN=MemberNode_2", sysMetadata, "detailCode.1"));
     verify(cn, times(0)).listNodes(); // should not have required CN to deduce this
 
     // ensure the authority MN is granted permission if listed by an alias
-    assertTrue(auth.isAuthorityNodeOrCN("CN=AliasForMN2", sysMetadata));
+    assertTrue(auth.isAuthorityNodeOrCN("CN=AliasForMN2", sysMetadata, "detailCode.1"));
     verify(cn, times(1)).listNodes(); // required the cn node to find aliases
 
     // check that CNs get granted
-    assertTrue(auth.isAuthorityNodeOrCN("CN=CoordinatingNode_1", sysMetadata));
+    assertTrue(auth.isAuthorityNodeOrCN("CN=CoordinatingNode_1", sysMetadata, "detailCode.1"));
     verify(cn, times(2)).listNodes();
-    assertTrue(auth.isAuthorityNodeOrCN("CN=CoordinatingNode_2", sysMetadata));
+    assertTrue(auth.isAuthorityNodeOrCN("CN=CoordinatingNode_2", sysMetadata, "detailCode.1"));
     verify(cn, times(3)).listNodes();
 
     // ensure that just anybody doesn't get granted
-    assertFalse(auth.isAuthorityNodeOrCN("CN=Nobody", sysMetadata));
+    assertFalse(auth.isAuthorityNodeOrCN("CN=Nobody", sysMetadata, "detailCode.1"));
     verify(cn, times(4)).listNodes();
   }
 

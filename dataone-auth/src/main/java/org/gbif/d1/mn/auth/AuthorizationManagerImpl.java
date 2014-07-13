@@ -12,13 +12,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import org.dataone.ns.service.apis.v1.CoordinatingNode;
 import org.dataone.ns.service.apis.v1.SystemMetadataProvider;
-import org.dataone.ns.service.exceptions.InsufficientResources;
-import org.dataone.ns.service.exceptions.InvalidCredentials;
-import org.dataone.ns.service.exceptions.InvalidRequest;
-import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotFound;
-import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.AccessPolicy;
 import org.dataone.ns.service.types.v1.AccessRule;
@@ -87,24 +82,9 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
     LOG.debug("MN is configured with subject identifications: {}", selfSubjects);
   }
 
-  /**
-   * TODO: document this complex procedure
-   * Extracts the certificate from the request, which must be present and runs the authentication routine.
-   * This will either complete indicating that the subject is authorized or a NotAuthorized exception will be thrown.
-   * 
-   * @throws InsufficientResources
-   * @throws NotImplemented
-   * @throws InvalidToken
-   * @throws ServiceFailure
-   * @throws NotFound
-   * @throws NotAuthorized
-   * @throws InvalidCredentials
-   * @throws InvalidRequest
-   */
   @Override
   public void checkIsAuthorized(HttpServletRequest request, Identifier identifier, Permission permission,
-    String detailCode) throws NotAuthorized, NotFound, ServiceFailure, InvalidToken, InsufficientResources,
-    InvalidRequest, InvalidCredentials {
+    String detailCode) {
     Preconditions.checkNotNull(request, "A request must be provided");
     Preconditions.checkNotNull(identifier, "An identifier must be provided");
     Preconditions.checkNotNull(identifier.getValue(), "An identifier must be provided");
@@ -149,55 +129,54 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
   /**
    * Runs through the procedure of verification returning whether approved or not.
    * Procedure is executed in an order to ensure that local calls are executed before calls requiring network calls.
+   * 
+   * @throws ServiceFailure If it is not possible to connect to the coordinating node
    */
   @VisibleForTesting
-  boolean checkIsAuthorized(Session session, SystemMetadata sysMetadata, Permission permission, String detailCode)
-    throws ServiceFailure {
-    try {
-      String primary = Subjects.primary(session);
+  boolean checkIsAuthorized(Session session, SystemMetadata sysMetadata, Permission permission, String detailCode) {
+    String primary = Subjects.primary(session);
 
-      // Is this call coming with our own credentials?
-      // Perhaps we've got local applications using the same certificate for example.
-      if (selfSubjects.contains(primary)) {
-        LOG.debug("Session[{}] is approved since request came from ourselves", session);
-        return true;
-      }
-
-      // get the primary, alternative identities and all groups from the caller
-      Set<String> subjects = Subjects.allSubjects(session);
-      // is there an access rule covering the session (e.g. PUBLIC READ must be very common)
-      if (isGrantedByAccessPolicy(sysMetadata, subjects, permission)) {
-        LOG.debug("System metadata[{}] access rules grant access to session[{}]", sysMetadata, session);
-        return true;
-      }
-
-      // the rights holder is granted permission
-      if (isRightsHolder(sysMetadata, subjects)) {
-        LOG
-          .info("The rights holder named in the system metadata[{}] is found in the session[{}]", sysMetadata, session);
-        return true;
-      }
-
-      // any CN or the authoritative MN is granted permission, but requires a network call to a CN
-      if (isAuthorityNodeOrCN(primary, sysMetadata)) {
-        LOG.debug("The session[{}] originates from the CN or the authoritative member node", session);
-        return true;
-      }
-
-      LOG.debug("The session[{}] is not permitted", session);
-      return false;
-
-    } catch (ServiceFailure e) {
-      throw new ServiceFailure(e.getMessage(), detailCode, e);
+    // Is this call coming with our own credentials?
+    // Perhaps we've got local applications using the same certificate for example.
+    if (selfSubjects.contains(primary)) {
+      LOG.debug("Session[{}] is approved since request came from ourselves", session);
+      return true;
     }
+
+    // get the primary, alternative identities and all groups from the caller
+    Set<String> subjects = Subjects.allSubjects(session);
+    // is there an access rule covering the session (e.g. PUBLIC READ must be very common)
+    if (isGrantedByAccessPolicy(sysMetadata, subjects, permission)) {
+      LOG.debug("System metadata[{}] access rules grant access to session[{}]", sysMetadata, session);
+      return true;
+    }
+
+    // the rights holder is granted permission
+    if (isRightsHolder(sysMetadata, subjects)) {
+      LOG
+        .info("The rights holder named in the system metadata[{}] is found in the session[{}]", sysMetadata, session);
+      return true;
+    }
+
+    // any CN or the authoritative MN is granted permission, but requires a network call to a CN
+    if (isAuthorityNodeOrCN(primary, sysMetadata, detailCode)) {
+      LOG.debug("The session[{}] originates from the CN or the authoritative member node", session);
+      return true;
+    }
+
+    LOG.debug("The session[{}] is not permitted", session);
+    return false;
+
   }
 
   /**
    * Looks up if the subject is the authority member node for the object or a CN.
    * This is combined into a single operation to minimize network calls to the CN.
+   * 
+   * @throws ServiceFailure If it is not possible to connect to the coordinating node
    */
   @VisibleForTesting
-  boolean isAuthorityNodeOrCN(String subject, SystemMetadata sysMetadata) throws ServiceFailure {
+  boolean isAuthorityNodeOrCN(String subject, SystemMetadata sysMetadata, String detailCode) {
     NodeReference authNode = sysMetadata.getAuthoritativeMemberNode();
     Preconditions.checkNotNull(authNode, "The authoritative member node cannot be null on an object");
     String authoritativeMN = authNode.getValue();
@@ -210,21 +189,25 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
 
     // call the coordinating node and get a list of all nodes including all their alias subjects
     // if the original request comes from a CN or the named authoritative MN then it is granted
-    for (Node node : cn.listNodes().getNode()) {
+    try {
+      for (Node node : cn.listNodes().getNode()) {
 
-      if (NodeType.CN == node.getType()
-        && contains(node.getSubject(), subject)) {
-        LOG.debug("Request received from a known alias[{}] of a CN[{}]", subject, node.getSubject());
-        return true;
+        if (NodeType.CN == node.getType()
+          && contains(node.getSubject(), subject)) {
+          LOG.debug("Request received from a known alias[{}] of a CN[{}]", subject, node.getSubject());
+          return true;
 
-      } else if (NodeType.MN == node.getType()
-        && contains(node.getSubject(), authoritativeMN)
-        && contains(node.getSubject(), subject)) {
-        LOG.debug("Request received from a known alias[{}] of the listed authoritative MN[{}]", subject,
-          node.getSubject());
-        return true;
+        } else if (NodeType.MN == node.getType()
+          && contains(node.getSubject(), authoritativeMN)
+          && contains(node.getSubject(), subject)) {
+          LOG.debug("Request received from a known alias[{}] of the listed authoritative MN[{}]", subject,
+            node.getSubject());
+          return true;
 
+        }
       }
+    } catch (ServiceFailure e) {
+      throw new ServiceFailure("Unable to call the CN for the list of nodes", detailCode, e);
     }
     return false;
   }
@@ -261,5 +244,4 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
     }
     return false;
   }
-
 }

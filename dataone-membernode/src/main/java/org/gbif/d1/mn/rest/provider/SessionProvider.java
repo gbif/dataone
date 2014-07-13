@@ -9,12 +9,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.ext.Provider;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.sun.jersey.core.spi.component.ComponentContext;
 import com.sun.jersey.core.spi.component.ComponentScope;
 import com.sun.jersey.spi.inject.Injectable;
 import com.sun.jersey.spi.inject.InjectableProvider;
+import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.types.v1.Session;
 
 /**
@@ -29,18 +29,22 @@ public final class SessionProvider implements InjectableProvider<Authenticate, T
   private class SessionInjectable implements Injectable<Session> {
 
     private final String detailCode;
+    private final HttpServletRequest request;
 
-    private SessionInjectable(String detailCode) {
+    private SessionInjectable(HttpServletRequest request, String detailCode) {
+      this.request = request;
       this.detailCode = detailCode;
     }
 
+    /**
+     * Provides the new session built from the certificate in the request, or throws an exception.
+     * 
+     * @throws InvalidToken Should it be impossible to create a session from the given request
+     * @throws NullPointerException If the request is null
+     */
     @Override
     public Session getValue() {
-      try {
-        return certificateUtils.newSession(request, detailCode);
-      } catch (Exception e) {
-        throw Throwables.propagate(e);
-      }
+      return certificateUtils.newSession(request, detailCode);
     }
   }
 
@@ -65,7 +69,7 @@ public final class SessionProvider implements InjectableProvider<Authenticate, T
   @Override
   public Injectable<Session> getInjectable(ComponentContext ic, Authenticate a, Type c) {
     if (c.equals(Session.class)) {
-      return new SessionInjectable(a.value());
+      return new SessionInjectable(request, a.value());
     }
     return null;
   }

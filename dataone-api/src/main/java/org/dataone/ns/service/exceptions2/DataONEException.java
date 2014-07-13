@@ -6,6 +6,9 @@ import javax.annotation.concurrent.ThreadSafe;
 /**
  * Represents an exception that will be emitted from a DataONE node.
  * <p>
+ * This is just an exploratory class, while we consider whether to use a single checked exception, lots of checked
+ * exceptions or lots of runtime exceptions.
+ * <p>
  * The exceptions documented in the DataONE specification are numerous in number and many methods are required to throw
  * all of them. In all cases, these exceptions are returned across the HTTP interface. As such it does not make for
  * elegant code to have a whole host of exception definitions, none of which will be actioned upon within this JVM.
@@ -21,6 +24,7 @@ import javax.annotation.concurrent.ThreadSafe;
 @ThreadSafe
 public final class DataONEException extends Exception {
 
+  // TODO: lots of them
   public enum Type {
     SERVICE_FAILURE, NOT_FOUND
   }
@@ -98,16 +102,23 @@ public final class DataONEException extends Exception {
     return new DataONEException(Type.NOT_FOUND, message, detailCode, pid);
   }
 
-  public DataONEException notFound(String message, String detailCode, String pid, Throwable cause) {
-    return new DataONEException(Type.NOT_FOUND, message, detailCode, pid, cause);
+  public DataONEException notFound(String message, String detailCode, String pid, String nodeId) {
+    return new DataONEException(Type.NOT_FOUND, message, detailCode, nodeId, pid); // careful: swap order
   }
 
-  public DataONEException serviceFailure(String message, String detailCode, Exception cause) {
-    return new DataONEException(Type.SERVICE_FAILURE, message, detailCode, cause);
+  public DataONEException serviceFailure(String message, String detailCode) {
+    return new DataONEException(Type.SERVICE_FAILURE, message, detailCode);
+  }
+
+  public DataONEException serviceFailure(String message, String detailCode, String nodeId) {
+    return new DataONEException(Type.SERVICE_FAILURE, message, detailCode, nodeId);
+  }
+
+  public DataONEException serviceFailure(String message, String detailCode, String nodeId, Throwable cause) {
+    return new DataONEException(Type.SERVICE_FAILURE, message, detailCode, nodeId, cause);
   }
 
   public DataONEException serviceFailure(String message, String detailCode, Throwable cause) {
     return new DataONEException(Type.SERVICE_FAILURE, message, detailCode, cause);
   }
-
 }

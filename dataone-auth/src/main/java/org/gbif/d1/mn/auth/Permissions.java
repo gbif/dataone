@@ -17,19 +17,15 @@ final class Permissions {
    */
   static ImmutableSet<Permission> expand(Iterable<Permission> permissions) {
     ImmutableSet.Builder<Permission> builder = new ImmutableSet.Builder<Permission>();
-
-    // TODO: Fallthrough is always suspicious so consider a better implementation
+    // expand the higher permissions to include what they also grant
     for (Permission p : permissions) {
-      switch (p) {
-        case CHANGE_PERMISSION:
-          builder.add(Permission.CHANGE_PERMISSION); // continue to cascade
-        case WRITE:
-          builder.add(Permission.WRITE); // continue to cascade
-        case READ:
-          builder.add(Permission.READ); // no more cascades
-          break;
-        default:
-          break; // no permission
+      builder.add(p);
+      if (Permission.WRITE == p) {
+        builder.add(Permission.READ);
+      }
+      if (Permission.CHANGE_PERMISSION == p) {
+        builder.add(Permission.WRITE);
+        builder.add(Permission.READ);
       }
     }
     return builder.build();

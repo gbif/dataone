@@ -24,16 +24,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.sun.jersey.multipart.FormDataParam;
 import com.sun.jersey.spi.resource.Singleton;
 import org.dataone.ns.service.apis.v1.MemberNode;
-import org.dataone.ns.service.exceptions.IdentifierNotUnique;
-import org.dataone.ns.service.exceptions.InsufficientResources;
-import org.dataone.ns.service.exceptions.InvalidRequest;
-import org.dataone.ns.service.exceptions.InvalidSystemMetadata;
 import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.exceptions.SynchronizationFailed;
-import org.dataone.ns.service.exceptions.UnsupportedType;
 import org.dataone.ns.service.types.v1.Checksum;
 import org.dataone.ns.service.types.v1.DescribeResponse;
 import org.dataone.ns.service.types.v1.Event;
@@ -47,7 +42,6 @@ import org.dataone.ns.service.types.v1.SystemMetadata;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.omg.CosNaming.NamingContextPackage.NotFound;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,21 +69,19 @@ public final class MemberNodeResource implements MemberNode {
 
   private final AuthorizationManager authorizationManager;
   private final MNBackend backend;
-  private final Node selfNode;
+  private final Node self;
 
-  public MemberNodeResource(MNBackend backend, Node selfNode) {
+  public MemberNodeResource(Node self, AuthorizationManager authorizationManager, MNBackend backend) {
     this.backend = backend;
-    this.selfNode = selfNode;
-    this.authorizationManager = null; // TODO
+    this.self = self;
+    this.authorizationManager = authorizationManager;
   }
 
   @PUT
   @Path("archive/{pid}")
   @Timed
   @Override
-  public Identifier archive(@Authenticate("code") Session session, @PathParam("pid") String pid) throws InvalidToken,
-    ServiceFailure,
-    NotAuthorized, NotFound, NotImplemented {
+  public Identifier archive(@Authenticate("code") Session session, @PathParam("pid") String pid) {
     return null;
   }
 
@@ -99,9 +91,7 @@ public final class MemberNodeResource implements MemberNode {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Timed
   public Identifier create(@Authenticate("code") Session session, @FormDataParam("pid") String pid,
-    @FormDataParam("object") InputStream object,
-    @FormDataParam("sysmeta") SystemMetadata sysmeta) throws IdentifierNotUnique, InsufficientResources,
-    InvalidRequest, InvalidSystemMetadata, InvalidToken, NotAuthorized, NotImplemented, ServiceFailure, UnsupportedType {
+    @FormDataParam("object") InputStream object, @FormDataParam("sysmeta") SystemMetadata sysmeta) {
 
     return Identifier.builder().withValue(pid).build();
   }
@@ -110,9 +100,7 @@ public final class MemberNodeResource implements MemberNode {
   @Path("object/{pid}")
   @Timed
   @Override
-  public Identifier delete(@Authenticate("code") Session session, @PathParam("pid") String pid) throws InvalidToken,
-    ServiceFailure,
-    NotAuthorized, NotFound, NotImplemented {
+  public Identifier delete(@Authenticate("code") Session session, @PathParam("pid") String pid) {
     return null;
   }
 
@@ -120,10 +108,7 @@ public final class MemberNodeResource implements MemberNode {
   @Path("object/{pid}")
   @Timed
   @Override
-  public DescribeResponse describe(@Authenticate("code") Session session, @PathParam("pid") String pid)
-    throws InvalidToken,
-    NotAuthorized,
-    NotImplemented, ServiceFailure, NotFound {
+  public DescribeResponse describe(@Authenticate("code") Session session, @PathParam("pid") String pid) {
     return null;
   }
 
@@ -131,10 +116,7 @@ public final class MemberNodeResource implements MemberNode {
   @Path("generate")
   @Timed
   @Override
-  public Identifier generateIdentifier(@Authenticate("code") Session session, String scheme, String fragment)
-    throws InvalidToken,
-    ServiceFailure,
-    NotAuthorized, NotImplemented, InvalidRequest {
+  public Identifier generateIdentifier(@Authenticate("code") Session session, String scheme, String fragment) {
     return null;
   }
 
@@ -143,28 +125,22 @@ public final class MemberNodeResource implements MemberNode {
   @Produces(MediaType.APPLICATION_OCTET_STREAM)
   @Timed
   @Override
-  public InputStream get(@Authenticate("code") Session session, @PathParam("pid") String pid) throws InvalidToken,
-    NotAuthorized,
-    NotImplemented, ServiceFailure, NotFound, InsufficientResources {
-    try {
-      return null; // backend.get(securityContext.getUserPrincipal(), pid);
-    } catch (Exception e) {
-      throw logAndThrow(e, new ServiceFailure("1030", "Error retrieving data from the back end"));
-    }
+  public InputStream get(@Authenticate("code") Session session, @PathParam("pid") String pid) {
+    return null;
   }
 
   // The root ("/") resource
   @GET
   @Timed
   @Override
-  public Node getCapabilities(@Authenticate("code") Session session) throws NotImplemented, ServiceFailure {
-    return selfNode;
+  public Node getCapabilities(@Authenticate("code") Session session) {
+    return self;
   }
 
   // Note: specification dictates /node returns same as /
   @GET
   @Path("node")
-  public Node getCapabilitiesWithNodePath(@Authenticate("code") Session session) throws NotImplemented, ServiceFailure {
+  public Node getCapabilitiesWithNodePath(@Authenticate("code") Session session) {
     return getCapabilities(session);
   }
 
@@ -173,8 +149,7 @@ public final class MemberNodeResource implements MemberNode {
   @Timed
   @Override
   public Checksum getChecksum(@Authenticate("code") Session session, @PathParam("pid") String pid,
-    @QueryParam("checksumAlgorithm") String checksumAlgorithm) throws InvalidRequest, InvalidToken, NotAuthorized,
-    NotImplemented, ServiceFailure, NotFound {
+    @QueryParam("checksumAlgorithm") String checksumAlgorithm) {
     return null;
   }
 
@@ -183,15 +158,8 @@ public final class MemberNodeResource implements MemberNode {
   @Timed
   @Override
   public Log getLogRecords(@Authenticate("code") Session session, @QueryParam("fromDate") Date fromDate,
-    @QueryParam("toDate") Date toDate,
-    @QueryParam("event") Event event, @QueryParam("pidFilter") String pidFilter, @QueryParam("start") Integer start,
-    @QueryParam("count") Integer count) throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented,
-    ServiceFailure {
-    // if (securityContext.getUserPrincipal() != null) {
-    // LOG.error("Security context: {}", securityContext.getUserPrincipal().getName());
-    // }
-
-    // TODO: pass query in
+    @QueryParam("toDate") Date toDate, @QueryParam("event") Event event, @QueryParam("pidFilter") String pidFilter,
+    @QueryParam("start") Integer start, @QueryParam("count") Integer count) {
     return null;
   }
 
@@ -199,10 +167,7 @@ public final class MemberNodeResource implements MemberNode {
   @Path("replica/{pid}")
   @Timed
   @Override
-  public InputStream getReplica(@Authenticate("code") Session session, @PathParam("pid") String pid)
-    throws InvalidToken,
-    NotAuthorized,
-    NotImplemented, ServiceFailure, NotFound, InsufficientResources {
+  public InputStream getReplica(@Authenticate("code") Session session, @PathParam("pid") String pid) {
     return null;
   }
 
@@ -219,9 +184,7 @@ public final class MemberNodeResource implements MemberNode {
   @Timed
   @Override
   public boolean isAuthorized(@Authenticate("code") Session session, @PathParam("pid") String pid,
-    @QueryParam("action") Permission action)
-    throws ServiceFailure, InvalidRequest, InvalidToken, NotFound, NotAuthorized, NotImplemented {
-    // checkIsAuthorized(request, backend, action, pid, IS_AUTHORIZED_NOT_AUTHORIZED);
+    @QueryParam("action") Permission action) {
     return false;
   }
 
@@ -230,16 +193,10 @@ public final class MemberNodeResource implements MemberNode {
   @Timed
   @Override
   public ObjectList listObjects(@Authenticate("code") Session session, @QueryParam("fromDate") Date fromDate,
-    @QueryParam("toDate") Date toDate,
-    @QueryParam("formatId") String formatId, @QueryParam("replicaStatus") Boolean replicaStatus,
-    @QueryParam("start") Integer start, @QueryParam("count") Integer count) throws InvalidRequest, InvalidToken,
-    NotAuthorized, NotImplemented, ServiceFailure {
+    @QueryParam("toDate") Date toDate, @QueryParam("formatId") String formatId,
+    @QueryParam("replicaStatus") Boolean replicaStatus, @QueryParam("start") Integer start,
+    @QueryParam("count") Integer count) {
     return null;
-  }
-
-  private <T extends Exception> T logAndThrow(Exception original, T t) throws T {
-    LOG.error(original.getMessage(), original);
-    throw t;
   }
 
   @GET
@@ -257,8 +214,7 @@ public final class MemberNodeResource implements MemberNode {
   @Timed
   @Override
   public boolean replicate(@Authenticate("code") Session session, @FormDataParam("sysmeta") SystemMetadata sysmeta,
-    @FormDataParam("sourceNode") String sourceNode) throws NotImplemented, ServiceFailure, NotAuthorized,
-    InvalidRequest, InvalidToken, InsufficientResources, UnsupportedType {
+    @FormDataParam("sourceNode") String sourceNode) {
     return false;
   }
 
@@ -267,9 +223,7 @@ public final class MemberNodeResource implements MemberNode {
   @Timed
   @Override
   public boolean synchronizationFailed(@Authenticate("code") Session session, SynchronizationFailed message)
-    throws InvalidToken,
-    NotAuthorized,
-    NotImplemented, ServiceFailure {
+    throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure {
     return false;
   }
 
@@ -278,8 +232,7 @@ public final class MemberNodeResource implements MemberNode {
   @Timed
   @Override
   public boolean systemMetadataChanged(@Authenticate("code") Session session, Identifier pid, long serialVersion,
-    Date dateSystemMetadataLastModified) throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented,
-    InvalidRequest {
+    Date dateSystemMetadataLastModified) {
     return false;
   }
 
@@ -290,9 +243,7 @@ public final class MemberNodeResource implements MemberNode {
   @Override
   public Identifier update(@Authenticate("code") Session session, @PathParam("pid") String pid,
     @FormDataParam("file") InputStream object, @FormDataParam("newPid") String newPid,
-    @FormDataParam("sysmeta") SystemMetadata sysmeta) throws IdentifierNotUnique, InsufficientResources,
-    InvalidRequest, InvalidSystemMetadata, InvalidToken, NotAuthorized, NotImplemented, ServiceFailure,
-    UnsupportedType, NotFound {
+    @FormDataParam("sysmeta") SystemMetadata sysmeta) {
     return null;
   }
 }

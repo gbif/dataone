@@ -26,8 +26,6 @@ import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERUTF8String;
-import org.dataone.ns.service.exceptions.InvalidCredentials;
-import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.Subject;
@@ -44,7 +42,6 @@ import org.slf4j.LoggerFactory;
 public final class CertificateUtils {
 
   private static final Logger LOG = LoggerFactory.getLogger(CertificateUtils.class);
-  private static final String HTTPS_SCHEME = "https";
   private static final String REQ_X509CERTIFICATE = "javax.servlet.request.X509Certificate";
   private static final JAXBContext SUBJECT_INFO_CONTEXT = initJaxbContext(); // confirmed threadsafe
 
@@ -75,26 +72,29 @@ public final class CertificateUtils {
     }
   }
 
-  public Session newSession(HttpServletRequest request, String detailCode) throws InvalidRequest, InvalidCredentials,
-    InvalidToken {
+  /**
+   * Builds a new session from the given request
+   * 
+   * @param request The HTTP request; must be present and hold a single certificate
+   * @param detailCode Only used to construct the InvalidToken on exception
+   * @return The session
+   * @throws InvalidToken Should it be impossible to create a session from the given request
+   * @throws NullPointerException If the request is null
+   */
+  public Session newSession(HttpServletRequest request, String detailCode) {
     Preconditions.checkNotNull(request, "A request must be provided"); // indicates invalid use
 
-    if (HTTPS_SCHEME.equals(request.getScheme().toLowerCase())) {
-      Certificate[] certs = (Certificate[]) request.getAttribute(REQ_X509CERTIFICATE);
+    Certificate[] certs = (Certificate[]) request.getAttribute(REQ_X509CERTIFICATE);
+    if (certs != null && certs.length == 1) {
+      // session subject is the primary principle of the certificate
+      X509Certificate x509Cert = (X509Certificate) certs[0];
+      return newSession(x509Cert, detailCode);
 
-      if (certs != null && certs.length == 1) {
-        // session subject is the primary principle of the certificate
-        X509Certificate x509Cert = (X509Certificate) certs[0];
-        return newSession(detailCode, x509Cert);
-
-      } else if (certs != null && certs.length > 1) {
-        throw new InvalidCredentials("One certificate expected in the request, found " + certs.length, detailCode);
-      } else {
-        throw new InvalidCredentials("No certificate found in the request", detailCode);
-      }
+    } else if (certs != null && certs.length > 1) {
+      throw new InvalidToken("One certificate expected in the request, found " + certs.length, detailCode);
 
     } else {
-      throw new InvalidRequest("Https is required for all authentication", detailCode);
+      throw new InvalidToken("No certificate found in the request", detailCode);
     }
   }
 
@@ -138,9 +138,8 @@ public final class CertificateUtils {
    * Retrieves the extension value given by the object id.
    * Not intended for client use - visible only for testing.
    * 
-   * @see @see <a
-   *      href="http://stackoverflow.com/questions/2409618/how-do-i-decode-a-der-encoded-string-in-java">StackOverflow
-   *      </a>
+   * @see <a
+   *      href="http://stackoverflow.com/questions/2409618/how-do-i-decode-a-der-encoded-string-in-java">StackOverflow</a>
    */
   @VisibleForTesting
   String getExtension(X509Certificate X509Certificate, String oid) throws IOException {
@@ -160,7 +159,13 @@ public final class CertificateUtils {
     return decoded;
   }
 
-  Session newSession(String detailCode, X509Certificate x509Cert) throws InvalidToken {
+  /**
+   * Builds the session from the certificate.
+   * 
+   * @throws InvalidToken Should the extension exist but be unparsable
+   */
+  @VisibleForTesting
+  Session newSession(X509Certificate x509Cert, String detailCode) {
     Session.Builder<Void> session = Session.builder();
     X500Principal principal = x509Cert.getSubjectX500Principal();
     String dn = principal.getName(X500Principal.RFC2253); // LDAPv3 format
@@ -180,7 +185,7 @@ public final class CertificateUtils {
       }
 
     } catch (IOException e) {
-      // last chance to log detail [warn only as might not indicate error if service is being misused by clients]
+      // last chance to log detail
       LOG.warn("Unable to read extension from certificate (Hint: possible unexpected encoding?)", e);
       throw new InvalidToken("Extension in certificate cannot be decoded", detailCode);
     }
@@ -190,7 +195,7 @@ public final class CertificateUtils {
         SubjectInfo subjectInfo = parseSubjectInfo(subjectInfoAsXMLString);
         session.withSubjectInfo(subjectInfo);
       } catch (Exception e) {
-        // last chance to log detail [warn only as might not indicate error if service is being misused by clients]
+        // last chance to log detail
         LOG.warn("Cannot parse XML for certificate extension into SubjectInfo", e);
         throw new InvalidToken("Extension in certificate for SubjectInfo cannot be parsed as XML", detailCode);
       }
