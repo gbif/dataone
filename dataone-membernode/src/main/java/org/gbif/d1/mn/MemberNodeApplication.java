@@ -6,14 +6,15 @@ import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.backend.memory.InMemoryBackend;
 import org.gbif.d1.mn.health.BackendHealthCheck;
 import org.gbif.d1.mn.rest.MemberNodeResource;
-import org.gbif.d1.mn.rest.error.DefaultExceptionMapper;
+import org.gbif.d1.mn.rest.exception.DataOneExceptionMapper;
+import org.gbif.d1.mn.rest.exception.DefaultExceptionMapper;
 import org.gbif.d1.mn.rest.provider.SessionProvider;
 
-import java.util.Iterator;
 import java.util.Set;
 
 import javax.ws.rs.ext.ExceptionMapper;
 
+import com.google.common.collect.Sets;
 import com.sun.jersey.api.core.ResourceConfig;
 import io.dropwizard.Application;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
@@ -26,6 +27,7 @@ import org.dataone.ns.service.types.v1.NodeList;
 import org.dataone.ns.service.types.v1.NodeReference;
 import org.dataone.ns.service.types.v1.Service;
 import org.dataone.ns.service.types.v1.Services;
+import org.dataone.ns.service.types.v1.Subject;
 
 /**
  * The main entry point for running the member node.
@@ -53,11 +55,14 @@ public class MemberNodeApplication<T extends MemberNodeConfiguration> extends Ap
 
   @Override
   public final void run(T configuration, Environment environment) {
-    // exception handling
-    // removeDropwizardExceptionMappers(environment.jersey());
+    // exception handling removes defaults, adds D1 handling and then adds a default which always
+    // returns a ServiceFailure
+    removeAllExceptionMappers(environment.jersey());
+    environment.jersey().register(new DataOneExceptionMapper());
     environment.jersey().register(new DefaultExceptionMapper());
 
     // providers
+    // TODO: read config here to support overwriting OIDs in certificates
     environment.jersey().register(SessionProvider.newWithDefaults());
 
     // RESTful resources
@@ -83,23 +88,20 @@ public class MemberNodeApplication<T extends MemberNodeConfiguration> extends Ap
   }
 
   /**
-   * Strips the default Dropwizard Exception handling and replaces with our own.
-   * <p>
-   * TODO: remove this?
-   * 
-   * @see <a href="http://thoughtspark.org/2013/02/25/dropwizard-and-jersey-exceptionmappers/">More information</a>
+   * Strips the default Exception handling.
    */
-  private void removeDropwizardExceptionMappers(JerseyEnvironment environment) {
+  private void removeAllExceptionMappers(JerseyEnvironment environment) {
     ResourceConfig jrConfig = environment.getResourceConfig();
     Set<Object> dwSingletons = jrConfig.getSingletons();
-    Iterator<Object> iter = dwSingletons.iterator();
-
-    // remove any of the dropwizard ExceptionMappers
-    while (iter.hasNext()) {
-      Object s = iter.next();
-      if (s instanceof ExceptionMapper && s.getClass().getName().startsWith("io.dropwizard.jersey.")) {
-        dwSingletons.remove(s);
+    Set<Object> keysToRemove = Sets.newHashSet();
+    for (Object s : jrConfig.getSingletons()) {
+      if (s instanceof ExceptionMapper) {
+        keysToRemove.add(s);
       }
+    }
+
+    for (Object s : keysToRemove) {
+      dwSingletons.remove(s);
     }
   }
 
@@ -110,6 +112,7 @@ public class MemberNodeApplication<T extends MemberNodeConfiguration> extends Ap
   private Node self(MemberNodeConfiguration configuration) {
     // nonsense for now
     return Node.builder()
+      .addSubject(Subject.builder().withValue("CN=GBIFS Member Node").build())
       .withIdentifier(NodeReference.builder().withValue("urn:node:GBIFS").build())
       .withName("GBIFS Member Node")
       .withDescription("TODO")
