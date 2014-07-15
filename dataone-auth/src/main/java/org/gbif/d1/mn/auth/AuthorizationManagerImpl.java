@@ -83,8 +83,7 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
   }
 
   @Override
-  public void checkIsAuthorized(HttpServletRequest request, Identifier identifier, Permission permission,
-    String detailCode) {
+  public void checkIsAuthorized(HttpServletRequest request, Identifier identifier, Permission permission) {
     Preconditions.checkNotNull(request, "A request must be provided");
     Preconditions.checkNotNull(identifier, "An identifier must be provided");
     Preconditions.checkNotNull(identifier.getValue(), "An identifier must be provided");
@@ -92,13 +91,13 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
 
     SystemMetadata sysMetadata = systemMetadataProvider.getSystemMetadata(identifier.getValue());
     if (sysMetadata == null) {
-      throw new NotFound("Cannot perform action since object not found", detailCode, identifier.getValue());
+      throw new NotFound("Cannot perform action since object not found", identifier.getValue());
     }
 
-    Session session = certificateUtils.newSession(request, detailCode); // throws exception if could not be built
-    boolean approved = checkIsAuthorized(session, sysMetadata, permission, detailCode);
+    Session session = certificateUtils.newSession(request); // throws exception if could not be built
+    boolean approved = checkIsAuthorized(session, sysMetadata, permission);
     if (!approved) {
-      throw new NotAuthorized("No subject represented by the certificate have permission to perform action", detailCode);
+      throw new NotAuthorized("No subject represented by the certificate have permission to perform action");
     }
   }
 
@@ -133,7 +132,7 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
    * @throws ServiceFailure If it is not possible to connect to the coordinating node
    */
   @VisibleForTesting
-  boolean checkIsAuthorized(Session session, SystemMetadata sysMetadata, Permission permission, String detailCode) {
+  boolean checkIsAuthorized(Session session, SystemMetadata sysMetadata, Permission permission) {
     String primary = Subjects.primary(session);
 
     // Is this call coming with our own credentials?
@@ -159,7 +158,7 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
     }
 
     // any CN or the authoritative MN is granted permission, but requires a network call to a CN
-    if (isAuthorityNodeOrCN(primary, sysMetadata, detailCode)) {
+    if (isAuthorityNodeOrCN(primary, sysMetadata)) {
       LOG.debug("The session[{}] originates from the CN or the authoritative member node", session);
       return true;
     }
@@ -176,7 +175,7 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
    * @throws ServiceFailure If it is not possible to connect to the coordinating node
    */
   @VisibleForTesting
-  boolean isAuthorityNodeOrCN(String subject, SystemMetadata sysMetadata, String detailCode) {
+  boolean isAuthorityNodeOrCN(String subject, SystemMetadata sysMetadata) {
     NodeReference authNode = sysMetadata.getAuthoritativeMemberNode();
     Preconditions.checkNotNull(authNode, "The authoritative member node cannot be null on an object");
     String authoritativeMN = authNode.getValue();
@@ -207,7 +206,7 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
         }
       }
     } catch (ServiceFailure e) {
-      throw new ServiceFailure("Unable to call the CN for the list of nodes", detailCode, e);
+      throw new ServiceFailure("Unable to call the CN for the list of nodes", e);
     }
     return false;
   }

@@ -14,11 +14,15 @@ public class InvalidSystemMetadata extends DataONEException {
 
   private static final long serialVersionUID = -5840884345956489739L;
 
+  public InvalidSystemMetadata(String message) {
+    super(message);
+  }
+
   public InvalidSystemMetadata(String message, String detailCode) {
-    super(message, detailCode);
+    super(message, detailCode, null, null);
   }
 
   public InvalidSystemMetadata(String message, String detailCode, String nodeId) {
-    super(message, detailCode, nodeId);
+    super(message, detailCode, nodeId, null);
   }
 }

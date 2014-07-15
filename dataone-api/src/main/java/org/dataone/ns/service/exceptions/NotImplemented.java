@@ -16,11 +16,15 @@ public class NotImplemented extends DataONEException {
 
   private static final long serialVersionUID = 8904494284521053331L;
 
+  public NotImplemented(String message) {
+    super(message);
+  }
+
   public NotImplemented(String message, String detailCode) {
-    super(message, detailCode);
+    super(message, detailCode, null, null);
   }
 
   public NotImplemented(String message, String detailCode, String nodeId) {
-    super(message, detailCode, nodeId);
+    super(message, detailCode, nodeId, null);
   }
 }

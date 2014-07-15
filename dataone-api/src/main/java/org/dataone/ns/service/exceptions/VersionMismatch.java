@@ -14,11 +14,15 @@ public class VersionMismatch extends DataONEException {
 
   private static final long serialVersionUID = 6015751043767336291L;
 
+  public VersionMismatch(String message) {
+    super(message);
+  }
+
   public VersionMismatch(String message, String detailCode) {
-    super(message, detailCode);
+    super(message, detailCode, null, null);
   }
 
   public VersionMismatch(String message, String detailCode, String nodeId) {
-    super(message, detailCode, nodeId);
+    super(message, detailCode, nodeId, null);
   }
 }

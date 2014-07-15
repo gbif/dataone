@@ -76,25 +76,24 @@ public final class CertificateUtils {
    * Builds a new session from the given request
    * 
    * @param request The HTTP request; must be present and hold a single certificate
-   * @param detailCode Only used to construct the InvalidToken on exception
    * @return The session
    * @throws InvalidToken Should it be impossible to create a session from the given request
    * @throws NullPointerException If the request is null
    */
-  public Session newSession(HttpServletRequest request, String detailCode) {
+  public Session newSession(HttpServletRequest request) {
     Preconditions.checkNotNull(request, "A request must be provided"); // indicates invalid use
 
     Certificate[] certs = (Certificate[]) request.getAttribute(REQ_X509CERTIFICATE);
     if (certs != null && certs.length == 1) {
       // session subject is the primary principle of the certificate
       X509Certificate x509Cert = (X509Certificate) certs[0];
-      return newSession(x509Cert, detailCode);
+      return newSession(x509Cert);
 
     } else if (certs != null && certs.length > 1) {
-      throw new InvalidToken("One certificate expected in the request, found " + certs.length, detailCode);
+      throw new InvalidToken("One certificate expected in the request, found " + certs.length);
 
     } else {
-      throw new InvalidToken("No certificate found in the request", detailCode);
+      throw new InvalidToken("No certificate found in the request");
     }
   }
 
@@ -165,7 +164,7 @@ public final class CertificateUtils {
    * @throws InvalidToken Should the extension exist but be unparsable
    */
   @VisibleForTesting
-  Session newSession(X509Certificate x509Cert, String detailCode) {
+  Session newSession(X509Certificate x509Cert) {
     Session.Builder<Void> session = Session.builder();
     X500Principal principal = x509Cert.getSubjectX500Principal();
     String dn = principal.getName(X500Principal.RFC2253); // LDAPv3 format
@@ -187,7 +186,7 @@ public final class CertificateUtils {
     } catch (IOException e) {
       // last chance to log detail
       LOG.warn("Unable to read extension from certificate (Hint: possible unexpected encoding?)", e);
-      throw new InvalidToken("Extension in certificate cannot be decoded", detailCode);
+      throw new InvalidToken("Extension in certificate cannot be decoded");
     }
 
     if (subjectInfoAsXMLString != null) {
@@ -197,7 +196,7 @@ public final class CertificateUtils {
       } catch (Exception e) {
         // last chance to log detail
         LOG.warn("Cannot parse XML for certificate extension into SubjectInfo", e);
-        throw new InvalidToken("Extension in certificate for SubjectInfo cannot be parsed as XML", detailCode);
+        throw new InvalidToken("Extension in certificate for SubjectInfo cannot be parsed as XML");
       }
     }
 

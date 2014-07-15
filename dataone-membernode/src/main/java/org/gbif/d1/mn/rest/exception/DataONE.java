@@ -1,11 +1,20 @@
-package org.gbif.d1.mn.rest.provider;
+package org.gbif.d1.mn.rest.exception;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target(ElementType.PARAMETER)
+/**
+ * Provides annotation
+ */
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Authenticate {
+@Target(ElementType.METHOD)
+public @interface DataONE {
+
+  public enum Method {
+    CREATE
+  };
+
+  public Method value();
 }

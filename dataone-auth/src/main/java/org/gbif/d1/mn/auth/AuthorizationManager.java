@@ -40,7 +40,6 @@ public interface AuthorizationManager {
    * @param request Which must have a certificate
    * @param identifier Of the object the caller wishes to access
    * @param permission The level of access sought
-   * @param detailCode The detail code to pass into the exception if one is being raised
    * @throws NotAuthorized If the checks ran to completion and the caller is not authorized
    * @throws NotFound If the identified object is not found on this node
    * @throws ServiceFailure If an error occurs, including connecting to a coordinating node
@@ -48,5 +47,5 @@ public interface AuthorizationManager {
    * @throws InsufficientResources If the implementation decides it is refusing access due to a resource limit
    * @throws InvalidRequest If the request is not well formed for any reason other than an InvalidToken
    */
-  void checkIsAuthorized(HttpServletRequest request, Identifier identifier, Permission permission, String detailCode);
+  void checkIsAuthorized(HttpServletRequest request, Identifier identifier, Permission permission);
 }

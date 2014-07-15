@@ -13,8 +13,12 @@ public class NotFound extends DataONEException {
 
   private static final long serialVersionUID = -8776645677598300180L;
 
+  public NotFound(String message, String pid) {
+    super(message, null, null, pid); // careful to call correct one
+  }
+
   public NotFound(String message, String detailCode, String pid) {
-    super(message, detailCode, pid);
+    super(message, detailCode, null, pid);
   }
 
   public NotFound(String message, String detailCode, String pid, String nodeId) {

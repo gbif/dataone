@@ -13,10 +13,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -57,7 +55,7 @@ public class AuthorizationManagerTest {
     AuthorizationManagerImpl auth = new AuthorizationManagerImpl(systemMetadataProvider, cn, selfNode);
     SystemMetadata sysMetadata = Builders.newSystemMetadata("org/gbif/d1/mn/auth/sysMeta-1.xml");
     // this will force a CN call to list nodes
-    auth.isAuthorityNodeOrCN("CN=Nobody", sysMetadata, "detailCode.1");
+    auth.isAuthorityNodeOrCN("CN=Nobody", sysMetadata);
   }
 
   @Test
@@ -67,21 +65,21 @@ public class AuthorizationManagerTest {
     SystemMetadata sysMetadata = Builders.newSystemMetadata("org/gbif/d1/mn/auth/sysMeta-1.xml");
 
     // ensure the authority MN is granted permission if listed explicitly
-    assertTrue(auth.isAuthorityNodeOrCN("CN=MemberNode_2", sysMetadata, "detailCode.1"));
+    assertTrue(auth.isAuthorityNodeOrCN("CN=MemberNode_2", sysMetadata));
     verify(cn, times(0)).listNodes(); // should not have required CN to deduce this
 
     // ensure the authority MN is granted permission if listed by an alias
-    assertTrue(auth.isAuthorityNodeOrCN("CN=AliasForMN2", sysMetadata, "detailCode.1"));
+    assertTrue(auth.isAuthorityNodeOrCN("CN=AliasForMN2", sysMetadata));
     verify(cn, times(1)).listNodes(); // required the cn node to find aliases
 
     // check that CNs get granted
-    assertTrue(auth.isAuthorityNodeOrCN("CN=CoordinatingNode_1", sysMetadata, "detailCode.1"));
+    assertTrue(auth.isAuthorityNodeOrCN("CN=CoordinatingNode_1", sysMetadata));
     verify(cn, times(2)).listNodes();
-    assertTrue(auth.isAuthorityNodeOrCN("CN=CoordinatingNode_2", sysMetadata, "detailCode.1"));
+    assertTrue(auth.isAuthorityNodeOrCN("CN=CoordinatingNode_2", sysMetadata));
     verify(cn, times(3)).listNodes();
 
     // ensure that just anybody doesn't get granted
-    assertFalse(auth.isAuthorityNodeOrCN("CN=Nobody", sysMetadata, "detailCode.1"));
+    assertFalse(auth.isAuthorityNodeOrCN("CN=Nobody", sysMetadata));
     verify(cn, times(4)).listNodes();
   }
 
@@ -95,52 +93,44 @@ public class AuthorizationManagerTest {
 
     // the subject is ourselves
     Session session = Builders.newSession("org/gbif/d1/mn/auth/session-8.xml");
-    assertTrue(auth.checkIsAuthorized(session, sysMetadata, Permission.CHANGE_PERMISSION, "1"));
+    assertTrue(auth.checkIsAuthorized(session, sysMetadata, Permission.CHANGE_PERMISSION));
     verify(cn, times(0)).listNodes(); // no CN calls needed
 
     // the subject is the rights holder
     session = Builders.newSession("org/gbif/d1/mn/auth/session-1.xml");
-    assertTrue(auth.checkIsAuthorized(session, sysMetadata, Permission.CHANGE_PERMISSION, "1"));
+    assertTrue(auth.checkIsAuthorized(session, sysMetadata, Permission.CHANGE_PERMISSION));
     verify(cn, times(0)).listNodes(); // no CN calls needed
 
     // the subject is part of an org listed in the access rules for READ only
     session = Builders.newSession("org/gbif/d1/mn/auth/session-6.xml");
-    assertFalse(auth.checkIsAuthorized(session, sysMetadata, Permission.CHANGE_PERMISSION, "1"));
+    assertFalse(auth.checkIsAuthorized(session, sysMetadata, Permission.CHANGE_PERMISSION));
     verify(cn, times(1)).listNodes(); // failed, so ran through to the end and called a CN
-    assertTrue(auth.checkIsAuthorized(session, sysMetadata, Permission.READ, "1"));
+    assertTrue(auth.checkIsAuthorized(session, sysMetadata, Permission.READ));
     verify(cn, times(1)).listNodes(); // did not require another call
 
     // session is a CN
     session = Builders.newSession("org/gbif/d1/mn/auth/session-9.xml");
-    assertTrue(auth.checkIsAuthorized(session, sysMetadata, Permission.CHANGE_PERMISSION, "1"));
+    assertTrue(auth.checkIsAuthorized(session, sysMetadata, Permission.CHANGE_PERMISSION));
     verify(cn, times(2)).listNodes(); // required a call to the CN
 
     // session is an alias of the listed authority MN
     session = Builders.newSession("org/gbif/d1/mn/auth/session-10.xml");
-    assertTrue(auth.checkIsAuthorized(session, sysMetadata, Permission.CHANGE_PERMISSION, "1"));
+    assertTrue(auth.checkIsAuthorized(session, sysMetadata, Permission.CHANGE_PERMISSION));
     verify(cn, times(3)).listNodes(); // required a call to the CN
   }
 
   /**
    * Ensure that the detail code is correctly surfaced in the exception.
    */
-  @Test
+  @Test(expected = ServiceFailure.class)
   public void testIsAuthorizedCNDown() throws Exception {
-    // tests that detail codes are correctly passed through during failures
-    String expectedDetailCode = "Unit test code";
-    try {
-      // note this throws with detailCode "1" which is internal and should not be surfaced
-      when(cn.listNodes()).thenThrow(new ServiceFailure("1", "I'm not available"));
-      AuthorizationManagerImpl auth = new AuthorizationManagerImpl(systemMetadataProvider, cn, selfNode);
-      SystemMetadata sysMetadata = Builders.newSystemMetadata("org/gbif/d1/mn/auth/sysMeta-1.xml");
-      // session-9.xml represents a CN, so this will force a CN call during auth
-      Session session = Builders.newSession("org/gbif/d1/mn/auth/session-9.xml");
-      auth.checkIsAuthorized(session, sysMetadata, Permission.READ, expectedDetailCode);
-      fail("Expected a ServiceFailure exception");
-    } catch (ServiceFailure e) { // expected
-      e.printStackTrace();
-      assertEquals(expectedDetailCode, e.getDetailCode());
-    }
+    // note this throws with detailCode "1" which is internal and should not be surfaced
+    when(cn.listNodes()).thenThrow(new ServiceFailure("1", "I'm not available"));
+    AuthorizationManagerImpl auth = new AuthorizationManagerImpl(systemMetadataProvider, cn, selfNode);
+    SystemMetadata sysMetadata = Builders.newSystemMetadata("org/gbif/d1/mn/auth/sysMeta-1.xml");
+    // session-9.xml represents a CN, so this will force a CN call during auth
+    Session session = Builders.newSession("org/gbif/d1/mn/auth/session-9.xml");
+    auth.checkIsAuthorized(session, sysMetadata, Permission.READ);
   }
 
   @Test

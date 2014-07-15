@@ -6,7 +6,6 @@ import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.backend.memory.InMemoryBackend;
 import org.gbif.d1.mn.health.BackendHealthCheck;
 import org.gbif.d1.mn.rest.MemberNodeResource;
-import org.gbif.d1.mn.rest.exception.DataOneExceptionMapper;
 import org.gbif.d1.mn.rest.exception.DefaultExceptionMapper;
 import org.gbif.d1.mn.rest.provider.SessionProvider;
 
@@ -55,10 +54,8 @@ public class MemberNodeApplication<T extends MemberNodeConfiguration> extends Ap
 
   @Override
   public final void run(T configuration, Environment environment) {
-    // exception handling removes defaults, adds D1 handling and then adds a default which always
-    // returns a ServiceFailure
+    // exception handling removes defaults, and adds custom handling
     removeAllExceptionMappers(environment.jersey());
-    environment.jersey().register(new DataOneExceptionMapper());
     environment.jersey().register(new DefaultExceptionMapper());
 
     // providers
@@ -71,7 +68,6 @@ public class MemberNodeApplication<T extends MemberNodeConfiguration> extends Ap
     MNBackend backend = getBackend(configuration);
     AuthorizationManager auth = AuthorizationManagers.newAuthorizationManager(backend, cn, self);
     environment.jersey().register(new MemberNodeResource(self, auth, backend));
-
     // health checks
     environment.healthChecks().register("backend", new BackendHealthCheck(backend));
   }

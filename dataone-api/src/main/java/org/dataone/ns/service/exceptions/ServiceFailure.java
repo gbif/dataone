@@ -14,19 +14,27 @@ public class ServiceFailure extends DataONEException {
 
   private static final long serialVersionUID = -4044845581507746254L;
 
+  public ServiceFailure(String message) {
+    super(message);
+  }
+
   public ServiceFailure(String message, String detailCode) {
-    super(message, detailCode);
+    super(message, detailCode, null, null);
   }
 
   public ServiceFailure(String message, String detailCode, String nodeId) {
-    super(message, detailCode, nodeId);
+    super(message, detailCode, nodeId, null);
   }
 
   public ServiceFailure(String message, String detailCode, String nodeId, Throwable cause) {
-    super(message, detailCode, nodeId);
+    super(message, detailCode, nodeId, null, cause);
   }
 
   public ServiceFailure(String message, String detailCode, Throwable cause) {
-    super(message, detailCode);
+    super(message, detailCode, null, null, cause);
+  }
+
+  public ServiceFailure(String message, Throwable cause) {
+    super(message, cause);
   }
 }

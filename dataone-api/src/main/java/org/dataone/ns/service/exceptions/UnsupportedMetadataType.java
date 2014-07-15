@@ -13,11 +13,15 @@ public class UnsupportedMetadataType extends DataONEException {
 
   private static final long serialVersionUID = 4661374954195073838L;
 
+  public UnsupportedMetadataType(String message) {
+    super(message);
+  }
+
   public UnsupportedMetadataType(String message, String detailCode) {
-    super(message, detailCode);
+    super(message, detailCode, null, null);
   }
 
   public UnsupportedMetadataType(String message, String detailCode, String nodeId) {
-    super(message, detailCode, nodeId);
+    super(message, detailCode, nodeId, null);
   }
 }

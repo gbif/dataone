@@ -13,8 +13,12 @@ public class IdentifierNotUnique extends DataONEException {
 
   private static final long serialVersionUID = 6726392850227334395L;
 
+  public IdentifierNotUnique(String message, String pid) {
+    super(message, null, null, pid);
+  }
+
   public IdentifierNotUnique(String message, String detailCode, String pid) {
-    super(message, detailCode, pid);
+    super(message, detailCode, null, pid);
   }
 
   public IdentifierNotUnique(String message, String detailCode, String pid, String nodeId) {

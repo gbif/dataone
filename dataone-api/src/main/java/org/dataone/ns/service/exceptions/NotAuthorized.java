@@ -13,11 +13,15 @@ public class NotAuthorized extends DataONEException {
 
   private static final long serialVersionUID = -4069266622213984585L;
 
+  public NotAuthorized(String message) {
+    super(message);
+  }
+
   public NotAuthorized(String message, String detailCode) {
-    super(message, detailCode);
+    super(message, detailCode, null, null);
   }
 
   public NotAuthorized(String message, String detailCode, String nodeId) {
-    super(message, detailCode, nodeId);
+    super(message, detailCode, nodeId, null);
   }
 }

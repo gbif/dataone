@@ -29,7 +29,6 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
 
 /**
  * A suite of tests that use self signed certificates to verify that Sessions are correctly extracted.
@@ -97,30 +96,20 @@ public class CertificateUtilsTest {
   /**
    * Ensure that the expected error is thrown for non XML, nonsense extension.
    */
-  @Test
+  @Test(expected = InvalidToken.class)
   public void testExtractSubjectInfoFailureNonsense() throws Exception {
-    try {
-      CertificateUtils.newInstance().newSession(
-        newCertificate("CN=Tim Robertson", personalKeyPair, caCertificate, "Not even XML"), "1");
-      fail("Invalid extensions should raise exception");
-    } catch (InvalidToken e) {
-      assertEquals("1", e.getDetailCode());
-    }
+    CertificateUtils.newInstance().newSession(
+      newCertificate("CN=Tim Robertson", personalKeyPair, caCertificate, "Not even XML"));
   }
 
   /**
    * Ensure that the expected error is thrown for an invalid extension.
    */
-  @Test
+  @Test(expected = InvalidToken.class)
   public void testExtractSubjectInfoFailureXML() throws Exception {
     // valid but unexpected XML
-    try {
-      CertificateUtils.newInstance().newSession(
-        newCertificate("CN=Tim Robertson", personalKeyPair, caCertificate, "<Test/>"), "1");
-      fail("Invalid extensions should raise exception");
-    } catch (InvalidToken e) {
-      assertEquals("1", e.getDetailCode());
-    }
+    CertificateUtils.newInstance().newSession(
+      newCertificate("CN=Tim Robertson", personalKeyPair, caCertificate, "<Test/>"));
   }
 
   /**
@@ -137,7 +126,7 @@ public class CertificateUtilsTest {
 
     String dn = "CN=Tim Robertson";
     Session session =
-      CertificateUtils.newInstance().newSession(newCertificate(dn, personalKeyPair, caCertificate, extension), "1");
+      CertificateUtils.newInstance().newSession(newCertificate(dn, personalKeyPair, caCertificate, extension));
     assertNotNull(session);
     assertNotNull(session.getSubject());
     assertEquals(dn, session.getSubject().getValue());
@@ -150,7 +139,7 @@ public class CertificateUtilsTest {
     String dn = "CN=Tim Robertson";
     // no extension passed in
     Session session =
-      CertificateUtils.newInstance().newSession(newCertificate(dn, personalKeyPair, caCertificate, null), "1");
+      CertificateUtils.newInstance().newSession(newCertificate(dn, personalKeyPair, caCertificate, null));
     assertNotNull(session);
     assertNotNull(session.getSubject());
     assertEquals(dn, session.getSubject().getValue());

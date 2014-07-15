@@ -40,6 +40,11 @@ public class DataONEException extends RuntimeException {
 
   private static final long serialVersionUID = -8001672483615361690L;
 
+  /**
+   * Nullable to allow deferred setting, but note that an exception is not valid to serialize as XML across the wire
+   * unless the detailCode is set.
+   */
+  @Nullable
   private final String detailCode;
 
   @Nullable
@@ -48,17 +53,11 @@ public class DataONEException extends RuntimeException {
   @Nullable
   private final String nodeId; // node identifier of the machine that raised the exception
 
-  protected DataONEException(String message, String detailCode) {
+  // Note: deliberately limiting options in construction as it is very easy to misuse String order
+  protected DataONEException(String message) {
     super(message);
-    this.detailCode = detailCode;
+    this.detailCode = null;
     this.nodeId = null;
-    this.pid = null;
-  }
-
-  protected DataONEException(String message, String detailCode, String nodeId) {
-    super(message);
-    this.detailCode = detailCode;
-    this.nodeId = nodeId;
     this.pid = null;
   }
 
@@ -76,16 +75,9 @@ public class DataONEException extends RuntimeException {
     this.pid = pid;
   }
 
-  protected DataONEException(String message, String detailCode, String nodeId, Throwable cause) {
+  protected DataONEException(String message, Throwable cause) {
     super(message, cause);
-    this.detailCode = detailCode;
-    this.nodeId = nodeId;
-    this.pid = null;
-  }
-
-  protected DataONEException(String message, String detailCode, Throwable cause) {
-    super(message, cause);
-    this.detailCode = detailCode;
+    this.detailCode = null;
     this.nodeId = null;
     this.pid = null;
   }

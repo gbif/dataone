@@ -14,11 +14,15 @@ public class UnsupportedType extends DataONEException {
 
   private static final long serialVersionUID = 8374844773479988385L;
 
+  public UnsupportedType(String message) {
+    super(message);
+  }
+
   public UnsupportedType(String message, String detailCode) {
-    super(message, detailCode);
+    super(message, detailCode, null, null);
   }
 
   public UnsupportedType(String message, String detailCode, String nodeId) {
-    super(message, detailCode, nodeId);
+    super(message, detailCode, nodeId, null);
   }
 }

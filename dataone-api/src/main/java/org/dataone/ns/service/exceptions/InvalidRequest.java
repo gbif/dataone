@@ -13,19 +13,27 @@ public class InvalidRequest extends DataONEException {
 
   private static final long serialVersionUID = -8453320521331323991L;
 
+  public InvalidRequest(String message) {
+    super(message);
+  }
+
   public InvalidRequest(String message, String detailCode) {
-    super(message, detailCode);
+    super(message, detailCode, null, null);
   }
 
   public InvalidRequest(String message, String detailCode, String nodeId) {
-    super(message, detailCode, nodeId);
+    super(message, detailCode, nodeId, null);
   }
 
   public InvalidRequest(String message, String detailCode, String nodeId, Throwable cause) {
-    super(message, detailCode, nodeId, cause);
+    super(message, detailCode, nodeId, null, cause);
   }
 
   public InvalidRequest(String message, String detailCode, Throwable cause) {
-    super(message, detailCode, cause);
+    super(message, detailCode, null, null, cause);
+  }
+
+  public InvalidRequest(String message, Throwable cause) {
+    super(message, cause);
   }
 }

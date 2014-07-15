@@ -13,11 +13,15 @@ public class AuthenticationTimeout extends DataONEException {
 
   private static final long serialVersionUID = -6329869270435775319L;
 
+  public AuthenticationTimeout(String message) {
+    super(message);
+  }
+
   public AuthenticationTimeout(String message, String detailCode) {
-    super(message, detailCode);
+    super(message, detailCode, null, null);
   }
 
   public AuthenticationTimeout(String message, String detailCode, String nodeId) {
-    super(message, detailCode, nodeId);
+    super(message, detailCode, nodeId, null);
   }
 }

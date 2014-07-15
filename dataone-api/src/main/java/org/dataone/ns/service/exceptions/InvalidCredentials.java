@@ -13,11 +13,15 @@ public class InvalidCredentials extends DataONEException {
 
   private static final long serialVersionUID = -2431090833531104825L;
 
+  public InvalidCredentials(String message) {
+    super(message);
+  }
+
   public InvalidCredentials(String message, String detailCode) {
-    super(message, detailCode);
+    super(message, detailCode, null, null);
   }
 
   public InvalidCredentials(String message, String detailCode, String nodeId) {
-    super(message, detailCode, nodeId);
+    super(message, detailCode, nodeId, null);
   }
 }

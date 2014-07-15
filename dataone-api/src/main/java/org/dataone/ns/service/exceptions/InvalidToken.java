@@ -15,11 +15,15 @@ public class InvalidToken extends DataONEException {
 
   private static final long serialVersionUID = -7325891741882641232L;
 
+  public InvalidToken(String message) {
+    super(message);
+  }
+
   public InvalidToken(String message, String detailCode) {
-    super(message, detailCode);
+    super(message, detailCode, null, null);
   }
 
   public InvalidToken(String message, String detailCode, String nodeId) {
-    super(message, detailCode, nodeId);
+    super(message, detailCode, nodeId, null);
   }
 }

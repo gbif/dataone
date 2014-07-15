@@ -28,12 +28,10 @@ public final class SessionProvider implements InjectableProvider<Authenticate, T
    */
   private class SessionInjectable implements Injectable<Session> {
 
-    private final String detailCode;
     private final HttpServletRequest request;
 
-    private SessionInjectable(HttpServletRequest request, String detailCode) {
+    private SessionInjectable(HttpServletRequest request) {
       this.request = request;
-      this.detailCode = detailCode;
     }
 
     /**
@@ -44,7 +42,7 @@ public final class SessionProvider implements InjectableProvider<Authenticate, T
      */
     @Override
     public Session getValue() {
-      return certificateUtils.newSession(request, detailCode);
+      return certificateUtils.newSession(request);
     }
   }
 
@@ -69,7 +67,7 @@ public final class SessionProvider implements InjectableProvider<Authenticate, T
   @Override
   public Injectable<Session> getInjectable(ComponentContext ic, Authenticate a, Type c) {
     if (c.equals(Session.class)) {
-      return new SessionInjectable(request, a.value());
+      return new SessionInjectable(request);
     }
     return null;
   }
