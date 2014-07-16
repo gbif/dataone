@@ -39,7 +39,6 @@ public class MockSessionProvider implements InjectableProvider<Authenticate, Typ
 
   @Override
   public Session getValue() {
-    // TODO: this guy won't be authorized for very much - consider richer options?
     return Session.builder()
       .withSubject(
         Subject.builder().withValue("CN=Tim Robertson").build()

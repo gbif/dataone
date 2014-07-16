@@ -14,7 +14,7 @@
   <packaging>jar</packaging>
 
   <name>dataone-membernode-hadoop</name>
-  <description>TODO</description>
+  <description>A Hadoop backed implementation of the DataONE Member Node specification</description>
 
   <repositories>
     <repository>

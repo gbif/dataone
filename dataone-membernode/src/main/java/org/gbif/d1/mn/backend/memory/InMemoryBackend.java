@@ -17,7 +17,6 @@ public class InMemoryBackend implements MNBackend {
 
   @Override
   public SystemMetadata getSystemMetadata(Session session, String identifier) {
-    // TODO Auto-generated method stub
     return null;
   }
 
