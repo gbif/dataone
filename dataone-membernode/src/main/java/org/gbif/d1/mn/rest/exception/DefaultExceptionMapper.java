@@ -38,7 +38,7 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable> {
   // required to access the annotation to populate the detail code
   @Context
   @VisibleForTesting
-  private ExtendedUriInfo uriInfo;
+  ExtendedUriInfo uriInfo;
 
   public DefaultExceptionMapper(String nodeId) {
     this.nodeId = nodeId;

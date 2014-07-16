@@ -1,5 +1,7 @@
 package org.gbif.d1.mn.backend;
 
+import com.google.common.base.Preconditions;
+
 /**
  * An instance of this class should describe the health of a backend system containing an exception to encapsulate the
  * issue should it not be considered healthy.
@@ -22,9 +24,13 @@ public class Health {
   }
 
   public static Health unhealthy(Exception cause) {
+    Preconditions.checkNotNull(cause, "The cause of the reporting unhealth is required"); // invalid use
     return new Health(false, cause);
   }
 
+  /**
+   * @return The exception which will always null when healthy and populated when unhealthy
+   */
   public Exception getCause() {
     return cause;
   }

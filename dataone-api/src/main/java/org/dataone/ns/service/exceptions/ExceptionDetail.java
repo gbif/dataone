@@ -50,6 +50,30 @@ public class ExceptionDetail {
   protected ExceptionDetail() {
   }
 
+  public String getDescription() {
+    return description;
+  }
+
+  public String getDetailCode() {
+    return detailCode;
+  }
+
+  public int getErrorCode() {
+    return errorCode;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public String getNodeId() {
+    return nodeId;
+  }
+
+  public String getPid() {
+    return pid;
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)

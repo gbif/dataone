@@ -1,6 +1,7 @@
 package org.gbif.d1.mn.service;
 
 import org.gbif.d1.mn.auth.AuthorizationManager;
+import org.gbif.d1.mn.backend.Health;
 import org.gbif.d1.mn.backend.MNBackend;
 
 import java.io.InputStream;
@@ -9,6 +10,7 @@ import java.util.Date;
 import com.google.common.annotations.VisibleForTesting;
 import org.dataone.ns.service.apis.v1.MNRead;
 import org.dataone.ns.service.exceptions.ExceptionDetail;
+import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.Checksum;
 import org.dataone.ns.service.types.v1.DescribeResponse;
 import org.dataone.ns.service.types.v1.Event;
@@ -18,6 +20,7 @@ import org.dataone.ns.service.types.v1.Node;
 import org.dataone.ns.service.types.v1.ObjectList;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
+import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
@@ -95,7 +98,13 @@ final class MNReadImpl implements MNRead {
 
   @Override
   public String ping() {
-    return null;
+    Health health = backend.health();
+    if (health.isHealthy()) {
+      return DTF.print(new DateTime());
+    } else {
+      LOG.error(health.getCause().getMessage(), health.getCause());
+      throw new ServiceFailure("Unable to connect to back-end systems");
+    }
   }
 
   @Override

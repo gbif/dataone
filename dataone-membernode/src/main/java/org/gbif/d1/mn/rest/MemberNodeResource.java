@@ -31,7 +31,6 @@ import org.dataone.ns.service.apis.v1.MNReplication;
 import org.dataone.ns.service.apis.v1.MNStorage;
 import org.dataone.ns.service.apis.v1.MemberNode;
 import org.dataone.ns.service.exceptions.ExceptionDetail;
-import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotImplemented;
@@ -46,6 +45,9 @@ import org.dataone.ns.service.types.v1.ObjectList;
 import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
+
+import static org.gbif.d1.mn.rest.D1Preconditions.checkIsSupported;
+import static org.gbif.d1.mn.rest.D1Preconditions.checkNotNull;
 
 /**
  * A Tier 4 RESTful Member Node implementation.
@@ -83,7 +85,7 @@ public final class MemberNodeResource implements MemberNode {
    * <p>
    * Should any service be null, then any subsequent API call that requires the service will return a
    * {@link NotImplemented} in accordance with the specification. This functionality is enforced by calling
-   * {@link MemberNodeResource#checkIsSupported(Object)}.
+   * {@link D1Preconditions#checkIsSupported(Object)}.
    * 
    * @param read to delegate Tier 1 requests to
    * @param authorization to delegate Tier 2 requests to
@@ -94,6 +96,7 @@ public final class MemberNodeResource implements MemberNode {
    */
   public MemberNodeResource(MNRead read, MNAuthorization authorization, MNStorage storage,
     MNReplication replication) {
+    // Note: Guava Preconditions here, not D1Preconditions
     Preconditions.checkNotNull(read, "Read service (Tier 1) is required at a minimum");
     Preconditions.checkState(storage == null || authorization != null,
       "Cannot implement storage (Tier 3) without authorization (Tier 2)");
@@ -103,35 +106,6 @@ public final class MemberNodeResource implements MemberNode {
     this.authorization = authorization;
     this.storage = storage;
     this.replication = replication;
-  }
-
-  /**
-   * Ensure that the provided object reference is not null, indicating that it is supported by this configuration.
-   * 
-   * @param reference an object reference
-   * @return the non-null reference that was validated
-   * @throws NotImplemented If {@code reference} is null
-   */
-  private static <T> T checkIsSupported(T reference) {
-    if (reference == null) {
-      throw new NotImplemented("This node is not configured to support the operation");
-    }
-    return reference;
-  }
-
-  /**
-   * Ensures that an object reference passed as a parameter to the calling method is not null.
-   * 
-   * @param reference an object reference
-   * @param errorMessage the exception message to use if the check fails
-   * @return the non-null reference that was validated
-   * @throws InvalidRequest if {@code reference} is null
-   */
-  private static <T> T checkNotNull(T reference, @Nullable Object errorMessage) {
-    if (reference == null) {
-      throw new NullPointerException(String.valueOf(errorMessage));
-    }
-    return reference;
   }
 
   @PUT
