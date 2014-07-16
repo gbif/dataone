@@ -44,7 +44,6 @@ final class ReplicationService implements MNReplication {
   @Override
   public boolean replicate(Session session, SystemMetadata sysmeta, String sourceNode) throws NotImplemented,
     ServiceFailure, NotAuthorized, InvalidRequest, InvalidToken, InsufficientResources, UnsupportedType {
-    // TODO Auto-generated method stub
     return false;
   }
 }

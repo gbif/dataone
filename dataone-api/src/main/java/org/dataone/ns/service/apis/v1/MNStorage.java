@@ -3,15 +3,7 @@ package org.dataone.ns.service.apis.v1;
 import java.io.InputStream;
 
 import org.dataone.ns.service.exceptions.IdentifierNotUnique;
-import org.dataone.ns.service.exceptions.InsufficientResources;
-import org.dataone.ns.service.exceptions.InvalidRequest;
-import org.dataone.ns.service.exceptions.InvalidSystemMetadata;
 import org.dataone.ns.service.exceptions.InvalidToken;
-import org.dataone.ns.service.exceptions.NotAuthorized;
-import org.dataone.ns.service.exceptions.NotFound;
-import org.dataone.ns.service.exceptions.NotImplemented;
-import org.dataone.ns.service.exceptions.ServiceFailure;
-import org.dataone.ns.service.exceptions.UnsupportedType;
 import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
@@ -40,16 +32,20 @@ public interface MNStorage {
    * Member Nodes MUST check that the caller is authorized to perform this function. If the object does not exist on the
    * node servicing the request, then an Exceptions.NotFound exception is raised. The message body of the exception
    * SHOULD contain a hint as to the location of the CNRead.resolve() method.
+   * 
+   * @throws InvalidToken, ServiceFailure,
+   *         NotAuthorized, NotFound, NotImplemented
    */
-  Identifier archive(Session session, String pid) throws InvalidToken, ServiceFailure,
-    NotAuthorized, NotFound, NotImplemented;
+  Identifier archive(Session session, Identifier pid);
 
   /**
    * Called by a client to adds a new object to the Member Node.
+   * 
+   * @throws IdentifierNotUnique, InsufficientResources,
+   *         InvalidRequest, InvalidSystemMetadata, InvalidToken, NotAuthorized, NotImplemented, ServiceFailure,
+   *         UnsupportedType
    */
-  Identifier create(Session session, String pid, InputStream object,
-    SystemMetadata sysmeta) throws IdentifierNotUnique, InsufficientResources,
-    InvalidRequest, InvalidSystemMetadata, InvalidToken, NotAuthorized, NotImplemented, ServiceFailure, UnsupportedType;
+  Identifier create(Session session, Identifier pid, InputStream object, SystemMetadata sysmeta);
 
   /**
    * Deletes an object managed by DataONE from the Member Node. Member Nodes MUST check that the caller (typically a
@@ -64,15 +60,19 @@ public interface MNStorage {
    * <p>
    * If the object does not exist on the node servicing the request, then an Exceptions.NotFound exception is raised.
    * The message body of the exception SHOULD contain a hint as to the location of the CNRead.resolve() method.
+   * 
+   * @throws InvalidToken, ServiceFailure, NotAuthorized, NotFound,
+   *         NotImplemented
    */
-  Identifier delete(Session session, String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound,
-    NotImplemented;
+  Identifier delete(Session session, Identifier pid);
 
   /**
    * Given a scheme and optional fragment, generates an identifier with that scheme and fragment that is unique.
+   * 
+   * @throws InvalidToken, ServiceFailure,
+   *         NotAuthorized, NotImplemented, InvalidRequest
    */
-  Identifier generateIdentifier(Session session, String scheme, String fragment) throws InvalidToken, ServiceFailure,
-    NotAuthorized, NotImplemented, InvalidRequest;
+  Identifier generateIdentifier(Session session, String scheme, String fragment);
 
   /**
    * This method is called by clients to update objects on Member Nodes.
@@ -90,10 +90,11 @@ public interface MNStorage {
    * <p>
    * A new, unique Types.SystemMetadata.seriesId may be included when beginning a series, or a series may be extended if
    * the newPid obsoletes the existing pid.
+   * 
+   * @throws IdentifierNotUnique,
+   *         InsufficientResources, InvalidRequest, InvalidSystemMetadata, InvalidToken, NotAuthorized, NotImplemented,
+   *         ServiceFailure, UnsupportedType, NotFound
    */
-  Identifier update(Session session, String pid, InputStream object, String newPid, SystemMetadata sysmeta)
-    throws IdentifierNotUnique,
-    InsufficientResources, InvalidRequest, InvalidSystemMetadata, InvalidToken, NotAuthorized, NotImplemented,
-    ServiceFailure, UnsupportedType, NotFound;
+  Identifier update(Session session, Identifier pid, InputStream object, Identifier newPid, SystemMetadata sysmeta);
 
 }

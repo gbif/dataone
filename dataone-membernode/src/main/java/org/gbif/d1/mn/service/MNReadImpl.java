@@ -8,17 +8,11 @@ import java.util.Date;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.dataone.ns.service.apis.v1.MNRead;
-import org.dataone.ns.service.exceptions.InsufficientResources;
-import org.dataone.ns.service.exceptions.InvalidRequest;
-import org.dataone.ns.service.exceptions.InvalidToken;
-import org.dataone.ns.service.exceptions.NotAuthorized;
-import org.dataone.ns.service.exceptions.NotFound;
-import org.dataone.ns.service.exceptions.NotImplemented;
-import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.exceptions.SynchronizationFailed;
 import org.dataone.ns.service.types.v1.Checksum;
 import org.dataone.ns.service.types.v1.DescribeResponse;
 import org.dataone.ns.service.types.v1.Event;
+import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Log;
 import org.dataone.ns.service.types.v1.Node;
 import org.dataone.ns.service.types.v1.ObjectList;
@@ -57,69 +51,55 @@ final class MNReadImpl implements MNRead {
   }
 
   @Override
-  public DescribeResponse describe(Session session, String pid) {
-    // TODO Auto-generated method stub
+  public DescribeResponse describe(Session session, Identifier pid) {
     return null;
   }
 
   @Override
-  public InputStream get(Session session, String pid) throws InvalidToken, NotAuthorized, NotImplemented,
-    ServiceFailure, NotFound, InsufficientResources {
-    // TODO Auto-generated method stub
+  public InputStream get(Session session, Identifier pid) {
     return null;
   }
 
   @Override
-  public Node getCapabilities(Session session) throws NotImplemented, ServiceFailure {
-    // TODO Auto-generated method stub
+  public Node getCapabilities(Session session) {
     return null;
   }
 
   @Override
-  public Checksum getChecksum(Session session, String pid, String checksumAlgorithm) throws InvalidRequest,
-    InvalidToken, NotAuthorized, NotImplemented, ServiceFailure, NotFound {
-    // TODO Auto-generated method stub
+  public Checksum getChecksum(Session session, Identifier pid, String checksumAlgorithm) {
     return null;
   }
 
   @Override
-  public Log getLogRecords(Session session, Date fromDate, Date toDate, Event event, String pidFilter, Integer start,
-    Integer count) throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented, ServiceFailure {
-    // TODO Auto-generated method stub
+  public Log getLogRecords(Session session, Date fromDate, Date toDate, Event event, Identifier pidFilter,
+    Integer start,
+    Integer count) {
     return null;
   }
 
   @Override
-  public InputStream getReplica(Session session, String pid) throws InvalidToken, NotAuthorized, NotImplemented,
-    ServiceFailure, NotFound, InsufficientResources {
-    // TODO Auto-generated method stub
+  public InputStream getReplica(Session session, Identifier pid) {
     return null;
   }
 
   @Override
-  public SystemMetadata getSystemMetadata(Session session, String identifier) throws NotAuthorized, NotFound,
-    ServiceFailure, InvalidToken, InsufficientResources {
-    // TODO Auto-generated method stub
+  public SystemMetadata getSystemMetadata(Session session, Identifier identifier) {
     return null;
   }
 
   @Override
   public ObjectList listObjects(Session session, Date fromDate, Date toDate, String formatId, Boolean replicaStatus,
-    Integer start, Integer count) throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented, ServiceFailure {
-    // TODO Auto-generated method stub
+    Integer start, Integer count) {
     return null;
   }
 
   @Override
-  public String ping(Session session) throws NotImplemented, ServiceFailure, InsufficientResources {
-    // TODO Auto-generated method stub
+  public String ping(Session session) {
     return null;
   }
 
   @Override
-  public boolean synchronizationFailed(Session session, SynchronizationFailed message) throws InvalidToken,
-    NotAuthorized, NotImplemented, ServiceFailure {
-    // TODO Auto-generated method stub
+  public boolean synchronizationFailed(Session session, SynchronizationFailed message) {
     return false;
   }
 }

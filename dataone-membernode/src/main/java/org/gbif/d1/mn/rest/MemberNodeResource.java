@@ -25,11 +25,11 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
 import com.sun.jersey.multipart.FormDataParam;
 import com.sun.jersey.spi.resource.Singleton;
-import org.dataone.ns.service.apis.v1.MemberNode;
 import org.dataone.ns.service.apis.v1.MNAuthorization;
 import org.dataone.ns.service.apis.v1.MNRead;
 import org.dataone.ns.service.apis.v1.MNReplication;
 import org.dataone.ns.service.apis.v1.MNStorage;
+import org.dataone.ns.service.apis.v1.MemberNode;
 import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotImplemented;
@@ -103,7 +103,7 @@ public final class MemberNodeResource implements MemberNode {
   @DataONE(Method.ARCHIVE)
   @Timed
   @Override
-  public Identifier archive(@Authenticate Session session, @PathParam("pid") String pid) {
+  public Identifier archive(@Authenticate Session session, @PathParam("pid") Identifier pid) {
     checkIsSupported(storage);
     return storage.archive(session, pid);
   }
@@ -114,7 +114,7 @@ public final class MemberNodeResource implements MemberNode {
   @DataONE(Method.CREATE)
   @Timed
   @Override
-  public Identifier create(@Authenticate Session session, @FormDataParam("pid") String pid,
+  public Identifier create(@Authenticate Session session, @FormDataParam("pid") Identifier pid,
     @FormDataParam("object") InputStream object, @FormDataParam("sysmeta") SystemMetadata sysmeta) {
     checkIsSupported(storage);
     return storage.create(session, pid, object, sysmeta);
@@ -125,7 +125,7 @@ public final class MemberNodeResource implements MemberNode {
   @DataONE(Method.DELETE)
   @Timed
   @Override
-  public Identifier delete(@Authenticate Session session, @PathParam("pid") String pid) {
+  public Identifier delete(@Authenticate Session session, @PathParam("pid") Identifier pid) {
     checkIsSupported(storage);
     return storage.delete(session, pid);
   }
@@ -135,7 +135,7 @@ public final class MemberNodeResource implements MemberNode {
   @DataONE(Method.DESCRIBE)
   @Timed
   @Override
-  public DescribeResponse describe(@Authenticate Session session, @PathParam("pid") String pid) {
+  public DescribeResponse describe(@Authenticate Session session, @PathParam("pid") Identifier pid) {
     checkIsSupported(read);
     return read.describe(session, pid);
   }
@@ -156,7 +156,7 @@ public final class MemberNodeResource implements MemberNode {
   @DataONE(Method.GET)
   @Timed
   @Override
-  public InputStream get(@Authenticate Session session, @PathParam("pid") String pid) {
+  public InputStream get(@Authenticate Session session, @PathParam("pid") Identifier pid) {
     checkIsSupported(read);
     return read.get(session, pid);
   }
@@ -184,7 +184,7 @@ public final class MemberNodeResource implements MemberNode {
   @DataONE(Method.GET_CHECKSUM)
   @Timed
   @Override
-  public Checksum getChecksum(@Authenticate Session session, @PathParam("pid") String pid,
+  public Checksum getChecksum(@Authenticate Session session, @PathParam("pid") Identifier pid,
     @QueryParam("checksumAlgorithm") String checksumAlgorithm) {
     checkIsSupported(read);
     return read.getChecksum(session, pid, checksumAlgorithm);
@@ -196,7 +196,7 @@ public final class MemberNodeResource implements MemberNode {
   @Timed
   @Override
   public Log getLogRecords(@Authenticate Session session, @QueryParam("fromDate") Date fromDate,
-    @QueryParam("toDate") Date toDate, @QueryParam("event") Event event, @QueryParam("pidFilter") String pidFilter,
+    @QueryParam("toDate") Date toDate, @QueryParam("event") Event event, @QueryParam("pidFilter") Identifier pidFilter,
     @QueryParam("start") Integer start, @QueryParam("count") Integer count) {
     checkIsSupported(read);
     return read.getLogRecords(session, fromDate, toDate, event, pidFilter, start, count);
@@ -207,7 +207,7 @@ public final class MemberNodeResource implements MemberNode {
   @DataONE(Method.GET_REPLICA)
   @Timed
   @Override
-  public InputStream getReplica(@Authenticate Session session, @PathParam("pid") String pid) {
+  public InputStream getReplica(@Authenticate Session session, @PathParam("pid") Identifier pid) {
     checkIsSupported(read);
     return read.getReplica(session, pid);
   }
@@ -217,7 +217,7 @@ public final class MemberNodeResource implements MemberNode {
   @Path("meta/{pid}")
   @DataONE(Method.GET_SYSTEM_METADATA)
   @Timed
-  public SystemMetadata getSystemMetadata(@Authenticate Session session, @PathParam("pid") String pid) {
+  public SystemMetadata getSystemMetadata(@Authenticate Session session, @PathParam("pid") Identifier pid) {
     checkIsSupported(read);
     return read.getSystemMetadata(session, pid);
   }
@@ -227,7 +227,7 @@ public final class MemberNodeResource implements MemberNode {
   @DataONE(Method.IS_AUTHORIZED)
   @Timed
   @Override
-  public boolean isAuthorized(@Authenticate Session session, @PathParam("pid") String pid,
+  public boolean isAuthorized(@Authenticate Session session, @PathParam("pid") Identifier pid,
     @QueryParam("action") Permission action) {
     checkIsSupported(authorization);
     return authorization.isAuthorized(session, pid, action);
@@ -297,8 +297,8 @@ public final class MemberNodeResource implements MemberNode {
   @DataONE(Method.UPDATE)
   @Timed
   @Override
-  public Identifier update(@Authenticate Session session, @PathParam("pid") String pid,
-    @FormDataParam("file") InputStream object, @FormDataParam("newPid") String newPid,
+  public Identifier update(@Authenticate Session session, @PathParam("pid") Identifier pid,
+    @FormDataParam("file") InputStream object, @FormDataParam("newPid") Identifier newPid,
     @FormDataParam("sysmeta") SystemMetadata sysmeta) {
     checkIsSupported(storage);
     return storage.update(session, pid, object, newPid, sysmeta);

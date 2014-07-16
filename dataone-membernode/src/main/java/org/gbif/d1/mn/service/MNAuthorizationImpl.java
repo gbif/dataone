@@ -38,15 +38,13 @@ final class MNAuthorizationImpl implements MNAuthorization {
   }
 
   @Override
-  public boolean isAuthorized(Session session, String pid, Permission action) {
-    // TODO Auto-generated method stub
+  public boolean isAuthorized(Session session, Identifier pid, Permission action) {
     return false;
   }
 
   @Override
   public boolean systemMetadataChanged(Session session, Identifier pid, long serialVersion,
     Date dateSystemMetadataLastModified) {
-    // TODO Auto-generated method stub
     return false;
   }
 }

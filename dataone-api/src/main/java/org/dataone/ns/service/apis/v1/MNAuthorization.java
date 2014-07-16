@@ -30,7 +30,7 @@ public interface MNAuthorization {
    * @throws InvalidRequest If any argument is null
    * @throws ServiceFailure If the backend systems cannot be read, or the coordinating node cannot be accessed
    */
-  boolean isAuthorized(Session session, String pid, Permission action);
+  boolean isAuthorized(Session session, Identifier pid, Permission action);
 
   /**
    * Notifies the Member Node that the authoritative copy of system metadata on the Coordinating Nodes has changed.
