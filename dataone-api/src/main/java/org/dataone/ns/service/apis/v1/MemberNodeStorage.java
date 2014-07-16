@@ -8,13 +8,13 @@ import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.InvalidSystemMetadata;
 import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
+import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.exceptions.UnsupportedType;
 import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
-import org.omg.CosNaming.NamingContextPackage.NotFound;
 
 /**
  * Interface definition for the Tier 3 services.
@@ -23,7 +23,7 @@ import org.omg.CosNaming.NamingContextPackage.NotFound;
  * @see <a
  *      href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html</a>
  */
-public interface MemberNodeStorage extends MemberNodeAuthorization {
+public interface MemberNodeStorage {
 
   /**
    * Hides an object managed by DataONE from search operations, effectively preventing its discovery during normal

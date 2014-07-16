@@ -27,13 +27,22 @@ import org.slf4j.LoggerFactory;
 public class DefaultExceptionMapper implements ExceptionMapper<Throwable> {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultExceptionMapper.class);
+  private final String nodeId;
+
   @VisibleForTesting
-  static final String DEFAULT_DETAIL_CODE = "000"; // does not comply with the spec but what else can we do?
+  static final String DEFAULT_DETAIL_CODE = "000"; // does not comply with the specification but what else can we do?
+
+  @VisibleForTesting
+  static final int DEFAULT_HTTP_CODE = 500; // for safety only
 
   // required to access the annotation to populate the detail code
   @Context
   @VisibleForTesting
-  ExtendedUriInfo uriInfo;
+  private ExtendedUriInfo uriInfo;
+
+  public DefaultExceptionMapper(String nodeId) {
+    this.nodeId = nodeId;
+  }
 
   @Override
   public Response toResponse(Throwable exception) {
@@ -47,17 +56,14 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable> {
       DataONE dataONE = uriInfo.getMatchedMethod().getAnnotation(DataONE.class);
       String detailCode = detailCode(dataONE, d1e);
 
-      String pid = null; // TODO: read annotation and find the value
-      int code = 500; // TODO: populate the HTTP code
-      String nodeId = "TODO";
-
-      ExceptionDetail detail = new ExceptionDetail(
-        d1e.getClass().getSimpleName(), code, detailCode, d1e.getMessage(), nodeId, pid);
-
+      // HTTP code is mapped 1:1 with the DataONEException
+      int code = httpCode(d1e);
       return Response
         .status(code)
         .type(MediaType.APPLICATION_XML)
-        .entity(detail)
+        .entity(new ExceptionDetail(
+          d1e.getClass().getSimpleName(), code, detailCode, d1e.getMessage(), nodeId, d1e.getPid())
+        )
         .build();
 
     } else {
@@ -86,6 +92,17 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable> {
     } else {
       // we default as a service failure
       return new ServiceFailure(exception.getMessage(), exception);
+    }
+  }
+
+  private int httpCode(DataONEException d1e) {
+    Integer code = HttpCodes.codeFor(d1e.getClass()); // can return null
+    if (code == null) {
+      LOG.warn("Missing HTTP code for exception[{}], using default[{}]", d1e.getClass().getSimpleName(),
+        DEFAULT_HTTP_CODE);
+      return DEFAULT_HTTP_CODE;
+    } else {
+      return code;
     }
   }
 

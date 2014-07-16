@@ -7,4 +7,7 @@ import io.dropwizard.Configuration;
  */
 public class MemberNodeConfiguration extends Configuration {
 
+  public enum TIER {
+    TIER1, TIER2, TIER3, TIER4
+  }
 }

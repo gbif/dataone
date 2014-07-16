@@ -16,6 +16,8 @@ import com.sun.jersey.spi.inject.Injectable;
 import com.sun.jersey.spi.inject.InjectableProvider;
 import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.types.v1.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A provider of sessions which are built from the certificate presented with client requests.
@@ -42,9 +44,15 @@ public final class SessionProvider implements InjectableProvider<Authenticate, T
      */
     @Override
     public Session getValue() {
-      return certificateUtils.newSession(request);
+      Session session = certificateUtils.newSession(request);
+      if (session != null) { // cannot be null today, but future proof
+        LOG.info("Successfully authenticated subject[{}]", session.getSubject());
+      }
+      return session;
     }
   }
+
+  private static final Logger LOG = LoggerFactory.getLogger(SessionProvider.class);
 
   @Context
   private HttpServletRequest request;

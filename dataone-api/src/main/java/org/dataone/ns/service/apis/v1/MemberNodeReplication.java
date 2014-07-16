@@ -16,7 +16,7 @@ import org.dataone.ns.service.types.v1.SystemMetadata;
  * @see <a
  *      href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html</a>
  */
-public interface MemberNodeReplication extends MemberNodeStorage {
+public interface MemberNodeReplication {
 
   /**
    * Called by a Coordinating Node to request that the Member Node create a copy of the specified object by retrieving

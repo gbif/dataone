@@ -7,6 +7,7 @@ import org.dataone.ns.service.exceptions.InsufficientResources;
 import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
+import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.exceptions.SynchronizationFailed;
@@ -18,7 +19,6 @@ import org.dataone.ns.service.types.v1.Node;
 import org.dataone.ns.service.types.v1.ObjectList;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
-import org.omg.CosNaming.NamingContextPackage.NotFound;
 
 /**
  * Interface definition for the Tier 1 services.

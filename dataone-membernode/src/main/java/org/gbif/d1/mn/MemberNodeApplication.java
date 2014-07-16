@@ -8,6 +8,7 @@ import org.gbif.d1.mn.health.BackendHealthCheck;
 import org.gbif.d1.mn.rest.MemberNodeResource;
 import org.gbif.d1.mn.rest.exception.DefaultExceptionMapper;
 import org.gbif.d1.mn.rest.provider.SessionProvider;
+import org.gbif.d1.mn.service.MNServices;
 
 import java.util.Set;
 
@@ -54,20 +55,26 @@ public class MemberNodeApplication<T extends MemberNodeConfiguration> extends Ap
 
   @Override
   public final void run(T configuration, Environment environment) {
+    Node self = self(configuration);
+
     // exception handling removes defaults, and adds custom handling
     removeAllExceptionMappers(environment.jersey());
-    environment.jersey().register(new DefaultExceptionMapper());
+    environment.jersey().register(new DefaultExceptionMapper(self.getIdentifier().getValue()));
 
     // providers
     // TODO: read config here to support overwriting OIDs in certificates
     environment.jersey().register(SessionProvider.newWithDefaults());
 
     // RESTful resources
-    Node self = self(configuration);
     CoordinatingNode cn = coordinatingNode(configuration);
     MNBackend backend = getBackend(configuration);
     AuthorizationManager auth = AuthorizationManagers.newAuthorizationManager(backend, cn, self);
-    environment.jersey().register(new MemberNodeResource(self, auth, backend));
+    environment.jersey().register(new MemberNodeResource(
+      MNServices.readService(self, auth, backend),
+      MNServices.authorizationService(self, auth, backend),
+      MNServices.storageService(self, auth, backend),
+      MNServices.replicationService(self, auth, backend)));
+
     // health checks
     environment.healthChecks().register("backend", new BackendHealthCheck(backend));
   }

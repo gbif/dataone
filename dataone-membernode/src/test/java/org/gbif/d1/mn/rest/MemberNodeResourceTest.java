@@ -1,64 +1,64 @@
 package org.gbif.d1.mn.rest;
 
-import org.gbif.d1.mn.auth.AuthorizationManager;
-import org.gbif.d1.mn.backend.MNBackend;
-import org.gbif.d1.mn.backend.model.MNLogEntry;
-
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Lists;
 import com.sun.jersey.api.client.WebResource;
 import io.dropwizard.testing.junit.ResourceTestRule;
-import org.dataone.ns.service.types.v1.Builders;
+import org.dataone.ns.service.apis.v1.MemberNodeAuthorization;
+import org.dataone.ns.service.apis.v1.MemberNodeRead;
+import org.dataone.ns.service.apis.v1.MemberNodeReplication;
+import org.dataone.ns.service.apis.v1.MemberNodeStorage;
+import org.dataone.ns.service.types.v1.Session;
 import org.hamcrest.MatcherAssert;
-import org.junit.Before;
-import org.junit.ClassRule;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+import org.junit.Rule;
 import org.junit.Test;
 import uk.co.it.modular.hamcrest.date.DateMatchers;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * A full member node testing stack.
- * <p>
- * Uses mocked backend to assert correct behaviour and mock callback to ensure the correct CN callbacks are issued.
+ * Tests all URL routing and that the correct services as called.
  */
 public class MemberNodeResourceTest {
 
   private static final String BASE_URL = "/mn/v1";
 
-  private static final MNBackend backend = mock(MNBackend.class);
-  private static final AuthorizationManager authorizationManager = mock(AuthorizationManager.class);
+  // mock delegates for the resource, which are reset before each test
+  private static final MemberNodeRead read = mock(MemberNodeRead.class);
+  private static final MemberNodeAuthorization authorization = mock(MemberNodeAuthorization.class);
+  private static final MemberNodeStorage storage = mock(MemberNodeStorage.class);
+  private static final MemberNodeReplication replication = mock(MemberNodeReplication.class);
+
+  private static final String DATE_FORMAT = "HH:mm:ss Z 'on' EEE, MMM d, yyyy";
+  private static final DateTimeFormatter DTF = DateTimeFormat.forPattern(DATE_FORMAT); // threadsafe
 
   /**
    * We mock sessions because we can't access the HttpServletRequest using the Jersey InMemory container, and we don't
-   * need to test authentication.
+   * need to test authentication as that is unit tested in isolation.
    */
-  @ClassRule
-  public static final ResourceTestRule resources = ResourceTestRule.builder()
-    .addResource(new MemberNodeResource(Builders.newNode("node.xml"), authorizationManager, backend))
+  @Rule
+  public ResourceTestRule resources = ResourceTestRule.builder()
+    .addResource(new MemberNodeResource(read, authorization, storage, replication))
     .addProvider(new MockSessionProvider())
     .build();
 
-  @Before
-  public void setup() {
-    when(backend.getLogs()).thenReturn(Lists.<MNLogEntry>newArrayList());
-  }
-
   @Test
   public void testPing() {
+    when(read.ping(any(Session.class))).thenReturn(DTF.print(new DateTime()));
     // if a ping takes longer than 5 secs we're hosed
     String pong = clientResource().path("monitor/ping").get(String.class);
-    Date result = MemberNodeResource.DTF.parseDateTime(pong).toDate();
+    Date result = DTF.parseDateTime(pong).toDate();
     MatcherAssert.assertThat(result, DateMatchers.within(5, TimeUnit.SECONDS, new Date()));
   }
 
   /**
-   * To use this: clientResource().path("ping").get().
-   * 
-   * @return A client resource that can be used as the base for all test.
+   * @return A client resource that can be used as the base for all test
    */
   private WebResource clientResource() {
     return resources.client().resource(BASE_URL);

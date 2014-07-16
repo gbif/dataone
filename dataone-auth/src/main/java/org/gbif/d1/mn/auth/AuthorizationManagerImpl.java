@@ -3,8 +3,6 @@ package org.gbif.d1.mn.auth;
 import java.util.List;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -83,8 +81,8 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
   }
 
   @Override
-  public void checkIsAuthorized(HttpServletRequest request, Identifier identifier, Permission permission) {
-    Preconditions.checkNotNull(request, "A request must be provided");
+  public void checkIsAuthorized(Session session, Identifier identifier, Permission permission) {
+    Preconditions.checkNotNull(session, "A session must be provided");
     Preconditions.checkNotNull(identifier, "An identifier must be provided");
     Preconditions.checkNotNull(identifier.getValue(), "An identifier must be provided");
     Preconditions.checkNotNull(permission, "A permission must be provided");
@@ -94,7 +92,6 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
       throw new NotFound("Cannot perform action since object not found", identifier.getValue());
     }
 
-    Session session = certificateUtils.newSession(request); // throws exception if could not be built
     boolean approved = checkIsAuthorized(session, sysMetadata, permission);
     if (!approved) {
       throw new NotAuthorized("No subject represented by the certificate have permission to perform action");

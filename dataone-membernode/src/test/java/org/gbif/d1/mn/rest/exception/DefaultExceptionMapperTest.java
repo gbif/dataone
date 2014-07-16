@@ -15,7 +15,7 @@ public class DefaultExceptionMapperTest {
 
   @Test
   public void testDetailCode() {
-    DefaultExceptionMapper mapper = new DefaultExceptionMapper();
+    DefaultExceptionMapper mapper = new DefaultExceptionMapper("urn:node:Tim");
 
     DataONE annotation = Mockito.mock(DataONE.class);
     when(annotation.value()).thenReturn(Method.CREATE);
