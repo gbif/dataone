@@ -26,10 +26,10 @@ import com.google.common.base.Preconditions;
 import com.sun.jersey.multipart.FormDataParam;
 import com.sun.jersey.spi.resource.Singleton;
 import org.dataone.ns.service.apis.v1.MemberNode;
-import org.dataone.ns.service.apis.v1.MemberNodeAuthorization;
-import org.dataone.ns.service.apis.v1.MemberNodeRead;
-import org.dataone.ns.service.apis.v1.MemberNodeReplication;
-import org.dataone.ns.service.apis.v1.MemberNodeStorage;
+import org.dataone.ns.service.apis.v1.MNAuthorization;
+import org.dataone.ns.service.apis.v1.MNRead;
+import org.dataone.ns.service.apis.v1.MNReplication;
+import org.dataone.ns.service.apis.v1.MNStorage;
 import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotImplemented;
@@ -71,10 +71,10 @@ import org.dataone.ns.service.types.v1.SystemMetadata;
 @Singleton
 public final class MemberNodeResource implements MemberNode {
 
-  private final MemberNodeRead read;
-  private final MemberNodeAuthorization authorization;
-  private final MemberNodeStorage storage;
-  private final MemberNodeReplication replication;
+  private final MNRead read;
+  private final MNAuthorization authorization;
+  private final MNStorage storage;
+  private final MNReplication replication;
 
   /**
    * Constructs a member node with the delegate backend services.
@@ -85,8 +85,8 @@ public final class MemberNodeResource implements MemberNode {
    * @throws NullPointerException if the read service is null - this is the minimum conformance level
    * @throws IllegalStateException if a service is provided that depends on a lower level service which is missing
    */
-  public MemberNodeResource(MemberNodeRead read, MemberNodeAuthorization authorization, MemberNodeStorage storage,
-    MemberNodeReplication replication) {
+  public MemberNodeResource(MNRead read, MNAuthorization authorization, MNStorage storage,
+    MNReplication replication) {
     Preconditions.checkNotNull(read, "Read service (Tier 1) is required at a minimum");
     Preconditions.checkState(storage == null || authorization != null,
       "Cannot implement storage (Tier 3) without authorization (Tier 2)");

@@ -17,7 +17,7 @@ import org.omg.CosNaming.NamingContextPackage.NotFound;
  * @see <a
  *      href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html</a>
  */
-public interface MemberNodeAuthorization {
+public interface MNAuthorization {
 
   /**
    * Test if the client identified by the session is allowed to perform an operation at the stated permission level on

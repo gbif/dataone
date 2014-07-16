@@ -27,10 +27,10 @@ import org.dataone.ns.service.types.v1.SystemMetadata;
  * @see <a
  *      href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html</a>
  */
-public interface MemberNodeRead {
+public interface MNRead {
 
   /**
-   * This method provides a lighter weight mechanism than {@link MemberNodeRead#getSystemMetadata(Session, String)} ()}
+   * This method provides a lighter weight mechanism than {@link MNRead#getSystemMetadata(Session, String)} ()}
    * for a client to determine basic properties of the referenced object. The response should indicate properties that
    * are typically returned in a HTTP HEAD request: the date late modified, the size of the object, the type of the
    * object (the SystemMetadata.formatId).
@@ -70,7 +70,7 @@ public interface MemberNodeRead {
 
   /**
    * Called by a target Member Node to fulfill the replication request originated by a Coordinating Node calling
-   * {@link MemberNodeReplication#replicate(Session, SystemMetadata, String)}. This is a request to make a replica copy
+   * {@link MNReplication#replicate(Session, SystemMetadata, String)}. This is a request to make a replica copy
    * of the object, and differs from a call to GET /object in that it should be logged as a replication event rather
    * than a read event on that object.
    */

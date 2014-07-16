@@ -5,7 +5,7 @@ import org.gbif.d1.mn.backend.MNBackend;
 
 import java.io.InputStream;
 
-import org.dataone.ns.service.apis.v1.MemberNodeStorage;
+import org.dataone.ns.service.apis.v1.MNStorage;
 import org.dataone.ns.service.exceptions.IdentifierNotUnique;
 import org.dataone.ns.service.exceptions.InsufficientResources;
 import org.dataone.ns.service.exceptions.InvalidRequest;
@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @see <a href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">DataONE Member Node API</a>
  */
-final class StorageService implements MemberNodeStorage {
+final class StorageService implements MNStorage {
 
   private static final Logger LOG = LoggerFactory.getLogger(StorageService.class);
 

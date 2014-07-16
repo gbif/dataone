@@ -1,18 +1,18 @@
 package org.gbif.d1.mn.hadoop;
 
-import org.gbif.d1.mn.MemberNodeApplication;
+import org.gbif.d1.mn.MNApplication;
 import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.backend.memory.InMemoryBackend;
 
 /**
  * The main entry point for running the member node.
  */
-public final class D1MNHadoopApplication extends MemberNodeApplication<D1MNConfiguration> {
+public final class HadoopApplication extends MNApplication<HadoopConfiguration> {
 
-  private static final String APPLICATION_NAME = "DataONE Member Node";
+  private static final String APPLICATION_NAME = "DataONE Member Node (Hadoop)";
 
   public static void main(String[] args) throws Exception {
-    new D1MNHadoopApplication().run(args);
+    new HadoopApplication().run(args);
   }
 
   @Override
@@ -21,7 +21,7 @@ public final class D1MNHadoopApplication extends MemberNodeApplication<D1MNConfi
   }
 
   @Override
-  protected MNBackend getBackend(D1MNConfiguration d1MNConfiguration) {
+  protected MNBackend getBackend(HadoopConfiguration hadoopConfiguration) {
     return new InMemoryBackend();
   }
 }

@@ -23,7 +23,7 @@ import org.dataone.ns.service.types.v1.SystemMetadata;
  * @see <a
  *      href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html</a>
  */
-public interface MemberNodeStorage {
+public interface MNStorage {
 
   /**
    * Hides an object managed by DataONE from search operations, effectively preventing its discovery during normal

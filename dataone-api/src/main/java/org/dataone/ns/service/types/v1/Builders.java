@@ -16,7 +16,8 @@ public class Builders {
       CONTEXT =
         JAXBContext.newInstance(Node.class, Session.class, SubjectInfo.class, SystemMetadata.class, NodeList.class);
     } catch (JAXBException e) {
-      throw new RuntimeException("Unable to create the JAXBContex [something wrong with the generated classes]");
+      throw new RuntimeException(
+        "Unable to create the JAXBContex [something is wrong with the generated classes or JAXB libraries are missing]");
     }
   }
 
@@ -26,19 +27,6 @@ public class Builders {
 
   public static NodeList newNodeList(String filename) {
     return newObject(filename, NodeList.class);
-  }
-
-  /**
-   * Utility to create the object from the given file which must be on the path.
-   */
-  @SuppressWarnings("unchecked")
-  private static <T> T newObject(String filename, Class<T> type) {
-    try {
-      return (T) CONTEXT.createUnmarshaller().unmarshal(Resources.getResource(filename));
-    } catch (Throwable e) {
-      throw new IllegalArgumentException("Unable to convert file[" + filename + "] into type[" + type.getName() + "]",
-        e);
-    }
   }
 
   public static Session newSession(String filename) {
@@ -51,5 +39,20 @@ public class Builders {
 
   public static SystemMetadata newSystemMetadata(String filename) {
     return newObject(filename, SystemMetadata.class);
+  }
+
+  /**
+   * Create the object from the given file which must be on the path.
+   * 
+   * @throws IllegalArgumentException if the file does not exist on the path or cannot be read as the stated type
+   */
+  @SuppressWarnings("unchecked")
+  private static <T> T newObject(String filename, Class<T> type) {
+    try {
+      return (T) CONTEXT.createUnmarshaller().unmarshal(Resources.getResource(filename));
+    } catch (Throwable e) {
+      throw new IllegalArgumentException("Unable to convert file[" + filename + "] into type[" + type.getName() + "]",
+        e);
+    }
   }
 }

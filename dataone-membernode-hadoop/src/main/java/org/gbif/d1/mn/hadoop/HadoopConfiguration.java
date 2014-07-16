@@ -1,6 +1,6 @@
 package org.gbif.d1.mn.hadoop;
 
-import org.gbif.d1.mn.MemberNodeConfiguration;
+import org.gbif.d1.mn.MNConfiguration;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -8,9 +8,9 @@ import javax.validation.constraints.Min;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * D1MNHadoopApplication configuration with sensible defaults if applicable.
+ * HadoopApplication configuration with sensible defaults if applicable.
  */
-public class D1MNConfiguration extends MemberNodeConfiguration {
+public class HadoopConfiguration extends MNConfiguration {
 
   @Min(1)
   @Max(65535)

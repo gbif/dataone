@@ -36,12 +36,12 @@ import org.dataone.ns.service.types.v1.Subject;
  * 
  * @param <T> For the configuration object to support custom backends which require configuration
  */
-public class MemberNodeApplication<T extends MemberNodeConfiguration> extends Application<T> {
+public class MNApplication<T extends MNConfiguration> extends Application<T> {
 
   private static final String APPLICATION_NAME = "DataONE Member Node";
 
   public static void main(String[] args) throws Exception {
-    new MemberNodeApplication<MemberNodeConfiguration>().run(args);
+    new MNApplication<MNConfiguration>().run(args);
   }
 
   @Override
@@ -80,7 +80,7 @@ public class MemberNodeApplication<T extends MemberNodeConfiguration> extends Ap
   }
 
   // TODO: implement
-  private CoordinatingNode coordinatingNode(MemberNodeConfiguration configuration) {
+  private CoordinatingNode coordinatingNode(MNConfiguration configuration) {
     return new CoordinatingNode() {
 
       @Override
@@ -112,7 +112,7 @@ public class MemberNodeApplication<T extends MemberNodeConfiguration> extends Ap
    * Returns a Node representing this installation, based on the provided configuration.
    * TODO: extract config
    */
-  private Node self(MemberNodeConfiguration configuration) {
+  private Node self(MNConfiguration configuration) {
     // nonsense for now
     return Node.builder()
       .addSubject(Subject.builder().withValue("CN=GBIFS Member Node").build())

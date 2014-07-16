@@ -3,10 +3,10 @@ package org.gbif.d1.mn.service;
 import org.gbif.d1.mn.auth.AuthorizationManager;
 import org.gbif.d1.mn.backend.MNBackend;
 
-import org.dataone.ns.service.apis.v1.MemberNodeAuthorization;
-import org.dataone.ns.service.apis.v1.MemberNodeRead;
-import org.dataone.ns.service.apis.v1.MemberNodeReplication;
-import org.dataone.ns.service.apis.v1.MemberNodeStorage;
+import org.dataone.ns.service.apis.v1.MNAuthorization;
+import org.dataone.ns.service.apis.v1.MNRead;
+import org.dataone.ns.service.apis.v1.MNReplication;
+import org.dataone.ns.service.apis.v1.MNStorage;
 import org.dataone.ns.service.types.v1.Node;
 
 /**
@@ -14,21 +14,21 @@ import org.dataone.ns.service.types.v1.Node;
  */
 public class MNServices {
 
-  public static MemberNodeAuthorization authorizationService(Node self, AuthorizationManager authorizationManager,
+  public static MNAuthorization authorizationService(Node self, AuthorizationManager authorizationManager,
     MNBackend backend) {
-    return new AuthorizationService(self, authorizationManager, backend);
+    return new MNAuthorizationImpl(self, authorizationManager, backend);
   }
 
-  public static MemberNodeRead readService(Node self, AuthorizationManager authorizationManager, MNBackend backend) {
-    return new ReadService(self, authorizationManager, backend);
+  public static MNRead readService(Node self, AuthorizationManager authorizationManager, MNBackend backend) {
+    return new MNReadImpl(self, authorizationManager, backend);
   }
 
-  public static MemberNodeReplication replicationService(Node self, AuthorizationManager authorizationManager,
+  public static MNReplication replicationService(Node self, AuthorizationManager authorizationManager,
     MNBackend backend) {
     return new ReplicationService(self, authorizationManager, backend);
   }
 
-  public static MemberNodeStorage
+  public static MNStorage
     storageService(Node self, AuthorizationManager authorizationManager, MNBackend backend) {
     return new StorageService(self, authorizationManager, backend);
   }

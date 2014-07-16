@@ -5,7 +5,7 @@ import org.gbif.d1.mn.backend.MNBackend;
 
 import java.util.Date;
 
-import org.dataone.ns.service.apis.v1.MemberNodeAuthorization;
+import org.dataone.ns.service.apis.v1.MNAuthorization;
 import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Node;
 import org.dataone.ns.service.types.v1.Permission;
@@ -23,15 +23,15 @@ import org.slf4j.LoggerFactory;
  * 
  * @see <a href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">DataONE Member Node API</a>
  */
-final class AuthorizationService implements MemberNodeAuthorization {
+final class MNAuthorizationImpl implements MNAuthorization {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AuthorizationService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MNAuthorizationImpl.class);
 
   private final AuthorizationManager authorizationManager;
   private final MNBackend backend;
   private final Node self;
 
-  AuthorizationService(Node self, AuthorizationManager authorizationManager, MNBackend backend) {
+  MNAuthorizationImpl(Node self, AuthorizationManager authorizationManager, MNBackend backend) {
     this.backend = backend;
     this.self = self;
     this.authorizationManager = authorizationManager;

@@ -7,7 +7,7 @@ import java.io.InputStream;
 import java.util.Date;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.dataone.ns.service.apis.v1.MemberNodeRead;
+import org.dataone.ns.service.apis.v1.MNRead;
 import org.dataone.ns.service.exceptions.InsufficientResources;
 import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.InvalidToken;
@@ -39,9 +39,9 @@ import org.slf4j.LoggerFactory;
  * 
  * @see <a href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">DataONE Member Node API</a>
  */
-final class ReadService implements MemberNodeRead {
+final class MNReadImpl implements MNRead {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ReadService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MNReadImpl.class);
   private static final String DATE_FORMAT = "HH:mm:ss Z 'on' EEE, MMM d, yyyy";
   @VisibleForTesting
   static final DateTimeFormatter DTF = DateTimeFormat.forPattern(DATE_FORMAT); // threadsafe
@@ -50,7 +50,7 @@ final class ReadService implements MemberNodeRead {
   private final MNBackend backend;
   private final Node self;
 
-  ReadService(Node self, AuthorizationManager authorizationManager, MNBackend backend) {
+  MNReadImpl(Node self, AuthorizationManager authorizationManager, MNBackend backend) {
     this.backend = backend;
     this.self = self;
     this.authorizationManager = authorizationManager;

@@ -3,7 +3,7 @@ package org.gbif.d1.mn.service;
 import org.gbif.d1.mn.auth.AuthorizationManager;
 import org.gbif.d1.mn.backend.MNBackend;
 
-import org.dataone.ns.service.apis.v1.MemberNodeReplication;
+import org.dataone.ns.service.apis.v1.MNReplication;
 import org.dataone.ns.service.exceptions.InsufficientResources;
 import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.InvalidToken;
@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @see <a href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">DataONE Member Node API</a>
  */
-final class ReplicationService implements MemberNodeReplication {
+final class ReplicationService implements MNReplication {
 
   private static final Logger LOG = LoggerFactory.getLogger(ReplicationService.class);
 

@@ -5,10 +5,10 @@ import java.util.concurrent.TimeUnit;
 
 import com.sun.jersey.api.client.WebResource;
 import io.dropwizard.testing.junit.ResourceTestRule;
-import org.dataone.ns.service.apis.v1.MemberNodeAuthorization;
-import org.dataone.ns.service.apis.v1.MemberNodeRead;
-import org.dataone.ns.service.apis.v1.MemberNodeReplication;
-import org.dataone.ns.service.apis.v1.MemberNodeStorage;
+import org.dataone.ns.service.apis.v1.MNAuthorization;
+import org.dataone.ns.service.apis.v1.MNRead;
+import org.dataone.ns.service.apis.v1.MNReplication;
+import org.dataone.ns.service.apis.v1.MNStorage;
 import org.dataone.ns.service.types.v1.Session;
 import org.hamcrest.MatcherAssert;
 import org.joda.time.DateTime;
@@ -30,10 +30,10 @@ public class MemberNodeResourceTest {
   private static final String BASE_URL = "/mn/v1";
 
   // mock delegates for the resource, which are reset before each test
-  private static final MemberNodeRead read = mock(MemberNodeRead.class);
-  private static final MemberNodeAuthorization authorization = mock(MemberNodeAuthorization.class);
-  private static final MemberNodeStorage storage = mock(MemberNodeStorage.class);
-  private static final MemberNodeReplication replication = mock(MemberNodeReplication.class);
+  private static final MNRead read = mock(MNRead.class);
+  private static final MNAuthorization authorization = mock(MNAuthorization.class);
+  private static final MNStorage storage = mock(MNStorage.class);
+  private static final MNReplication replication = mock(MNReplication.class);
 
   private static final String DATE_FORMAT = "HH:mm:ss Z 'on' EEE, MMM d, yyyy";
   private static final DateTimeFormatter DTF = DateTimeFormat.forPattern(DATE_FORMAT); // threadsafe
