@@ -3,6 +3,7 @@ package org.dataone.ns.service.apis.v1;
 import java.io.InputStream;
 import java.util.Date;
 
+import org.dataone.ns.service.exceptions.ExceptionDetail;
 import org.dataone.ns.service.exceptions.InsufficientResources;
 import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.InvalidToken;
@@ -10,7 +11,6 @@ import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
-import org.dataone.ns.service.exceptions.SynchronizationFailed;
 import org.dataone.ns.service.types.v1.Checksum;
 import org.dataone.ns.service.types.v1.DescribeResponse;
 import org.dataone.ns.service.types.v1.Event;
@@ -31,8 +31,8 @@ import org.dataone.ns.service.types.v1.SystemMetadata;
  * </ul>
  * Implementations are encouraged <strong>not</strong> to throw other runtime exceptions.
  * 
- * @see <a
- *      href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html</a>
+ * @see <a href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">The DataONE Member Node
+ *      specification</a>
  */
 public interface MNRead {
 
@@ -147,5 +147,5 @@ public interface MNRead {
    * @throws InvalidToken if the credentials in the request are not correctly presented
    * @throws NotAuthorized if the credentials presented do not have permission to perform the action
    */
-  boolean synchronizationFailed(Session session, SynchronizationFailed message);
+  boolean synchronizationFailed(Session session, ExceptionDetail message);
 }

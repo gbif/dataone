@@ -8,7 +8,7 @@ import java.util.Date;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.dataone.ns.service.apis.v1.MNRead;
-import org.dataone.ns.service.exceptions.SynchronizationFailed;
+import org.dataone.ns.service.exceptions.ExceptionDetail;
 import org.dataone.ns.service.types.v1.Checksum;
 import org.dataone.ns.service.types.v1.DescribeResponse;
 import org.dataone.ns.service.types.v1.Event;
@@ -99,7 +99,7 @@ final class MNReadImpl implements MNRead {
   }
 
   @Override
-  public boolean synchronizationFailed(Session session, SynchronizationFailed message) {
+  public boolean synchronizationFailed(Session session, ExceptionDetail detail) {
     return false;
   }
 }

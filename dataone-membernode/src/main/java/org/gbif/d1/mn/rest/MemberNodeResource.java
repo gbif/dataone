@@ -1,7 +1,5 @@
 package org.gbif.d1.mn.rest;
 
-import org.gbif.d1.mn.auth.AuthorizationManager;
-import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.rest.exception.DataONE;
 import org.gbif.d1.mn.rest.exception.DataONE.Method;
 import org.gbif.d1.mn.rest.provider.Authenticate;
@@ -9,6 +7,7 @@ import org.gbif.d1.mn.rest.provider.Authenticate;
 import java.io.InputStream;
 import java.util.Date;
 
+import javax.annotation.Nullable;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -23,6 +22,7 @@ import javax.ws.rs.core.MediaType;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.sun.jersey.multipart.FormDataParam;
 import com.sun.jersey.spi.resource.Singleton;
 import org.dataone.ns.service.apis.v1.MNAuthorization;
@@ -30,11 +30,12 @@ import org.dataone.ns.service.apis.v1.MNRead;
 import org.dataone.ns.service.apis.v1.MNReplication;
 import org.dataone.ns.service.apis.v1.MNStorage;
 import org.dataone.ns.service.apis.v1.MemberNode;
+import org.dataone.ns.service.exceptions.ExceptionDetail;
+import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
-import org.dataone.ns.service.exceptions.SynchronizationFailed;
 import org.dataone.ns.service.types.v1.Checksum;
 import org.dataone.ns.service.types.v1.DescribeResponse;
 import org.dataone.ns.service.types.v1.Event;
@@ -52,8 +53,7 @@ import org.dataone.ns.service.types.v1.SystemMetadata;
  * This is a decorator that handles URL mapping and exception handling only delegating all implementation.
  * <p>
  * This is a singleton shared across the incoming request pool and therefore it is a requirement that this be
- * constructed with thread-safe {@link AuthorizationManager} and {@link MNBackend}, which will make this class
- * unconditionally thread-safe.
+ * constructed with thread-safe references, which will make this class unconditionally thread-safe.
  * <p>
  * Not designed for further inheritance, as this implements the full DataONE API.
  * <p>
@@ -77,11 +77,18 @@ public final class MemberNodeResource implements MemberNode {
   private final MNReplication replication;
 
   /**
-   * Constructs a member node with the delegate backend services.
+   * Constructs a member node which will delegate to the provided services.
+   * <p>
+   * <strong>It is a requirement that all parameters are thread-safe</strong>
    * <p>
    * Should any service be null, then any subsequent API call that requires the service will return a
-   * {@link NotImplemented} in accordance with the spec.
+   * {@link NotImplemented} in accordance with the specification. This functionality is enforced by calling
+   * {@link MemberNodeResource#checkIsSupported(Object)}.
    * 
+   * @param read to delegate Tier 1 requests to
+   * @param authorization to delegate Tier 2 requests to
+   * @param storage to delegate Tier 3 requests to
+   * @param replication to delegate Tier 4 requests to
    * @throws NullPointerException if the read service is null - this is the minimum conformance level
    * @throws IllegalStateException if a service is provided that depends on a lower level service which is missing
    */
@@ -96,6 +103,35 @@ public final class MemberNodeResource implements MemberNode {
     this.authorization = authorization;
     this.storage = storage;
     this.replication = replication;
+  }
+
+  /**
+   * Ensure that the provided object reference is not null, indicating that it is supported by this configuration.
+   * 
+   * @param reference an object reference
+   * @return the non-null reference that was validated
+   * @throws NotImplemented If {@code reference} is null
+   */
+  private static <T> T checkIsSupported(T reference) {
+    if (reference == null) {
+      throw new NotImplemented("This node is not configured to support the operation");
+    }
+    return reference;
+  }
+
+  /**
+   * Ensures that an object reference passed as a parameter to the calling method is not null.
+   * 
+   * @param reference an object reference
+   * @param errorMessage the exception message to use if the check fails
+   * @return the non-null reference that was validated
+   * @throws InvalidRequest if {@code reference} is null
+   */
+  private static <T> T checkNotNull(T reference, @Nullable Object errorMessage) {
+    if (reference == null) {
+      throw new NullPointerException(String.valueOf(errorMessage));
+    }
+    return reference;
   }
 
   @PUT
@@ -117,6 +153,9 @@ public final class MemberNodeResource implements MemberNode {
   public Identifier create(@Authenticate Session session, @FormDataParam("pid") Identifier pid,
     @FormDataParam("object") InputStream object, @FormDataParam("sysmeta") SystemMetadata sysmeta) {
     checkIsSupported(storage);
+    checkNotNull(pid, "Form parameter[pid] is required");
+    checkNotNull(pid, "Form parameter[object] is required");
+    checkNotNull(pid, "Form parameter[sysmeta] is required");
     return storage.create(session, pid, object, sysmeta);
   }
 
@@ -142,11 +181,15 @@ public final class MemberNodeResource implements MemberNode {
 
   @POST
   @Path("generate")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
   @DataONE(Method.GENERATE_IDENTIFIER)
   @Timed
   @Override
-  public Identifier generateIdentifier(@Authenticate Session session, String scheme, String fragment) {
+  public Identifier generateIdentifier(@Authenticate Session session, @FormDataParam("scheme") String scheme,
+    @FormDataParam("fragment") String fragment) {
     checkIsSupported(storage);
+    checkNotNull(scheme, "Form parameter[scheme] is required");
+    checkNotNull(fragment, "Form parameter[fragment] is required");
     return storage.generateIdentifier(session, scheme, fragment);
   }
 
@@ -187,6 +230,7 @@ public final class MemberNodeResource implements MemberNode {
   public Checksum getChecksum(@Authenticate Session session, @PathParam("pid") Identifier pid,
     @QueryParam("checksumAlgorithm") String checksumAlgorithm) {
     checkIsSupported(read);
+    checkNotNull(checksumAlgorithm, "Query parameter[checksumAlgorithm] is required");
     return read.getChecksum(session, pid, checksumAlgorithm);
   }
 
@@ -196,9 +240,14 @@ public final class MemberNodeResource implements MemberNode {
   @Timed
   @Override
   public Log getLogRecords(@Authenticate Session session, @QueryParam("fromDate") Date fromDate,
-    @QueryParam("toDate") Date toDate, @QueryParam("event") Event event, @QueryParam("pidFilter") Identifier pidFilter,
-    @QueryParam("start") Integer start, @QueryParam("count") Integer count) {
+    @QueryParam("toDate") Date toDate, @QueryParam("event") Event event,
+    @QueryParam("pidFilter") @Nullable Identifier pidFilter,
+    @QueryParam("start") @Nullable Integer start, @QueryParam("count") @Nullable Integer count) {
     checkIsSupported(read);
+    Lists.newArrayList();
+    checkNotNull(fromDate, "Query parameter[fromDate] is required");
+    checkNotNull(fromDate, "Query parameter[toDate] is required");
+    checkNotNull(fromDate, "Query parameter[eventDate] is required");
     return read.getLogRecords(session, fromDate, toDate, event, pidFilter, start, count);
   }
 
@@ -239,10 +288,11 @@ public final class MemberNodeResource implements MemberNode {
   @Timed
   @Override
   public ObjectList listObjects(@Authenticate Session session, @QueryParam("fromDate") Date fromDate,
-    @QueryParam("toDate") Date toDate, @QueryParam("formatId") String formatId,
-    @QueryParam("replicaStatus") Boolean replicaStatus, @QueryParam("start") Integer start,
-    @QueryParam("count") Integer count) {
+    @QueryParam("toDate") @Nullable Date toDate, @QueryParam("formatId") @Nullable String formatId,
+    @QueryParam("replicaStatus") @Nullable Boolean replicaStatus, @QueryParam("start") @Nullable Integer start,
+    @QueryParam("count") @Nullable Integer count) {
     checkIsSupported(read);
+    checkNotNull(fromDate, "Query parameter[fromDate] is required");
     return read.listObjects(session, fromDate, toDate, formatId, replicaStatus, start, count);
   }
 
@@ -266,6 +316,8 @@ public final class MemberNodeResource implements MemberNode {
   public boolean replicate(@Authenticate Session session, @FormDataParam("sysmeta") SystemMetadata sysmeta,
     @FormDataParam("sourceNode") String sourceNode) {
     checkIsSupported(replication);
+    checkNotNull(sysmeta, "Form parameter[sysmeta] is required");
+    checkNotNull(sourceNode, "Form parameter[sourceNode] is required");
     return replication.replicate(session, sysmeta, sourceNode);
   }
 
@@ -274,20 +326,26 @@ public final class MemberNodeResource implements MemberNode {
   @DataONE(Method.SYNCHRONIZATION_FAILED)
   @Timed
   @Override
-  public boolean synchronizationFailed(@Authenticate Session session, SynchronizationFailed message)
+  public boolean synchronizationFailed(@Authenticate Session session, ExceptionDetail detail)
     throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure {
     checkIsSupported(read);
-    return read.synchronizationFailed(session, message);
+    checkNotNull(detail, "The exception detail is required");
+    return read.synchronizationFailed(session, detail);
   }
 
   @POST
   @Path("dirtySystemMetadata")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
   @DataONE(Method.SYSTEM_METADATA_CHANGED)
   @Timed
   @Override
-  public boolean systemMetadataChanged(@Authenticate Session session, Identifier pid, long serialVersion,
-    Date dateSystemMetadataLastModified) {
+  public boolean systemMetadataChanged(@Authenticate Session session, @FormDataParam("pid") Identifier pid,
+    @FormDataParam("serialVersion") long serialVersion,
+    @FormDataParam("dateSystemMetadataLastModified") Date dateSystemMetadataLastModified) {
     checkIsSupported(authorization);
+    checkNotNull(pid, "Form parameter[pid] is required");
+    checkNotNull(serialVersion, "Form parameter[serialVersion] is required");
+    checkNotNull(dateSystemMetadataLastModified, "Form parameter[dateSystemMetadataLastModified] is required");
     return authorization.systemMetadataChanged(session, pid, serialVersion, dateSystemMetadataLastModified);
   }
 
@@ -301,15 +359,9 @@ public final class MemberNodeResource implements MemberNode {
     @FormDataParam("file") InputStream object, @FormDataParam("newPid") Identifier newPid,
     @FormDataParam("sysmeta") SystemMetadata sysmeta) {
     checkIsSupported(storage);
+    checkNotNull(pid, "Form parameter[file] is required");
+    checkNotNull(pid, "Form parameter[newPid] is required");
+    checkNotNull(pid, "Form parameter[sysmeta] is required");
     return storage.update(session, pid, object, newPid, sysmeta);
-  }
-
-  /**
-   * @throws NotImplemented If service is null
-   */
-  private void checkIsSupported(Object service) {
-    if (service == null) {
-      throw new NotImplemented("This node not configured to support operation");
-    }
   }
 }

@@ -28,8 +28,8 @@ import org.dataone.ns.service.types.v1.SystemMetadata;
  * </ul>
  * Implementations are encouraged <strong>not</strong> to throw other runtime exceptions.
  * 
- * @see <a
- *      href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html</a>
+ * @see <a href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">The DataONE Member Node
+ *      specification</a>
  */
 public interface MNStorage {
 

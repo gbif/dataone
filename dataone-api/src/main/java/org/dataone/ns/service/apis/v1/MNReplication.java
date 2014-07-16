@@ -13,8 +13,8 @@ import org.dataone.ns.service.types.v1.SystemMetadata;
 /**
  * Interface definition for the Tier 4 services.
  * 
- * @see <a
- *      href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html</a>
+ * @see <a href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">The DataONE Member Node
+ *      specification</a>
  */
 public interface MNReplication {
 
@@ -26,11 +26,7 @@ public interface MNReplication {
    * <p>
    * Failure of the operation MUST be indicated by returning an appropriate exception.
    * <p>
-   * Access control for this method MUST be configured to allow calling by Coordinating Nodes. .put(new
-   * Key(Method.REPLICATE, NotImplemented.class), "2150") .put(new Key(Method.REPLICATE, ServiceFailure.class), "2151")
-   * .put(new Key(Method.REPLICATE, NotAuthorized.class), "2152") .put(new Key(Method.REPLICATE, InvalidRequest.class),
-   * "2153") .put(new Key(Method.REPLICATE, InsufficientResources.class), "2154") .put(new Key(Method.REPLICATE,
-   * UnsupportedType.class), "2155") .put(new Key(Method.REPLICATE, InvalidToken.class), "2156")
+   * Access control for this method MUST be configured to allow calling by Coordinating Nodes.
    * 
    * @throws NotAuthorized if the credentials presented do not have permission to perform the action
    * @throws InvalidToken if the credentials in the request are not correctly presented

@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.security.Principal;
 import java.util.List;
 
+import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
 
 /**
@@ -46,7 +47,7 @@ public class InMemoryBackend implements MNBackend {
   }
 
   @Override
-  public SystemMetadata getSystemMetadata(String identifier) {
+  public SystemMetadata getSystemMetadata(Session session, String identifier) {
     // TODO Auto-generated method stub
     return null;
   }

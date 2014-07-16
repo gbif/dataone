@@ -41,7 +41,7 @@ public interface MNAuthorization {
    * authoritative copy from a Coordinating Node. This can be accepted and return immediately provided the
    * implementation intends to perform the operation under normal circumstances.
    * <p>
-   * TODO: should this be able to throw "NotFound" ?
+   * TODO: should this be able to throw "NotFound" ? TR has asked the list...
    * 
    * @return true if the request was accepted
    * @throws NotAuthorized if the credentials presented do not have permission to perform the action
