@@ -9,7 +9,6 @@ import org.dataone.ns.service.apis.v1.MNAuthorization;
 import org.dataone.ns.service.apis.v1.MNRead;
 import org.dataone.ns.service.apis.v1.MNReplication;
 import org.dataone.ns.service.apis.v1.MNStorage;
-import org.dataone.ns.service.types.v1.Session;
 import org.hamcrest.MatcherAssert;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -18,7 +17,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import uk.co.it.modular.hamcrest.date.DateMatchers;
 
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -50,7 +48,7 @@ public class MemberNodeResourceTest {
 
   @Test
   public void testPing() {
-    when(read.ping(any(Session.class))).thenReturn(DTF.print(new DateTime()));
+    when(read.ping()).thenReturn(DTF.print(new DateTime()));
     // if a ping takes longer than 5 secs we're hosed
     String pong = clientResource().path("monitor/ping").get(String.class);
     Date result = DTF.parseDateTime(pong).toDate();

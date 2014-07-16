@@ -166,17 +166,17 @@ public final class MemberNodeResource implements MemberNode {
   @DataONE(Method.GET_CAPABILITIES)
   @Timed
   @Override
-  public Node getCapabilities(@Authenticate Session session) {
+  public Node getCapabilities() {
     checkIsSupported(read);
-    return read.getCapabilities(session);
+    return read.getCapabilities();
   }
 
   // Note: specification dictates /node returns same as /
   @GET
   @Path("node")
   @DataONE(Method.GET_CAPABILITIES)
-  public Node getCapabilitiesWithNodePath(@Authenticate Session session) {
-    return getCapabilities(session);
+  public Node getCapabilitiesWithNodePath() {
+    return getCapabilities();
   }
 
   @GET
@@ -252,9 +252,9 @@ public final class MemberNodeResource implements MemberNode {
   @DataONE(Method.PING)
   @Timed
   @Override
-  public String ping(@Authenticate Session session) {
+  public String ping() {
     checkIsSupported(read);
-    return read.ping(session);
+    return read.ping();
   }
 
   @POST

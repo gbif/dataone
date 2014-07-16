@@ -3,14 +3,30 @@ package org.dataone.ns.service.apis.v1;
 import java.io.InputStream;
 
 import org.dataone.ns.service.exceptions.IdentifierNotUnique;
+import org.dataone.ns.service.exceptions.InsufficientResources;
+import org.dataone.ns.service.exceptions.InvalidRequest;
+import org.dataone.ns.service.exceptions.InvalidSystemMetadata;
 import org.dataone.ns.service.exceptions.InvalidToken;
+import org.dataone.ns.service.exceptions.NotAuthorized;
+import org.dataone.ns.service.exceptions.NotFound;
+import org.dataone.ns.service.exceptions.NotImplemented;
+import org.dataone.ns.service.exceptions.ServiceFailure;
+import org.dataone.ns.service.exceptions.UnsupportedType;
 import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
 
 /**
  * Interface definition for the Tier 3 services.
- * TODO: Used String for Identifier; consider using Identifier instead
+ * <p>
+ * All methods can throw:
+ * <ul>
+ * <li>{@link NotAuthorized} if the credentials presented do not have permission to perform the action</li>
+ * <li>{@link InvalidToken} if the credentials in the request are not correctly presented</li>
+ * <li>{@link ServiceFailure} if the system is unable to service the request</li>
+ * <li>{@link NotImplemented} if the operation is unsupported</li>
+ * </ul>
+ * Implementations are encouraged <strong>not</strong> to throw other runtime exceptions.
  * 
  * @see <a
  *      href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html</a>
@@ -29,21 +45,22 @@ public interface MNStorage {
    * <p>
    * Archived objects can not be un-archived. This behavior may change in future versions of the DataONE API.
    * <p>
-   * Member Nodes MUST check that the caller is authorized to perform this function. If the object does not exist on the
+   * Member Nodes MUST check that the caller is authorized to perform this function. if the object does not exist on the
    * node servicing the request, then an Exceptions.NotFound exception is raised. The message body of the exception
    * SHOULD contain a hint as to the location of the CNRead.resolve() method.
    * 
-   * @throws InvalidToken, ServiceFailure,
-   *         NotAuthorized, NotFound, NotImplemented
+   * @throws NotFound if the DataONE object is not present on this node
    */
   Identifier archive(Session session, Identifier pid);
 
   /**
    * Called by a client to adds a new object to the Member Node.
    * 
-   * @throws IdentifierNotUnique, InsufficientResources,
-   *         InvalidRequest, InvalidSystemMetadata, InvalidToken, NotAuthorized, NotImplemented, ServiceFailure,
-   *         UnsupportedType
+   * @throws IdentifierNotUnique if the identifier already exists within DataONE
+   * @throws InsufficientResources if the system determines that resource are exhausted
+   * @throws InvalidRequest if any argument is null or fails validation
+   * @throws InvalidSystemMetadata if the system metadata is not well formed
+   * @throws UnsupportedType if the supplied object type is not supported
    */
   Identifier create(Session session, Identifier pid, InputStream object, SystemMetadata sysmeta);
 
@@ -58,19 +75,17 @@ public interface MNStorage {
    * object bytes, and in general should do so since a delete operation may be in response to a problem with the object
    * (e.g. it contains malicious content, is inappropriate, or is the subject of a legal request).
    * <p>
-   * If the object does not exist on the node servicing the request, then an Exceptions.NotFound exception is raised.
+   * if the object does not exist on the node servicing the request, then an Exceptions.NotFound exception is raised.
    * The message body of the exception SHOULD contain a hint as to the location of the CNRead.resolve() method.
    * 
-   * @throws InvalidToken, ServiceFailure, NotAuthorized, NotFound,
-   *         NotImplemented
+   * @throws NotFound if the DataONE object is not present on this node
    */
   Identifier delete(Session session, Identifier pid);
 
   /**
    * Given a scheme and optional fragment, generates an identifier with that scheme and fragment that is unique.
    * 
-   * @throws InvalidToken, ServiceFailure,
-   *         NotAuthorized, NotImplemented, InvalidRequest
+   * @throws InvalidRequest if any argument is null or fails validation
    */
   Identifier generateIdentifier(Session session, String scheme, String fragment);
 
@@ -91,9 +106,12 @@ public interface MNStorage {
    * A new, unique Types.SystemMetadata.seriesId may be included when beginning a series, or a series may be extended if
    * the newPid obsoletes the existing pid.
    * 
-   * @throws IdentifierNotUnique,
-   *         InsufficientResources, InvalidRequest, InvalidSystemMetadata, InvalidToken, NotAuthorized, NotImplemented,
-   *         ServiceFailure, UnsupportedType, NotFound
+   * @throws IdentifierNotUnique if the identifier already exists within DataONE
+   * @throws InsufficientResources if the system determines that resource are exhausted
+   * @throws InvalidRequest if any argument is null or fails validation
+   * @throws InvalidSystemMetadata if the system metadata is not well formed
+   * @throws UnsupportedType if the supplied object type is not supported
+   * @throws NotFound if the DataONE object is not present on this node
    */
   Identifier update(Session session, Identifier pid, InputStream object, Identifier newPid, SystemMetadata sysmeta);
 

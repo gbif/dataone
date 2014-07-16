@@ -61,7 +61,7 @@ final class MNReadImpl implements MNRead {
   }
 
   @Override
-  public Node getCapabilities(Session session) {
+  public Node getCapabilities() {
     return null;
   }
 
@@ -94,7 +94,7 @@ final class MNReadImpl implements MNRead {
   }
 
   @Override
-  public String ping(Session session) {
+  public String ping() {
     return null;
   }
 

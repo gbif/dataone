@@ -3,9 +3,13 @@ package org.dataone.ns.service.apis.v1;
 import java.io.InputStream;
 import java.util.Date;
 
+import org.dataone.ns.service.exceptions.InsufficientResources;
 import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.InvalidToken;
+import org.dataone.ns.service.exceptions.NotAuthorized;
+import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.NotImplemented;
+import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.exceptions.SynchronizationFailed;
 import org.dataone.ns.service.types.v1.Checksum;
 import org.dataone.ns.service.types.v1.DescribeResponse;
@@ -19,6 +23,13 @@ import org.dataone.ns.service.types.v1.SystemMetadata;
 
 /**
  * Interface definition for the Tier 1 services.
+ * <p>
+ * All methods can throw:
+ * <ul>
+ * <li>{@link ServiceFailure} if the system is unable to service the request</li>
+ * <li>{@link NotImplemented} if the operation is unsupported</li>
+ * </ul>
+ * Implementations are encouraged <strong>not</strong> to throw other runtime exceptions.
  * 
  * @see <a
  *      href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html</a>
@@ -31,26 +42,26 @@ public interface MNRead {
    * are typically returned in a HTTP HEAD request: the date late modified, the size of the object, the type of the
    * object (the SystemMetadata.formatId).
    * 
-   * @throws throws InvalidToken, NotAuthorized, NotImplemented,
-   *         ServiceFailure, NotFound
+   * @throws InvalidToken if the credentials in the request are not correctly presented
+   * @throws NotAuthorized if the credentials presented do not have permission to perform the action
+   * @throws NotFound if the DataONE object is not present on this node
    */
   DescribeResponse describe(Session session, Identifier pid);
 
   /**
    * Retrieve an object identified by id from the node.
    * 
-   * @throws throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure,
-   *         NotFound,
-   *         InsufficientResources
+   * @throws InvalidToken if the credentials in the request are not correctly presented
+   * @throws NotAuthorized if the credentials presented do not have permission to perform the action
+   * @throws NotFound if the DataONE object is not present on this node
+   * @throws InsufficientResources if the system determines that resource are exhausted
    */
   InputStream get(Session session, Identifier pid);
 
   /**
    * Returns a document describing the capabilities of the Member Node.
-   * 
-   * @throws throws NotImplemented, ServiceFailure
    */
-  Node getCapabilities(Session session);
+  Node getCapabilities();
 
   /**
    * Returns {@link Checksum} for the specified object using an accepted hashing algorithm. The result is used to
@@ -58,9 +69,10 @@ public interface MNRead {
    * returned checksum is valid for the referenced object either by computing it on the fly or by using a cached value
    * that is certain to be correct.
    * 
-   * @throws InvalidRequest, InvalidToken,
-   *         NotAuthorized,
-   *         NotImplemented, ServiceFailure, NotFound
+   * @throws InvalidRequest if any argument is null or fails validation
+   * @throws InvalidToken if the credentials in the request are not correctly presented
+   * @throws NotAuthorized if the credentials presented do not have permission to perform the action
+   * @throws NotFound if the DataONE object is not present on this node
    */
   Checksum getChecksum(Session session, Identifier pid, String checksumAlgorithm);
 
@@ -68,7 +80,9 @@ public interface MNRead {
    * Retrieve log information from the Member Node for the specified slice parameters. Log entries will only return
    * PIDs.
    * 
-   * @throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented, ServiceFailure
+   * @throws InvalidRequest if any argument is null or fails validation
+   * @throws InvalidToken if the credentials in the request are not correctly presented
+   * @throws NotAuthorized if the credentials presented do not have permission to perform the action
    */
   Log getLogRecords(Session session, Date fromDate, Date toDate, Event event, Identifier pidFilter, Integer start,
     Integer count);
@@ -79,16 +93,20 @@ public interface MNRead {
    * of the object, and differs from a call to GET /object in that it should be logged as a replication event rather
    * than a read event on that object.
    * 
-   * @throws InvalidToken, NotAuthorized, NotImplemented,
-   *         ServiceFailure, NotFound, InsufficientResources
+   * @throws InvalidToken if the credentials in the request are not correctly presented
+   * @throws NotAuthorized if the credentials presented do not have permission to perform the action
+   * @throws NotFound if the DataONE object is not present on this node
+   * @throws InsufficientResources if the system determines that resource are exhausted
    */
   InputStream getReplica(Session session, Identifier pid);
 
   /**
    * Describes the object identified by id by returning the associated system metadata object.
    * 
-   * @throws throws NotAuthorized, NotFound, ServiceFailure,
-   *         InvalidToken, InsufficientResources
+   * @throws NotAuthorized if the credentials presented do not have permission to perform the action
+   * @throws NotFound if the DataONE object is not present on this node
+   * @throws InvalidToken if the credentials in the request are not correctly presented
+   * @throws InsufficientResources if the system determines that resource are exhausted
    */
   SystemMetadata getSystemMetadata(Session session, Identifier pid);
 
@@ -101,13 +119,15 @@ public interface MNRead {
    * by indicating the starting index of the response (where 0 is the index of the first item) and the count of elements
    * to be returned.
    * <p>
-   * Note that date time precision is limited to one millisecond. If no timezone information is provided, the UTC will
+   * Note that date time precision is limited to one millisecond. if no timezone information is provided, the UTC will
    * be assumed.
    * <p>
    * Access control for this method MUST be configured to allow calling by Coordinating Nodes and MAY be configured to
    * allow more general access.
    * 
-   * @throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented, ServiceFailure
+   * @throws InvalidRequest if any argument is null or fails validation
+   * @throws InvalidToken if the credentials in the request are not correctly presented
+   * @throws NotAuthorized if the credentials presented do not have permission to perform the action
    */
   ObjectList listObjects(Session session, Date fromDate, Date toDate, String formatId, Boolean replicaStatus,
     Integer start, Integer count);
@@ -115,18 +135,17 @@ public interface MNRead {
   /**
    * Returns a human readable form of the time for easy debugging since the specification is ambiguous.
    * 
-   * @throws NotImplemented, ServiceFailure, InsufficientResources
+   * @throws InsufficientResources if the system determines that resource are exhausted
    */
-  String ping(Session session);
+  String ping();
 
   /**
    * This is a callback method used by a CN to indicate to a MN that it cannot complete synchronization of the science
    * metadata identified by pid. When called, the MN should take steps to record the problem description and notify an
    * administrator or the data owner of the issue.
    * 
-   * @throws InvalidToken, NotAuthorized,
-   *         NotImplemented,
-   *         ServiceFailure
+   * @throws InvalidToken if the credentials in the request are not correctly presented
+   * @throws NotAuthorized if the credentials presented do not have permission to perform the action
    */
   boolean synchronizationFailed(Session session, SynchronizationFailed message);
 }
