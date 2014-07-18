@@ -107,7 +107,7 @@ class DetailCodes {
     .put(new Key(Method.LIST_OBJECTS, NotImplemented.class), "1560")
     .put(new Key(Method.LIST_OBJECTS, ServiceFailure.class), "1580")
     .put(new Key(Method.LIST_OBJECTS, InvalidToken.class), "1530")
-    // .put(new Key(Method.LIST_OBJECTS, NotImplemented.class), "1521")
+    .put(new Key(Method.LIST_OBJECTS, NotImplemented.class), "1521")
 
     .put(new Key(Method.SYNCHRONIZATION_FAILED, NotImplemented.class), "2160")
     .put(new Key(Method.SYNCHRONIZATION_FAILED, ServiceFailure.class), "2161")
@@ -119,6 +119,7 @@ class DetailCodes {
     .put(new Key(Method.SYSTEM_METADATA_CHANGED, InvalidToken.class), "1332")
     .put(new Key(Method.SYSTEM_METADATA_CHANGED, ServiceFailure.class), "1333")
     .put(new Key(Method.SYSTEM_METADATA_CHANGED, InvalidRequest.class), "1334")
+    .put(new Key(Method.SYSTEM_METADATA_CHANGED, NotFound.class), "1335") // TODO: verify this is correct behavior
 
     .put(new Key(Method.GET_REPLICA, NotImplemented.class), "2180")
     .put(new Key(Method.GET_REPLICA, ServiceFailure.class), "2181")
