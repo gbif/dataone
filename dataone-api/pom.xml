@@ -60,6 +60,7 @@
           <extension>true</extension>
           <!-- Important! Deletes any other source code in directory by design -->
           <removeOldOutput>true</removeOldOutput>
+          <forceRegenerate>true</forceRegenerate>
           <generateDirectory>${project.basedir}/src/main/java-generated</generateDirectory>
           <args>
             <arg>-Ximmutable</arg>
