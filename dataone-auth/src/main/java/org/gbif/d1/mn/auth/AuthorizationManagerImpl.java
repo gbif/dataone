@@ -87,6 +87,8 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
     Preconditions.checkNotNull(identifier.getValue(), "An identifier must be provided");
     Preconditions.checkNotNull(permission, "A permission must be provided");
 
+    // TODO: make debug
+    LOG.info("Checking permission for {}", identifier.getValue());
     SystemMetadata sysMetadata = systemMetadataProvider.getSystemMetadata(session, identifier.getValue());
     if (sysMetadata == null) {
       throw new NotFound("Cannot perform action since object not found", identifier.getValue());

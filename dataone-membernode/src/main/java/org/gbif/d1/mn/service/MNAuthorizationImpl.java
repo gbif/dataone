@@ -3,8 +3,7 @@ package org.gbif.d1.mn.service;
 import org.gbif.d1.mn.auth.AuthorizationManager;
 import org.gbif.d1.mn.backend.MNBackend;
 
-import java.util.Date;
-
+import com.google.common.base.Preconditions;
 import org.dataone.ns.service.apis.v1.MNAuthorization;
 import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Node;
@@ -28,23 +27,15 @@ final class MNAuthorizationImpl implements MNAuthorization {
   private static final Logger LOG = LoggerFactory.getLogger(MNAuthorizationImpl.class);
 
   private final AuthorizationManager authorizationManager;
-  private final MNBackend backend;
-  private final Node self;
 
-  MNAuthorizationImpl(Node self, AuthorizationManager authorizationManager, MNBackend backend) {
-    this.backend = backend;
-    this.self = self;
+  MNAuthorizationImpl(AuthorizationManager authorizationManager) {
+    Preconditions.checkNotNull(authorizationManager, "An authorization manager is required");
     this.authorizationManager = authorizationManager;
   }
 
   @Override
-  public boolean isAuthorized(Session session, Identifier pid, Permission action) {
-    return false;
-  }
-
-  @Override
-  public boolean systemMetadataChanged(Session session, Identifier pid, long serialVersion,
-    Date dateSystemMetadataLastModified) {
-    return false;
+  public boolean isAuthorized(Session session, Identifier identifier, Permission action) {
+    authorizationManager.checkIsAuthorized(session, identifier, action);
+    return true;
   }
 }

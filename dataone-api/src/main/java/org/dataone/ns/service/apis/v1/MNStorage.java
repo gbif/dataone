@@ -62,7 +62,7 @@ public interface MNStorage {
    * @throws InvalidSystemMetadata if the system metadata is not well formed
    * @throws UnsupportedType if the supplied object type is not supported
    */
-  Identifier create(Session session, Identifier pid, InputStream object, SystemMetadata sysmeta);
+  Identifier create(Session session, String pid, InputStream object, SystemMetadata sysmeta);
 
   /**
    * Deletes an object managed by DataONE from the Member Node. Member Nodes MUST check that the caller (typically a

@@ -14,22 +14,19 @@ import org.dataone.ns.service.types.v1.Node;
  */
 public class MNServices {
 
-  public static MNAuthorization authorizationService(Node self, AuthorizationManager authorizationManager,
-    MNBackend backend) {
-    return new MNAuthorizationImpl(self, authorizationManager, backend);
+  public static MNAuthorization authorizationService(AuthorizationManager auth) {
+    return new MNAuthorizationImpl(auth);
   }
 
-  public static MNRead readService(Node self, AuthorizationManager authorizationManager, MNBackend backend) {
-    return new MNReadImpl(self, authorizationManager, backend);
+  public static MNRead readService(Node self, AuthorizationManager auth, MNBackend backend) {
+    return new MNReadImpl(self, auth, backend);
   }
 
-  public static MNReplication replicationService(Node self, AuthorizationManager authorizationManager,
-    MNBackend backend) {
-    return new ReplicationService(self, authorizationManager, backend);
+  public static MNReplication replicationService(AuthorizationManager auth) {
+    return new ReplicationService(auth);
   }
 
-  public static MNStorage
-    storageService(Node self, AuthorizationManager authorizationManager, MNBackend backend) {
-    return new StorageService(self, authorizationManager, backend);
+  public static MNStorage storageService(AuthorizationManager auth, MNBackend backend) {
+    return new StorageService(auth, backend);
   }
 }

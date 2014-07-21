@@ -1,7 +1,4 @@
-package org.gbif.d1.mn.health;
-
-import org.gbif.d1.mn.backend.Health;
-import org.gbif.d1.mn.backend.MNBackend;
+package org.gbif.d1.mn.backend;
 
 import com.codahale.metrics.health.HealthCheck;
 

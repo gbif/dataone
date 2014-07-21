@@ -78,9 +78,9 @@ final class MNReadImpl implements MNRead {
   }
 
   @Override
-  public InputStream get(Session session, Identifier identifier) {
+  public InputStream get(Session session, String pid) {
     // TODO add logging
-    return getAsStream(session, identifier);
+    return getAsStream(session, Identifier.builder().withValue(pid).build());
   }
 
   @Override

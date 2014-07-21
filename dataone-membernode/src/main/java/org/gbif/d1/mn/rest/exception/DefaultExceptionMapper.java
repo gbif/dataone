@@ -52,6 +52,8 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable> {
       // all exceptions are coorced to DataONE exceptions for serialization
       DataONEException d1e = coerce(exception);
 
+      LOG.info("Returning error", d1e);
+
       // inspect the method annotation and lookup the detailCode for the provided "exception / method" pair
       DataONE dataONE = uriInfo.getMatchedMethod().getAnnotation(DataONE.class);
       String detailCode = detailCode(dataONE, d1e);

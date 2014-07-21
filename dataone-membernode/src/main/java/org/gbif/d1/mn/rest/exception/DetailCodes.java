@@ -107,7 +107,6 @@ class DetailCodes {
     .put(new Key(Method.LIST_OBJECTS, NotImplemented.class), "1560")
     .put(new Key(Method.LIST_OBJECTS, ServiceFailure.class), "1580")
     .put(new Key(Method.LIST_OBJECTS, InvalidToken.class), "1530")
-    .put(new Key(Method.LIST_OBJECTS, NotImplemented.class), "1521")
 
     .put(new Key(Method.SYNCHRONIZATION_FAILED, NotImplemented.class), "2160")
     .put(new Key(Method.SYNCHRONIZATION_FAILED, ServiceFailure.class), "2161")

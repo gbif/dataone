@@ -56,7 +56,7 @@ public interface MNRead {
    * @throws NotFound if the DataONE object is not present on this node
    * @throws InsufficientResources if the system determines that resource are exhausted
    */
-  InputStream get(Session session, Identifier pid);
+  InputStream get(Session session, String pid);
 
   /**
    * Returns a document describing the capabilities of the Member Node.

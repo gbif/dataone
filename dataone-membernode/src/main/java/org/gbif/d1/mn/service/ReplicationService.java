@@ -4,13 +4,6 @@ import org.gbif.d1.mn.auth.AuthorizationManager;
 import org.gbif.d1.mn.backend.MNBackend;
 
 import org.dataone.ns.service.apis.v1.MNReplication;
-import org.dataone.ns.service.exceptions.InsufficientResources;
-import org.dataone.ns.service.exceptions.InvalidRequest;
-import org.dataone.ns.service.exceptions.InvalidToken;
-import org.dataone.ns.service.exceptions.NotAuthorized;
-import org.dataone.ns.service.exceptions.NotImplemented;
-import org.dataone.ns.service.exceptions.ServiceFailure;
-import org.dataone.ns.service.exceptions.UnsupportedType;
 import org.dataone.ns.service.types.v1.Node;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
@@ -32,18 +25,15 @@ final class ReplicationService implements MNReplication {
   private static final Logger LOG = LoggerFactory.getLogger(ReplicationService.class);
 
   private final AuthorizationManager authorizationManager;
-  private final MNBackend backend;
-  private final Node self;
 
-  ReplicationService(Node self, AuthorizationManager authorizationManager, MNBackend backend) {
-    this.backend = backend;
-    this.self = self;
+  ReplicationService(AuthorizationManager authorizationManager) {
     this.authorizationManager = authorizationManager;
   }
 
   @Override
-  public boolean replicate(Session session, SystemMetadata sysmeta, String sourceNode) throws NotImplemented,
-    ServiceFailure, NotAuthorized, InvalidRequest, InvalidToken, InsufficientResources, UnsupportedType {
-    return false;
+  public boolean replicate(Session session, SystemMetadata sysmeta, String sourceNode) {
+    // TODO: what authorization
+    // TODO: trigger a replicate operation
+    return true;
   }
 }

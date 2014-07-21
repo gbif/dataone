@@ -3,6 +3,7 @@ package org.gbif.d1.mn.rest;
 import org.gbif.d1.mn.rest.exception.DataONE;
 import org.gbif.d1.mn.rest.exception.DataONE.Method;
 import org.gbif.d1.mn.rest.provider.Authenticate;
+import org.gbif.d1.mn.util.D1Preconditions;
 
 import java.io.InputStream;
 import java.util.Date;
@@ -46,8 +47,8 @@ import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
 
-import static org.gbif.d1.mn.rest.D1Preconditions.checkIsSupported;
-import static org.gbif.d1.mn.rest.D1Preconditions.checkNotNull;
+import static org.gbif.d1.mn.util.D1Preconditions.checkIsSupported;
+import static org.gbif.d1.mn.util.D1Preconditions.checkNotNull;
 
 /**
  * A Tier 4 RESTful Member Node implementation.
@@ -124,7 +125,7 @@ public final class MemberNodeResource implements MemberNode {
   @DataONE(Method.CREATE)
   @Timed
   @Override
-  public Identifier create(@Authenticate Session session, @FormDataParam("pid") Identifier pid,
+  public Identifier create(@Authenticate Session session, @FormDataParam("pid") String pid,
     @FormDataParam("object") InputStream object, @FormDataParam("sysmeta") SystemMetadata sysmeta) {
     checkIsSupported(storage);
     checkNotNull(pid, "Form parameter[pid] is required");
@@ -173,7 +174,7 @@ public final class MemberNodeResource implements MemberNode {
   @DataONE(Method.GET)
   @Timed
   @Override
-  public InputStream get(@Authenticate Session session, @PathParam("pid") Identifier pid) {
+  public InputStream get(@Authenticate Session session, @PathParam("pid") String pid) {
     checkIsSupported(read);
     return read.get(session, pid);
   }
@@ -215,8 +216,8 @@ public final class MemberNodeResource implements MemberNode {
   @Override
   public Log getLogRecords(@Authenticate Session session, @QueryParam("fromDate") Date fromDate,
     @QueryParam("toDate") Date toDate, @QueryParam("event") Event event,
-    @QueryParam("pidFilter") @Nullable Identifier pidFilter,
-    @QueryParam("start") @Nullable Integer start, @QueryParam("count") @Nullable Integer count) {
+    @QueryParam("pidFilter") @Nullable Identifier pidFilter, @QueryParam("start") @Nullable Integer start,
+    @QueryParam("count") @Nullable Integer count) {
     checkIsSupported(read);
     Lists.newArrayList();
     checkNotNull(fromDate, "Query parameter[fromDate] is required");
@@ -320,8 +321,22 @@ public final class MemberNodeResource implements MemberNode {
     checkNotNull(pid, "Form parameter[pid] is required");
     checkNotNull(serialVersion, "Form parameter[serialVersion] is required");
     checkNotNull(dateSystemMetadataLastModified, "Form parameter[dateSystemMetadataLastModified] is required");
-    return authorization.systemMetadataChanged(session, pid, serialVersion, dateSystemMetadataLastModified);
+    return read.systemMetadataChanged(session, pid, serialVersion, dateSystemMetadataLastModified);
   }
+
+// @GET
+// @Path("test")
+// public String test(@Context HttpServletRequest request) {
+// try {
+// X509Certificate[] certs = (X509Certificate[]) request.getAttribute("javax.servlet.request.X509Certificate");
+// System.out.println(certs.length);
+// System.out.println(certs[0].getSubjectDN());
+// return "P: " + certs[0].getSubjectDN();
+// } catch (Exception e) {
+// e.printStackTrace();
+// return "nope";
+// }
+// }
 
   @PUT
   @Path("object/{pid}")

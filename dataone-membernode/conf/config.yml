@@ -10,6 +10,6 @@ server:
       keyStorePassword: password
       trustStorePath: conf/certificates/truststore.jks
       trustStorePassword: password
-      needClientAuth: false
+      needClientAuth: true
       wantClientAuth: true
 

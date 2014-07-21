@@ -2,9 +2,9 @@ package org.gbif.d1.mn;
 
 import org.gbif.d1.mn.auth.AuthorizationManager;
 import org.gbif.d1.mn.auth.AuthorizationManagers;
+import org.gbif.d1.mn.backend.BackendHealthCheck;
 import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.backend.memory.InMemoryBackend;
-import org.gbif.d1.mn.health.BackendHealthCheck;
 import org.gbif.d1.mn.rest.MemberNodeResource;
 import org.gbif.d1.mn.rest.exception.DefaultExceptionMapper;
 import org.gbif.d1.mn.rest.provider.SessionProvider;
@@ -71,15 +71,15 @@ public class MNApplication<T extends MNConfiguration> extends Application<T> {
     AuthorizationManager auth = AuthorizationManagers.newAuthorizationManager(backend, cn, self);
     environment.jersey().register(new MemberNodeResource(
       MNServices.readService(self, auth, backend),
-      MNServices.authorizationService(self, auth, backend),
-      MNServices.storageService(self, auth, backend),
-      MNServices.replicationService(self, auth, backend)));
+      MNServices.authorizationService(auth),
+      MNServices.storageService(auth, backend),
+      MNServices.replicationService(auth)));
 
     // health checks
     environment.healthChecks().register("backend", new BackendHealthCheck(backend));
   }
 
-  // TODO: implement
+  // TODO: implement a CN client
   private CoordinatingNode coordinatingNode(MNConfiguration configuration) {
     return new CoordinatingNode() {
 
@@ -91,7 +91,7 @@ public class MNApplication<T extends MNConfiguration> extends Application<T> {
   }
 
   /**
-   * Strips the default Exception handling.
+   * Removes all instances of {@link ExceptionMapper} from the environment.
    */
   private void removeAllExceptionMappers(JerseyEnvironment environment) {
     ResourceConfig jrConfig = environment.getResourceConfig();
@@ -102,7 +102,6 @@ public class MNApplication<T extends MNConfiguration> extends Application<T> {
         keysToRemove.add(s);
       }
     }
-
     for (Object s : keysToRemove) {
       dwSingletons.remove(s);
     }
