@@ -13,9 +13,9 @@ public class D1Throwables {
   private static final String DEFAULT_SERVICE_FAILURE_MESSAGE = "Unexpected service failure";
 
   /**
-   * Propagtes the exception as is if it is a DataONEException, otherwise throws a {@link ServiceFailure} with the
+   * Propagates the exception as is if it is a DataONEException, otherwise throws a {@link ServiceFailure} with the
    * provided text or some default text if null.
-   * 
+   *
    * @param throwable The cause
    * @param errorMessage The optional message to use for a service failure
    */

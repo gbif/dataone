@@ -3,6 +3,8 @@ package org.gbif.d1.mn.service;
 import org.gbif.d1.mn.auth.AuthorizationManager;
 import org.gbif.d1.mn.backend.MNBackend;
 
+import com.google.common.base.Preconditions;
+import com.google.common.eventbus.EventBus;
 import org.dataone.ns.service.apis.v1.MNReplication;
 import org.dataone.ns.service.types.v1.Node;
 import org.dataone.ns.service.types.v1.Session;
@@ -25,15 +27,23 @@ final class ReplicationService implements MNReplication {
   private static final Logger LOG = LoggerFactory.getLogger(ReplicationService.class);
 
   private final AuthorizationManager authorizationManager;
+  private final EventBus eventBus;
 
-  ReplicationService(AuthorizationManager authorizationManager) {
+  public ReplicationService(AuthorizationManager authorizationManager, EventBus eventBus) {
     this.authorizationManager = authorizationManager;
+    this.eventBus = eventBus;
   }
 
   @Override
   public boolean replicate(Session session, SystemMetadata sysmeta, String sourceNode) {
-    // TODO: what authorization
-    // TODO: trigger a replicate operation
+    Preconditions.checkNotNull(sysmeta, "System metadata is required");
+    Preconditions.checkNotNull(sysmeta.getIdentifier(), "Identifier is required in the system metadata");
+    Preconditions.checkNotNull(sysmeta.getIdentifier().getValue(), "Identifier is required in the system metadata");
+    Preconditions.checkNotNull(sourceNode, "SourceNode is required");
+
+    // TODO: what about authorization?
+    // TODO: what do we do for the sourceNode stuff?
+    eventBus.post(new ReplicateEvent(sysmeta.getIdentifier().getValue(), sourceNode));
     return true;
   }
 }

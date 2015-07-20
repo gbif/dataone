@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.ext.Provider;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.sun.jersey.core.spi.component.ComponentContext;
 import com.sun.jersey.core.spi.component.ComponentScope;
@@ -33,20 +34,23 @@ public final class SessionProvider implements InjectableProvider<Authenticate, T
     private final HttpServletRequest request;
 
     private SessionInjectable(HttpServletRequest request) {
+      Preconditions.checkNotNull("Request cannot be null", request);
       this.request = request;
     }
 
     /**
-     * Provides the new session built from the certificate in the request, or throws an exception.
+     * Provides the new session built from the certificate in the request, or throws an exception. Exception throwing
+     * behavior is provided by {@link CertificateUtils}.
      * 
      * @throws InvalidToken Should it be impossible to create a session from the given request
-     * @throws NullPointerException If the request is null
      */
     @Override
     public Session getValue() {
       Session session = certificateUtils.newSession(request);
       if (session != null) { // cannot be null today, but future proof
         LOG.info("Successfully authenticated subject[{}]", session.getSubject());
+      } else {
+        throw new InvalidToken("Unable to extract certificate from request");
       }
       return session;
     }

@@ -21,7 +21,7 @@ import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.exceptions.UnsupportedType;
 
 /**
- * Utilities to determine the detailCode for exceptions.
+ * Utilities to determine the DataONE detailCode for exceptions.
  * <p>
  * This class hides a lot of complexity that would otherwise be scattered around code by providing a simple lookup
  * facility for the required detail code depending on the method of execution. Methods can simple be annotated with

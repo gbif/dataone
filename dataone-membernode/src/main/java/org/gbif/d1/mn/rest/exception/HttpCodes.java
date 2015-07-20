@@ -21,7 +21,7 @@ import org.dataone.ns.service.exceptions.UnsupportedType;
 import org.dataone.ns.service.exceptions.VersionMismatch;
 
 /**
- * Utilities to determine the HTTP code for exceptions.
+ * HTTP codes for raised exceptions.
  */
 class HttpCodes {
 
@@ -40,7 +40,6 @@ class HttpCodes {
     .put(ServiceFailure.class, 500)
     .put(UnsupportedMetadataType.class, 400)
     .put(UnsupportedType.class, 400)
-    .put(SynchronizationFailed.class, 0) // TODO: This is not a valid HTTP code!
     .put(VersionMismatch.class, 409)
     .build();
 

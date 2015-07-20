@@ -11,6 +11,7 @@ import com.google.common.base.Objects;
 
 /**
  * The container object suitable for serializing exceptions over the wire.
+ * TODO: make this immutable maintaining JAXB support
  */
 @XmlRootElement(name = "error")
 @XmlAccessorType(XmlAccessType.FIELD)

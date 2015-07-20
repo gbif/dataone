@@ -19,7 +19,13 @@ import org.slf4j.LoggerFactory;
 /**
  * Serializes exceptions according to the DataONE specification.
  * <p>
- * Note we inspect annotations on the original target method to populate the detailCode and PID should they not be
+ * The DataONE specification is strict in that there are specific codes that must be set in the response depending on
+ * the method called (sigh).  To stop having to keep a trace within code, this software architecture simply annotates
+ * each method and then if an exception is thrown, this class deals with the handling of reporting the case to DataONE
+ * by inspecting the method annotation.  Thus, the mess is contained within this class, and individual cases don't need
+ * to concern themselves with codes and serialization and can simply throw standard exceptions.
+ * <p>
+ * We inspect annotations on the original target method to populate the detailCode and PID should they not be
  * present in DataONE exceptions, or prefix existing ones with the detail code using dot notation should they already
  * exist. This is in accordance with the DataONE specification.
  */

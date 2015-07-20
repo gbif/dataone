@@ -5,9 +5,12 @@ import org.gbif.d1.mn.auth.AuthorizationManagers;
 import org.gbif.d1.mn.backend.BackendHealthCheck;
 import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.backend.memory.InMemoryBackend;
+import org.gbif.d1.mn.resource.ArchiveResource;
 import org.gbif.d1.mn.rest.MemberNodeResource;
+import org.gbif.d1.mn.rest.TestResource1;
+import org.gbif.d1.mn.rest.TestResource2;
 import org.gbif.d1.mn.rest.exception.DefaultExceptionMapper;
-import org.gbif.d1.mn.rest.provider.SessionProvider;
+import org.gbif.d1.mn.rest.provider.TierSupportFilter;
 import org.gbif.d1.mn.service.MNServices;
 
 import java.util.Set;
@@ -15,8 +18,10 @@ import java.util.Set;
 import javax.ws.rs.ext.ExceptionMapper;
 
 import com.google.common.collect.Sets;
+import com.google.common.eventbus.EventBus;
 import com.sun.jersey.api.core.ResourceConfig;
 import io.dropwizard.Application;
+import io.dropwizard.jersey.DropwizardResourceConfig;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -33,7 +38,7 @@ import org.dataone.ns.service.types.v1.Subject;
  * The main entry point for running the member node.
  * <p>
  * Developers are expected to inherit from this, along with a new configuration object and implement
- * 
+ *
  * @param <T> For the configuration object to support custom backends which require configuration
  */
 public class MNApplication<T extends MNConfiguration> extends Application<T> {
@@ -63,18 +68,17 @@ public class MNApplication<T extends MNConfiguration> extends Application<T> {
 
     // providers
     // TODO: read config here to support overwriting OIDs in certificates
-    environment.jersey().register(SessionProvider.newWithDefaults());
+    // environment.jersey().register(SessionProvider.newWithDefaults());
+
+    environment.jersey().register(new TierSupportFilter(Tier.TIER4)); // todo
 
     // RESTful resources
     CoordinatingNode cn = coordinatingNode(configuration);
     MNBackend backend = getBackend(configuration);
     AuthorizationManager auth = AuthorizationManagers.newAuthorizationManager(backend, cn, self);
-    environment.jersey().register(new MemberNodeResource(
-      MNServices.readService(self, auth, backend),
-      MNServices.authorizationService(auth),
-      MNServices.storageService(auth, backend),
-      MNServices.replicationService(auth)));
-
+    EventBus asyncBus = new EventBus("Asynchronous services"); // decouples long running tasks
+    environment.jersey().register(new ArchiveResource(auth));
+    s
     // health checks
     environment.healthChecks().register("backend", new BackendHealthCheck(backend));
   }

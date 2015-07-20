@@ -3,6 +3,8 @@ package org.gbif.d1.mn.auth;
 import java.util.List;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -15,7 +17,6 @@ import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.AccessPolicy;
 import org.dataone.ns.service.types.v1.AccessRule;
-import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Node;
 import org.dataone.ns.service.types.v1.NodeReference;
 import org.dataone.ns.service.types.v1.NodeType;
@@ -81,17 +82,21 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
   }
 
   @Override
-  public void checkIsAuthorized(Session session, Identifier identifier, Permission permission) {
+  public void checkIsAuthorized(HttpServletRequest request, String id, Permission permission) {
+    checkIsAuthorized(certificateUtils.newSession(request), id, permission);
+
+  }
+
+  @Override
+  public void checkIsAuthorized(Session session, String id, Permission permission) {
     Preconditions.checkNotNull(session, "A session must be provided");
-    Preconditions.checkNotNull(identifier, "An identifier must be provided");
-    Preconditions.checkNotNull(identifier.getValue(), "An identifier must be provided");
+    Preconditions.checkNotNull(id, "An identifier must be provided");
     Preconditions.checkNotNull(permission, "A permission must be provided");
 
-    // TODO: make debug
-    LOG.info("Checking permission for {}", identifier.getValue());
-    SystemMetadata sysMetadata = systemMetadataProvider.getSystemMetadata(session, identifier.getValue());
+    LOG.debug("Checking permission for {}", id);
+    SystemMetadata sysMetadata = systemMetadataProvider.getSystemMetadata(session, id);
     if (sysMetadata == null) {
-      throw new NotFound("Cannot perform action since object not found", identifier.getValue());
+      throw new NotFound("Cannot perform action since object not found", id);
     }
 
     boolean approved = checkIsAuthorized(session, sysMetadata, permission);

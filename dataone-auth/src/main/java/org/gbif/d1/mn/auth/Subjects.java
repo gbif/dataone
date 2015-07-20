@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
  * <p>
  * Methods marked with @VisibleForTesting are not intended to be used outside of this class.
  */
-@ThreadSafe
 final class Subjects {
 
   private static final Logger LOG = LoggerFactory.getLogger(Subjects.class);

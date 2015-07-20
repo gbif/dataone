@@ -12,6 +12,7 @@ import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.eventbus.EventBus;
 import org.dataone.ns.service.apis.v1.MNRead;
 import org.dataone.ns.service.exceptions.ExceptionDetail;
 import org.dataone.ns.service.exceptions.ServiceFailure;
@@ -57,14 +58,16 @@ final class MNReadImpl implements MNRead {
   private final AuthorizationManager authorizationManager;
   private final MNBackend backend;
   private final Node self;
+  private final EventBus eventBus;
 
-  MNReadImpl(Node self, AuthorizationManager authorizationManager, MNBackend backend) {
+  MNReadImpl(Node self, AuthorizationManager authorizationManager, MNBackend backend, EventBus eventBus) {
     Preconditions.checkNotNull(self, "The self Node is required");
     Preconditions.checkNotNull(authorizationManager, "An authorization manager is required");
     Preconditions.checkNotNull(backend, "A backend is required");
     this.backend = backend;
     this.self = self;
     this.authorizationManager = authorizationManager;
+    this.eventBus = eventBus;
   }
 
   @Override
@@ -151,7 +154,9 @@ final class MNReadImpl implements MNRead {
   @Override
   public boolean systemMetadataChanged(Session session, Identifier pid, long serialVersion,
     Date dateSystemMetadataLastModified) {
-    // TODO: trigger a system metadata change asynchronously
+    Preconditions.checkNotNull(pid, "Identifier is required in the system metadata");
+    Preconditions.checkNotNull(pid.getValue(), "Identifier is required in the system metadata");
+    eventBus.post(new SystemMetadataUpdateEvent(pid.getValue()));
     return true;
   }
 
