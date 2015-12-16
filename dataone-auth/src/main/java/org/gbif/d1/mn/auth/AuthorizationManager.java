@@ -44,6 +44,7 @@ public interface AuthorizationManager {
 
   Session checkIsAuthorized(HttpServletRequest request, Permission permission);
 
-  // TODO: remove
-  //void checkIsAuthorized(Session session, String identifier, Permission permission);
+  Session checkIsAuthorized(Session session, Permission permission);
+
+  Session checkIsAuthorized(Session session, String identifier, Permission permission);
 }

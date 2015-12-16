@@ -1,10 +1,10 @@
 package org.gbif.d1.mn.resource;
 
 import org.gbif.d1.mn.auth.AuthorizationManager;
-import org.gbif.d1.mn.rest.exception.DataONE;
-import org.gbif.d1.mn.rest.exception.DataONE.Method;
-import org.gbif.d1.mn.rest.provider.Authenticate;
+import org.gbif.d1.mn.exception.DataONE;
+import org.gbif.d1.mn.exception.DataONE.Method;
 
+import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -14,17 +14,28 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import com.codahale.metrics.annotation.Timed;
-import com.sun.jersey.spi.resource.Singleton;
+import org.dataone.ns.service.exceptions.InvalidToken;
+import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotFound;
+import org.dataone.ns.service.exceptions.NotImplemented;
+import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Permission;
-import org.dataone.ns.service.types.v1.Session;
-
-import static org.gbif.d1.mn.util.D1Preconditions.checkIsSupported;
 
 /**
  * Operations related to the archival (hiding) of objects in DataONE.
- */
+ * <p>
+  * All methods can throw:
+  * <ul>
+  * <li>{@link NotAuthorized} if the credentials presented do not have permission to perform the action</li>
+  * <li>{@link InvalidToken} if the credentials in the request are not correctly presented</li>
+  * <li>{@link ServiceFailure} if the system is unable to service the request</li>
+  * <li>{@link NotImplemented} if the operation is unsupported</li>
+  * </ul>
+  *
+  * @see <a href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">The DataONE Member Node
+  *      specification</a>
+  */
 @Path("/mn/v1/archive")
 @Produces(MediaType.APPLICATION_XML)
 @Singleton

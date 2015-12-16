@@ -2,25 +2,23 @@ package org.gbif.d1.mn;
 
 import org.gbif.d1.mn.auth.AuthorizationManager;
 import org.gbif.d1.mn.auth.AuthorizationManagers;
+import org.gbif.d1.mn.auth.CertificateUtils;
 import org.gbif.d1.mn.backend.BackendHealthCheck;
 import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.backend.memory.InMemoryBackend;
+import org.gbif.d1.mn.provider.SessionProvider;
 import org.gbif.d1.mn.resource.ArchiveResource;
-import org.gbif.d1.mn.rest.MemberNodeResource;
-import org.gbif.d1.mn.rest.TestResource1;
-import org.gbif.d1.mn.rest.TestResource2;
-import org.gbif.d1.mn.rest.exception.DefaultExceptionMapper;
-import org.gbif.d1.mn.rest.provider.TierSupportFilter;
-import org.gbif.d1.mn.service.MNServices;
+import org.gbif.d1.mn.resource.ObjectResource;
+import org.gbif.d1.mn.exception.DefaultExceptionMapper;
+import org.gbif.d1.mn.provider.TierSupportFilter;
 
 import java.util.Set;
-
 import javax.ws.rs.ext.ExceptionMapper;
 
 import com.google.common.collect.Sets;
 import com.google.common.eventbus.EventBus;
-import com.sun.jersey.api.core.ResourceConfig;
 import io.dropwizard.Application;
+import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.jersey.DropwizardResourceConfig;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.setup.Bootstrap;
@@ -56,21 +54,21 @@ public class MNApplication<T extends MNConfiguration> extends Application<T> {
 
   @Override
   public final void initialize(Bootstrap<T> bootstrap) {
+    bootstrap.addBundle(new MultiPartBundle());
   }
 
   @Override
   public final void run(T configuration, Environment environment) {
     Node self = self(configuration);
 
-    // exception handling removes defaults, and adds custom handling
+    // Replace all exception handling with custom handling required by the DataONE specification
     removeAllExceptionMappers(environment.jersey());
     environment.jersey().register(new DefaultExceptionMapper(self.getIdentifier().getValue()));
 
     // providers
     // TODO: read config here to support overwriting OIDs in certificates
-    // environment.jersey().register(SessionProvider.newWithDefaults());
-
-    environment.jersey().register(new TierSupportFilter(Tier.TIER4)); // todo
+    environment.jersey().register(new SessionProvider(CertificateUtils.newInstance()));
+    environment.jersey().register(new TierSupportFilter(Tier.TIER4)); // TODO: read from config
 
     // RESTful resources
     CoordinatingNode cn = coordinatingNode(configuration);
@@ -78,7 +76,8 @@ public class MNApplication<T extends MNConfiguration> extends Application<T> {
     AuthorizationManager auth = AuthorizationManagers.newAuthorizationManager(backend, cn, self);
     EventBus asyncBus = new EventBus("Asynchronous services"); // decouples long running tasks
     environment.jersey().register(new ArchiveResource(auth));
-    s
+    environment.jersey().register(new ObjectResource(auth, backend));
+
     // health checks
     environment.healthChecks().register("backend", new BackendHealthCheck(backend));
   }
@@ -98,7 +97,7 @@ public class MNApplication<T extends MNConfiguration> extends Application<T> {
    * Removes all instances of {@link ExceptionMapper} from the environment.
    */
   private void removeAllExceptionMappers(JerseyEnvironment environment) {
-    ResourceConfig jrConfig = environment.getResourceConfig();
+    DropwizardResourceConfig jrConfig = environment.getResourceConfig();
     Set<Object> dwSingletons = jrConfig.getSingletons();
     Set<Object> keysToRemove = Sets.newHashSet();
     for (Object s : jrConfig.getSingletons()) {

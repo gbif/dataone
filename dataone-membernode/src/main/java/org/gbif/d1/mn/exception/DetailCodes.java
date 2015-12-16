@@ -1,6 +1,6 @@
-package org.gbif.d1.mn.rest.exception;
+package org.gbif.d1.mn.exception;
 
-import org.gbif.d1.mn.rest.exception.DataONE.Method;
+import org.gbif.d1.mn.exception.DataONE.Method;
 
 import java.util.Map;
 

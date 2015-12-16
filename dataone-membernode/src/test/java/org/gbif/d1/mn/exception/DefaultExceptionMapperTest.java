@@ -1,11 +1,13 @@
-package org.gbif.d1.mn.rest.exception;
+package org.gbif.d1.mn.exception;
 
-import org.gbif.d1.mn.rest.exception.DataONE.Method;
+import org.gbif.d1.mn.exception.DataONE;
+import org.gbif.d1.mn.exception.DataONE.Method;
+import org.gbif.d1.mn.exception.DefaultExceptionMapper;
+import org.gbif.d1.mn.exception.DetailCodes;
+import org.gbif.d1.mn.exception.HttpCodes;
 
 import javax.ws.rs.core.Response;
 
-import com.sun.jersey.api.core.ExtendedUriInfo;
-import com.sun.jersey.api.model.AbstractResourceMethod;
 import org.dataone.ns.service.exceptions.DataONEException;
 import org.dataone.ns.service.exceptions.ExceptionDetail;
 import org.dataone.ns.service.exceptions.NotAuthorized;
@@ -13,6 +15,9 @@ import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.exceptions.UnsupportedMetadataType;
+import org.glassfish.jersey.server.ExtendedUriInfo;
+import org.glassfish.jersey.server.model.Invocable;
+import org.glassfish.jersey.server.model.ResourceMethod;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -67,26 +72,15 @@ public class DefaultExceptionMapperTest {
   }
 
   /**
-   * Mocks behavior to simulate returning a method with a parameter annotated with {@link DataONE}.
-   */
-  private ExtendedUriInfo mockAnnotatedWith(Method method) {
-    DataONE annotation = mock(DataONE.class);
-    when(annotation.value()).thenReturn(method);
-    AbstractResourceMethod targetMethod = mock(AbstractResourceMethod.class);
-    when(targetMethod.getAnnotation(DataONE.class)).thenReturn(annotation);
-    ExtendedUriInfo uriInfo = mock(ExtendedUriInfo.class);
-    when(uriInfo.getMatchedMethod()).thenReturn(targetMethod);
-    return uriInfo;
-  }
-
-  /**
    * Tests that the exception mapper builds correctly for the given scenario.
    * <p>
    * Makes use of the {@link DetailCodes} and {@link HttpCodes} which are assumed to be correct.
    */
   private void testExceptionScenario(DefaultExceptionMapper mapper, Method method, DataONEException cause) {
-    mapper.uriInfo = mockAnnotatedWith(method);
-    Response response = mapper.toResponse(cause);
+    DataONE annotation = mock(DataONE.class);
+    when(annotation.value()).thenReturn(method);
+
+    Response response = mapper.toResponse(cause, annotation);
     assertNotNull("Response must exist", response);
 
     assertNotNull("Entity should be populated", response.getEntity());

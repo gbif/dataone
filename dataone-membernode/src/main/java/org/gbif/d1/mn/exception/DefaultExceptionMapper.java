@@ -1,4 +1,4 @@
-package org.gbif.d1.mn.rest.exception;
+package org.gbif.d1.mn.exception;
 
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -8,11 +8,13 @@ import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.sun.jersey.api.core.ExtendedUriInfo;
+import com.google.common.reflect.Invokable;
 import org.dataone.ns.service.exceptions.DataONEException;
 import org.dataone.ns.service.exceptions.ExceptionDetail;
 import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.ServiceFailure;
+import org.glassfish.jersey.server.ExtendedUriInfo;
+import org.glassfish.jersey.server.model.internal.ModelProcessorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,8 +45,7 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable> {
 
   // required to access the annotation to populate the detail code
   @Context
-  @VisibleForTesting
-  ExtendedUriInfo uriInfo;
+  private ExtendedUriInfo uriInfo;
 
   public DefaultExceptionMapper(String nodeId) {
     this.nodeId = nodeId;
@@ -54,32 +55,40 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable> {
   public Response toResponse(Throwable exception) {
 
     // check if it is a URL that we support
-    if (uriInfo.getMatchedMethod() != null) {
-      // all exceptions are coorced to DataONE exceptions for serialization
-      DataONEException d1e = coerce(exception);
-
-      LOG.info("Returning error", d1e);
+    if (uriInfo.getMatchedResourceMethod() != null) {
 
       // inspect the method annotation and lookup the detailCode for the provided "exception / method" pair
-      DataONE dataONE = uriInfo.getMatchedMethod().getAnnotation(DataONE.class);
-      String detailCode = detailCode(dataONE, d1e);
+      DataONE dataONE = uriInfo.getMatchedResourceMethod().getInvocable()
+        .getHandlingMethod().getAnnotation(DataONE.class);
 
-      // HTTP code is mapped 1:1 with the DataONEException
-      int code = httpCode(d1e);
-      return Response
-        .status(code)
-        .type(MediaType.APPLICATION_XML)
-        .entity(new ExceptionDetail(
-          d1e.getClass().getSimpleName(), code, detailCode, d1e.getMessage(), nodeId, d1e.getPid())
-        )
-        .build();
-
-    } else {
-      // not a URL this application supports
-      LOG.debug("Not found: {}", uriInfo.getPath());
-      return Response.status(Status.NOT_FOUND).build();
+      if (dataONE != null) {
+        return toResponse(exception, dataONE);
+      } else {
+        // swallow gracefully
+        LOG.warn("Expected a DataONE annotation on method linked to {}", uriInfo);
+      }
     }
 
+    // not a URL this application supports
+    LOG.debug("Not found: {}", uriInfo.getPath());
+    return Response.status(Status.NOT_FOUND).build();
+  }
+
+  @VisibleForTesting
+  Response toResponse(Throwable exception, DataONE dataONE) {
+    // all exceptions are coorced to DataONE exceptions for serialization
+    DataONEException d1e = coerce(exception);
+    String detailCode = detailCode(dataONE, d1e);
+
+    // HTTP code is mapped 1:1 with the DataONEException
+    int code = httpCode(d1e);
+    return Response
+      .status(code)
+      .type(MediaType.APPLICATION_XML)
+      .entity(new ExceptionDetail(
+        d1e.getClass().getSimpleName(), code, detailCode, d1e.getMessage(), nodeId, d1e.getPid())
+      )
+      .build();
   }
 
   /**
@@ -127,7 +136,7 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable> {
     // lookup the registered code (prefix) for the method and annotation
     String prefix = null;
     if (method == null) {
-      LOG.warn("Method [{}] missing DataONE annotation", uriInfo.getMatchedMethod());
+      LOG.warn("Method [{}] missing DataONE annotation", uriInfo.getMatchedResourceMethod());
     } else {
       prefix = DetailCodes.codeFor(method, d1e.getClass()); // may return null
     }

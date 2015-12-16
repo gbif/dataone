@@ -1,4 +1,4 @@
-package org.gbif.d1.mn.rest.provider;
+package org.gbif.d1.mn.provider;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

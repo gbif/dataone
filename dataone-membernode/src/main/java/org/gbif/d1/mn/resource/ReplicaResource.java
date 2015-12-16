@@ -1,34 +1,45 @@
 package org.gbif.d1.mn.resource;
 
-import org.gbif.d1.mn.rest.exception.DataONE;
-import org.gbif.d1.mn.rest.provider.Authenticate;
+import org.gbif.d1.mn.exception.DataONE;
+import org.gbif.d1.mn.provider.Authenticate;
 
 import java.io.InputStream;
+import javax.inject.Singleton;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 import com.codahale.metrics.annotation.Timed;
-import com.sun.jersey.spi.resource.Singleton;
+import org.dataone.ns.service.exceptions.InvalidToken;
+import org.dataone.ns.service.exceptions.NotAuthorized;
+import org.dataone.ns.service.exceptions.NotImplemented;
+import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Session;
 
-import static org.gbif.d1.mn.util.D1Preconditions.checkIsSupported;
-
 /**
  * Operations relating to retrieval of a replica object.
+ * <p>
+ * All methods can throw:
+ * <ul>
+ * <li>{@link NotAuthorized} if the credentials presented do not have permission to perform the action</li>
+ * <li>{@link InvalidToken} if the credentials in the request are not correctly presented</li>
+ * <li>{@link ServiceFailure} if the system is unable to service the request</li>
+ * <li>{@link NotImplemented} if the operation is unsupported</li>
+ * </ul>
+ *
+ * @see <a href="http://mule1.dataone.org/ArchitectureDocs-current/apis/MN_APIs.html">The DataONE Member Node
+ *      specification</a>
  */
 @Path("/mn/v1/replica")
 @Singleton
-public class ReplicaResource {
+public final class ReplicaResource {
   @GET
   @Path("replica/{pid}")
   @DataONE(DataONE.Method.GET_REPLICA)
   @Timed
-  @Override
   public InputStream getReplica(@Authenticate Session session, @PathParam("pid") Identifier pid) {
-    checkIsSupported(read);
-    return read.getReplica(session, pid);
+    return null;
   }
 
 }

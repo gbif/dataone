@@ -23,13 +23,6 @@
     </repository>
   </repositories>
 
-  <!-- url>http://github.org/gbif/portal-web</url> -->
-
-  <!-- TODO -->
-  <!-- scm> <connection>scm:git:git@github.com:gbif/XXX.git</connection> 
-    <url>https://github.com/gbif/XXX</url> <developerConnection>scm:git:git@github.com:gbif/XXX.git</developerConnection> 
-    <tag>HEAD</tag> </scm> -->
-
   <build>
     <plugins>
       <plugin>
@@ -108,9 +101,15 @@
       <artifactId>dropwizard-jersey</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-forms</artifactId>
+    </dependency>
+    <!--
+    REPLACED BY FORMS?
+    dependency>
       <groupId>com.sun.jersey.contribs</groupId>
       <artifactId>jersey-multipart</artifactId>
-    </dependency>
+    </dependency-->
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
@@ -127,14 +126,14 @@
       <groupId>com.codahale.metrics</groupId>
       <artifactId>metrics-healthchecks</artifactId>
     </dependency>
-    <dependency>
+    <!--dependency>
       <groupId>com.sun.jersey</groupId>
       <artifactId>jersey-core</artifactId>
     </dependency>
     <dependency>
       <groupId>com.sun.jersey</groupId>
       <artifactId>jersey-server</artifactId>
-    </dependency>
+    </dependency-->
     <dependency>
       <groupId>javax.validation</groupId>
       <artifactId>validation-api</artifactId>
@@ -167,9 +166,13 @@
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
     </dependency>
+
+    <!-- TODO: investigate -->
     <dependency>
-      <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch</artifactId>
-    </dependency>      
+      <groupId>javax.mail</groupId>
+      <artifactId>mail</artifactId>
+      <version>1.4.3</version>
+    </dependency>
+
   </dependencies>
 </project>

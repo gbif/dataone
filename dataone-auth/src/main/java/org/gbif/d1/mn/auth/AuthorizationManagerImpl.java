@@ -49,11 +49,9 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
   private final Set<String> selfSubjects; // identifying ourselves, a member node
   private final CertificateUtils certificateUtils;
 
-  /**
-   * Builds a new instance using the default OID.
-   */
+  @VisibleForTesting
   AuthorizationManagerImpl(SystemMetadataProvider systemMetadataProvider, CoordinatingNode cn, Node self) {
-    this(systemMetadataProvider, cn, self, ImmutableList.of(DEFAULT_OID_SUBJECT_INFO));
+    this(systemMetadataProvider, cn, self, ImmutableList.of(AuthorizationManager.DEFAULT_OID_SUBJECT_INFO));
   }
 
   /**
@@ -82,13 +80,17 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
   }
 
   @Override
-  public void checkIsAuthorized(HttpServletRequest request, String id, Permission permission) {
-    checkIsAuthorized(certificateUtils.newSession(request), id, permission);
-
+  public Session checkIsAuthorized(HttpServletRequest request, String id, Permission permission) {
+    return checkIsAuthorized(certificateUtils.newSession(request), id, permission);
   }
 
   @Override
-  public void checkIsAuthorized(Session session, String id, Permission permission) {
+  public Session checkIsAuthorized(HttpServletRequest request, Permission permission) {
+    return checkIsAuthorized(certificateUtils.newSession(request), permission);
+  }
+
+  @Override
+  public Session checkIsAuthorized(Session session, String id, Permission permission) {
     Preconditions.checkNotNull(session, "A session must be provided");
     Preconditions.checkNotNull(id, "An identifier must be provided");
     Preconditions.checkNotNull(permission, "A permission must be provided");
@@ -103,6 +105,33 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
     if (!approved) {
       throw new NotAuthorized("No subject represented by the certificate have permission to perform action");
     }
+    return session;
+  }
+
+  /**
+   * Retir
+   */
+  @Override
+  public Session checkIsAuthorized(Session session, Permission permission) {
+    Preconditions.checkNotNull(session, "A session must be provided");
+    Preconditions.checkNotNull(permission, "A permission must be provided");
+
+    // call the coordinating node and get a list of all nodes including all their alias subjects
+    // if the original request comes from a CN then it is granted
+    try {
+      for (Node node : cn.listNodes().getNode()) {
+
+        if (NodeType.CN == node.getType()
+            && contains(node.getSubject(), session.getSubject().toString())) {
+          LOG.debug("Request received from a known alias[{}] of a CN[{}]", session.getSubject().toString(), node.getSubject());
+          return session;
+        }
+      }
+    } catch (ServiceFailure e) {
+      throw new ServiceFailure("Unable to call the CN for the list of nodes", e);
+    }
+
+    throw new NotAuthorized("Only coordinating nodes are permitted to perform this action");
   }
 
   /**
@@ -132,7 +161,7 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
   /**
    * Runs through the procedure of verification returning whether approved or not.
    * Procedure is executed in an order to ensure that local calls are executed before calls requiring network calls.
-   * 
+   *
    * @throws ServiceFailure If it is not possible to connect to the coordinating node
    */
   @VisibleForTesting
@@ -175,7 +204,7 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
   /**
    * Looks up if the subject is the authority member node for the object or a CN.
    * This is combined into a single operation to minimize network calls to the CN.
-   * 
+   *
    * @throws ServiceFailure If it is not possible to connect to the coordinating node
    */
   @VisibleForTesting

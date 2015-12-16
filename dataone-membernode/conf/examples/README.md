@@ -2,7 +2,7 @@
 
 This holds some sample calls which illustrate usage using curl.
 
-> Note: curl on mac needed upgrading using homebrew, and then symlink created to use homebrew version.
+> Note: curl on mac may need upgrading using homebrew, and then symlink created to use homebrew version using something like:
 > ln -s /usr/local/Cellar/curl/7.36.0/bin/curl /usr/bin/curl
 
 ```

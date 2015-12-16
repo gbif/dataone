@@ -1,4 +1,4 @@
-package org.gbif.d1.mn.rest.exception;
+package org.gbif.d1.mn.exception;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

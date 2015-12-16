@@ -1,7 +1,7 @@
 package org.gbif.d1.mn;
 
-import org.gbif.d1.mn.rest.exception.DataONE;
-import static org.gbif.d1.mn.rest.exception.DataONE.Method.*;
+import org.gbif.d1.mn.exception.DataONE;
+import static org.gbif.d1.mn.exception.DataONE.Method.*;
 
 import java.util.Set;
 

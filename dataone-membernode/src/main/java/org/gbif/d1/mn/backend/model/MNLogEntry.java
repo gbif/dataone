@@ -1,7 +1,6 @@
 package org.gbif.d1.mn.backend.model;
 
 import java.util.Date;
-
 import javax.annotation.concurrent.Immutable;
 
 import com.google.common.base.Objects;
