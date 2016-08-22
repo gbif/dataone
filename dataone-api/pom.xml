@@ -72,7 +72,7 @@
           <plugins>
             <!-- Required for immutable and builder pattern -->
             <plugin>
-              <groupId>com.kscs.util</groupId>
+              <groupId>net.codesup.util</groupId>
               <artifactId>jaxb2-rich-contract-plugin</artifactId>
               <version>${jaxb2-rich-contract-plugin.version}</version>
             </plugin>

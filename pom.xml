@@ -127,8 +127,8 @@
     <!-- plugins -->
     <maven-shade-plugin.version>1.6</maven-shade-plugin.version>
     <maven-jar-plugin.version>2.4</maven-jar-plugin.version>
-    <jaxb2-rich-contract-plugin.version>1.2.3</jaxb2-rich-contract-plugin.version>
-    <maven-jaxb2-plugin.version>0.9.0</maven-jaxb2-plugin.version>
+    <jaxb2-rich-contract-plugin.version>1.17.0</jaxb2-rich-contract-plugin.version>
+    <maven-jaxb2-plugin.version>0.11.0</maven-jaxb2-plugin.version>
     <jaxb2_commons.version>0.6.3</jaxb2_commons.version>
     <xjc-guava-plugin.version>0.3.1</xjc-guava-plugin.version>
   </properties>
