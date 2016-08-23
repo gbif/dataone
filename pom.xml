@@ -65,11 +65,6 @@
       <id>gbif-thirdparty</id>
       <url>http://repository.gbif.org/content/repositories/thirdparty/</url>
     </repository>
-    <repository>
-      <id>jaxb2-plugins</id>
-      <name>JAXB2 XJC Plugin Repository</name>
-      <url>http://maven.klemm-scs.com/release</url>
-    </repository>
   </repositories>
 
   <pluginRepositories>

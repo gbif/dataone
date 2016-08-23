@@ -39,6 +39,13 @@ public interface MNBackend extends SystemMetadataProvider {
 
   Identifier create(Session session, Identifier pid, InputStream object, SystemMetadata sysmeta);
 
+  /**
+   * Delete the identified object from the back-end.
+   *
+   * @param session
+   * @param pid
+   * @return deleted Identifier or null if not found
+   */
   Identifier delete(Session session, Identifier pid);
 
   /**

@@ -87,7 +87,13 @@ public class InMemoryBackend implements MNBackend {
 
   @Override
   public Identifier delete(Session session, Identifier pid) {
-    return null;
+    Identifier deletedPid = null;
+    synchronized (lock) {
+      if (data.remove(pid) != null) {
+        deletedPid = pid;
+      }
+    }
+    return deletedPid;
   }
 
   @Override
@@ -160,7 +166,6 @@ public class InMemoryBackend implements MNBackend {
       }
     }
     return null;
-
   }
 
   @Override

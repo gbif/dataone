@@ -40,6 +40,7 @@ import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.ObjectList;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
+import org.dataone.ns.service.types.v1.Permission;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import static org.gbif.d1.mn.util.D1Preconditions.checkNotNull;
@@ -98,8 +99,6 @@ public final class ObjectResource {
                "System metadata must have the correct identifier");
 
 
-
-
     // TODO: How do we decide who can create?
     // auth.checkIsAuthorized(request, Permission.WRITE);  // will fail, as only CN can create in current implementation
 
@@ -125,13 +124,18 @@ public final class ObjectResource {
    * The message body of the exception SHOULD contain a hint as to the location of the CNRead.resolve() method.
    *
    * @throws NotFound if the DataONE object is not present on this node
+   * @throws NotAuthorized if the credentials presented do not have permission to perform the action
    */
   @DELETE
-  @Path("object/{pid}")
+  @Path("{pid}")
   @DataONE(DataONE.Method.DELETE)
   @Timed
-  public Identifier delete(@Authenticate Session session, @PathParam("pid") Identifier pid) {
-    return null;
+  public Identifier delete(@Authenticate Session session, @PathParam("pid") String pid) {
+    auth.checkIsAuthorized(session, Permission.WRITE);
+
+    Identifier identifier = Identifier.builder().withValue(pid).build();
+    backend.delete(session, identifier);
+    return identifier;
   }
 
   /**
@@ -145,7 +149,7 @@ public final class ObjectResource {
    * @throws NotFound if the DataONE object is not present on this node
    */
   @HEAD
-  @Path("object/{pid}")
+  @Path("{pid}")
   @DataONE(DataONE.Method.DESCRIBE)
   @Timed
   public DescribeResponse describe(@Authenticate Session session, @PathParam("pid") Identifier pid) {
@@ -161,12 +165,13 @@ public final class ObjectResource {
    * @throws InsufficientResources if the system determines that resource are exhausted
    */
   @GET
-  @Path("object/{pid}")
+  @Path("{pid}")
   @Produces(MediaType.APPLICATION_OCTET_STREAM)
   @DataONE(DataONE.Method.GET)
   @Timed
   public InputStream get(@Authenticate Session session, @PathParam("pid") String pid) {
-    return null;
+    auth.checkIsAuthorized(request, pid, Permission.READ);
+    return backend.get(Identifier.builder().withValue(pid).build());
   }
 
   /**
@@ -189,7 +194,6 @@ public final class ObjectResource {
    * @throws NotAuthorized if the credentials presented do not have permission to perform the action
    */
   @GET
-  @Path("object")
   @DataONE(DataONE.Method.LIST_OBJECTS)
   @Timed
   public ObjectList listObjects(@Authenticate Session session, @QueryParam("fromDate") Date fromDate,
@@ -225,7 +229,7 @@ public final class ObjectResource {
    * @throws NotFound if the DataONE object is not present on this node
    */
   @PUT
-  @Path("object/{pid}")
+  @Path("{pid}")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @DataONE(DataONE.Method.UPDATE)
   @Timed
