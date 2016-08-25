@@ -122,8 +122,8 @@ public class InMemoryBackend implements MNBackend {
   }
 
   @Override
-  public SystemMetadata getSystemMetadata(Session session, String pid) {
-    return systemMetadata(Identifier.builder().withValue(pid).build());
+  public SystemMetadata getSystemMetadata(Session session, Identifier pid) {
+    return systemMetadata(pid);
   }
 
   /**

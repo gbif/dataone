@@ -17,6 +17,7 @@ import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
+import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
@@ -59,8 +60,8 @@ public final class MetaResource {
   @Path("{pid}")
   @DataONE(DataONE.Method.GET_SYSTEM_METADATA)
   @Timed
-  public SystemMetadata getSystemMetadata(@Authenticate Session session, @PathParam("pid") String pid) {
-    auth.checkIsAuthorized(session, pid, Permission.READ);
+  public SystemMetadata getSystemMetadata(@Authenticate Session session, @PathParam("pid") Identifier pid) {
+    auth.checkIsAuthorized(session, pid.getValue(), Permission.READ);
     return backend.getSystemMetadata(session, pid);
   }
 }

@@ -4,6 +4,7 @@ import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.ServiceFailure;
+import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
 
@@ -24,5 +25,5 @@ public interface SystemMetadataProvider {
    * @throws NotFound if the DataONE object is not present on this node
    * @throws ServiceFailure if the system is unable to service the request
    */
-  SystemMetadata getSystemMetadata(Session session, String identifier);
+  SystemMetadata getSystemMetadata(Session session, Identifier identifier);
 }
