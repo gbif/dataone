@@ -6,11 +6,13 @@ import org.gbif.d1.mn.auth.CertificateUtils;
 import org.gbif.d1.mn.backend.BackendHealthCheck;
 import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.backend.memory.InMemoryBackend;
-import org.gbif.d1.mn.provider.SessionProvider;
-import org.gbif.d1.mn.resource.ArchiveResource;
-import org.gbif.d1.mn.resource.ObjectResource;
 import org.gbif.d1.mn.exception.DefaultExceptionMapper;
+import org.gbif.d1.mn.provider.IdentifierProvider;
+import org.gbif.d1.mn.provider.SessionProvider;
 import org.gbif.d1.mn.provider.TierSupportFilter;
+import org.gbif.d1.mn.resource.ArchiveResource;
+import org.gbif.d1.mn.resource.MetaResource;
+import org.gbif.d1.mn.resource.ObjectResource;
 
 import java.util.Set;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -69,6 +71,7 @@ public class MNApplication<T extends MNConfiguration> extends Application<T> {
     // TODO: read config here to support overwriting OIDs in certificates
     environment.jersey().register(new SessionProvider(CertificateUtils.newInstance()));
     environment.jersey().register(new TierSupportFilter(Tier.TIER4)); // TODO: read from config
+    environment.jersey().register(new IdentifierProvider());
 
     // RESTful resources
     CoordinatingNode cn = coordinatingNode(configuration);
@@ -77,6 +80,7 @@ public class MNApplication<T extends MNConfiguration> extends Application<T> {
     EventBus asyncBus = new EventBus("Asynchronous services"); // decouples long running tasks
     environment.jersey().register(new ArchiveResource(auth));
     environment.jersey().register(new ObjectResource(auth, backend));
+    environment.jersey().register(new MetaResource(auth, backend));
 
     // health checks
     environment.healthChecks().register("backend", new BackendHealthCheck(backend));

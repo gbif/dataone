@@ -1,5 +1,7 @@
 package org.gbif.d1.mn.resource;
 
+import org.gbif.d1.mn.auth.AuthorizationManager;
+import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.exception.DataONE;
 import org.gbif.d1.mn.provider.Authenticate;
 
@@ -15,7 +17,7 @@ import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
-import org.dataone.ns.service.types.v1.Identifier;
+import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
 
@@ -37,6 +39,14 @@ import org.dataone.ns.service.types.v1.SystemMetadata;
 @Singleton
 public final class MetaResource {
 
+  private final AuthorizationManager auth;
+  private final MNBackend backend;
+
+  public MetaResource(AuthorizationManager auth, MNBackend backend) {
+    this.auth = auth;
+    this.backend = backend;
+  }
+
   /**
    * Describes the object identified by id by returning the associated system metadata object.
    *
@@ -46,10 +56,11 @@ public final class MetaResource {
    * @throws InsufficientResources if the system determines that resource are exhausted
    */
   @GET
-  @Path("meta/{pid}")
+  @Path("{pid}")
   @DataONE(DataONE.Method.GET_SYSTEM_METADATA)
   @Timed
-  public SystemMetadata getSystemMetadata(@Authenticate Session session, @PathParam("pid") Identifier pid) {
-    return null;
+  public SystemMetadata getSystemMetadata(@Authenticate Session session, @PathParam("pid") String pid) {
+    auth.checkIsAuthorized(session, pid, Permission.READ);
+    return backend.getSystemMetadata(session, pid);
   }
 }

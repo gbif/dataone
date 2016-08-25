@@ -130,12 +130,11 @@ public final class ObjectResource {
   @Path("{pid}")
   @DataONE(DataONE.Method.DELETE)
   @Timed
-  public Identifier delete(@Authenticate Session session, @PathParam("pid") String pid) {
-    auth.checkIsAuthorized(session, Permission.WRITE);
+  public Identifier delete(@Authenticate Session session, @PathParam("pid") Identifier pid) {
+    auth.checkIsAuthorized(session, pid.getValue(), Permission.WRITE);
 
-    Identifier identifier = Identifier.builder().withValue(pid).build();
-    backend.delete(session, identifier);
-    return identifier;
+    backend.delete(session, pid);
+    return pid;
   }
 
   /**
@@ -169,9 +168,9 @@ public final class ObjectResource {
   @Produces(MediaType.APPLICATION_OCTET_STREAM)
   @DataONE(DataONE.Method.GET)
   @Timed
-  public InputStream get(@Authenticate Session session, @PathParam("pid") String pid) {
-    auth.checkIsAuthorized(request, pid, Permission.READ);
-    return backend.get(Identifier.builder().withValue(pid).build());
+  public InputStream get(@Authenticate Session session, @PathParam("pid") Identifier pid) {
+    auth.checkIsAuthorized(request, pid.getValue(), Permission.READ);
+    return backend.get(pid);
   }
 
   /**
