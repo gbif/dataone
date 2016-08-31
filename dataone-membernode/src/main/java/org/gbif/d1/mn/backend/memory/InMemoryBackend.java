@@ -9,20 +9,24 @@ import java.io.InputStream;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-
+import java.util.Map;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.dataone.ns.service.exceptions.IdentifierNotUnique;
+import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.Checksum;
 import org.dataone.ns.service.types.v1.DescribeResponse;
@@ -42,6 +46,33 @@ public class InMemoryBackend implements MNBackend {
   private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
   private final Object lock = new Object();
 
+  private static Map<String, Function<InputStream, String>> CHECKSUM_FUNCTIONS =
+          ImmutableMap.of(
+                  "md5",
+                  new Function<InputStream, String>() {
+                    @Nullable
+                    @Override
+                    public String apply(@Nullable InputStream input) {
+                      try {
+                        return DigestUtils.md5Hex(input);
+                      } catch (IOException e) {
+                        return null;
+                      }
+                    }
+                  },
+                  "sha1",
+                  new Function<InputStream, String>() {
+                    @Nullable
+                    @Override
+                    public String apply(@Nullable InputStream input) {
+                      try {
+                        return DigestUtils.sha1Hex(input);
+                      } catch (IOException e) {
+                        return null;
+                      }
+                    }
+                  });
+
   @GuardedBy("lock")
   private final LinkedHashMap<Identifier, PersistedObject> data;
 
@@ -54,8 +85,22 @@ public class InMemoryBackend implements MNBackend {
   }
 
   @Override
-  public Checksum checksum(Identifier identifier, String checksumAlgorithm) {
-    return null;
+  public Checksum checksum(Identifier pid, String checksumAlgorithm) {
+
+    if(!CHECKSUM_FUNCTIONS.containsKey(checksumAlgorithm.toLowerCase())){
+      throw new UnsupportedOperationException("Unkown checksumAlgorithm " + checksumAlgorithm);
+    }
+
+    String checksumStr = CHECKSUM_FUNCTIONS.get(checksumAlgorithm.toLowerCase()).apply(get(pid));
+    if(checksumStr == null){
+      throw new ServiceFailure("Unable to compute checksum");
+    }
+
+    Checksum checksum = Checksum.builder()
+            .withValue(checksumStr)
+            .withAlgorithm(checksumAlgorithm)
+            .build();
+    return checksum;
   }
 
   /**
