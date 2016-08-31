@@ -11,6 +11,7 @@ import org.gbif.d1.mn.provider.IdentifierProvider;
 import org.gbif.d1.mn.provider.SessionProvider;
 import org.gbif.d1.mn.provider.TierSupportFilter;
 import org.gbif.d1.mn.resource.ArchiveResource;
+import org.gbif.d1.mn.resource.ChecksumResource;
 import org.gbif.d1.mn.resource.MetaResource;
 import org.gbif.d1.mn.resource.ObjectResource;
 
@@ -81,6 +82,7 @@ public class MNApplication<T extends MNConfiguration> extends Application<T> {
     environment.jersey().register(new ArchiveResource(auth));
     environment.jersey().register(new ObjectResource(auth, backend));
     environment.jersey().register(new MetaResource(auth, backend));
+    environment.jersey().register(new ChecksumResource(auth, backend));
 
     // health checks
     environment.healthChecks().register("backend", new BackendHealthCheck(backend));

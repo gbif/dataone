@@ -17,6 +17,7 @@ import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.AccessPolicy;
 import org.dataone.ns.service.types.v1.AccessRule;
+import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Node;
 import org.dataone.ns.service.types.v1.NodeReference;
 import org.dataone.ns.service.types.v1.NodeType;
@@ -96,7 +97,8 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
     Preconditions.checkNotNull(permission, "A permission must be provided");
 
     LOG.debug("Checking permission for {}", id);
-    SystemMetadata sysMetadata = systemMetadataProvider.getSystemMetadata(session, id);
+    SystemMetadata sysMetadata = systemMetadataProvider.getSystemMetadata(session,
+            Identifier.builder().withValue(id).build());
     if (sysMetadata == null) {
       throw new NotFound("Cannot perform action since object not found", id);
     }
@@ -120,7 +122,6 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
     // if the original request comes from a CN then it is granted
     try {
       for (Node node : cn.listNodes().getNode()) {
-
         if (NodeType.CN == node.getType()
             && contains(node.getSubject(), session.getSubject().toString())) {
           LOG.debug("Request received from a known alias[{}] of a CN[{}]", session.getSubject().toString(), node.getSubject());

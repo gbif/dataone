@@ -1,6 +1,7 @@
 package org.gbif.d1.mn.resource;
 
 import org.gbif.d1.mn.auth.AuthorizationManager;
+import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.exception.DataONE;
 import org.gbif.d1.mn.provider.Authenticate;
 
@@ -9,8 +10,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 
 import com.codahale.metrics.annotation.Timed;
 import org.dataone.ns.service.exceptions.InvalidRequest;
@@ -47,9 +50,11 @@ public final class ChecksumResource {
   private HttpServletRequest request;
 
   private final AuthorizationManager auth;
+  private final MNBackend backend;
 
-  public ChecksumResource(AuthorizationManager auth) {
+  public ChecksumResource(AuthorizationManager auth, MNBackend backend) {
     this.auth = auth;
+    this.backend = backend;
   }
 
   /**
@@ -64,14 +69,15 @@ public final class ChecksumResource {
    * @throws NotFound if the DataONE object is not present on this node
    */
   @GET
-  @Path("checksum/{pid}")
+  @Path("{pid}")
   @DataONE(DataONE.Method.GET_CHECKSUM)
   @Timed
+  @Produces(MediaType.APPLICATION_XML)
   public Checksum getChecksum(@Authenticate Session session, @PathParam("pid") Identifier pid,
                               @QueryParam("checksumAlgorithm") String checksumAlgorithm) {
     checkNotNull(checksumAlgorithm, "Query parameter[checksumAlgorithm] is required");
     auth.checkIsAuthorized(request, pid.getValue(), Permission.READ);
-    return null; // TODO
+    return backend.checksum(pid, checksumAlgorithm);
   }
 
 }

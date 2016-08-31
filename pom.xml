@@ -109,6 +109,8 @@
     <metrics3.version>3.0.2</metrics3.version>
     <jsr305.version>3.0.1</jsr305.version>
     <joda-time.version>2.9.1</joda-time.version>
+    <apache-commons-codec.version>1.10</apache-commons-codec.version>
+    <apache-commons-io.version>2.5</apache-commons-io.version>
     <metrics.version>3.0.2</metrics.version>
     <validation-api.version>1.1.0.Final</validation-api.version>
     <jetty.orbit-javax.servlet.version>3.0.0.v201112011016</jetty.orbit-javax.servlet.version>
@@ -195,6 +197,16 @@
         <artifactId>jersey-server</artifactId>
         <version>${jersey.version}</version>
       </dependency-->
+      <dependency>
+        <groupId>commons-codec</groupId>
+        <artifactId>commons-codec</artifactId>
+        <version>${apache-commons-codec.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>${apache-commons-io.version}</version>
+      </dependency>
       <dependency>
         <groupId>joda-time</groupId>
         <artifactId>joda-time</artifactId>
