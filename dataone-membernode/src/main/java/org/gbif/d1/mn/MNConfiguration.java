@@ -10,4 +10,8 @@ public class MNConfiguration extends Configuration {
   public enum TIER {
     TIER1, TIER2, TIER3, TIER4
   }
+
+  public Tier getTier(){
+    return Tier.TIER4;
+  }
 }

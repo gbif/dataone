@@ -85,6 +85,14 @@
       <artifactId>dataone-auth</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.gbif.data</groupId>
+      <artifactId>data-repo-server</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif</groupId>
+      <artifactId>gbif-doi</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>

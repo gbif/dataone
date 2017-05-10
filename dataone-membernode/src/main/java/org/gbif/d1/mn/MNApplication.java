@@ -5,6 +5,8 @@ import org.gbif.d1.mn.auth.AuthorizationManagers;
 import org.gbif.d1.mn.auth.CertificateUtils;
 import org.gbif.d1.mn.backend.BackendHealthCheck;
 import org.gbif.d1.mn.backend.MNBackend;
+import org.gbif.d1.mn.backend.impl.DataRepoBackend;
+import org.gbif.d1.mn.backend.impl.DataRepoBackendConfiguration;
 import org.gbif.d1.mn.backend.memory.InMemoryBackend;
 import org.gbif.d1.mn.exception.DefaultExceptionMapper;
 import org.gbif.d1.mn.provider.IdentifierProvider;
@@ -14,11 +16,12 @@ import org.gbif.d1.mn.resource.ArchiveResource;
 import org.gbif.d1.mn.resource.ChecksumResource;
 import org.gbif.d1.mn.resource.MetaResource;
 import org.gbif.d1.mn.resource.ObjectResource;
+import org.gbif.datarepo.conf.DataRepoConfiguration;
+import org.gbif.datarepo.conf.DataRepoModule;
 
 import java.util.Set;
 import javax.ws.rs.ext.ExceptionMapper;
 
-import com.google.common.collect.Sets;
 import com.google.common.eventbus.EventBus;
 import io.dropwizard.Application;
 import io.dropwizard.forms.MultiPartBundle;
@@ -39,15 +42,13 @@ import org.dataone.ns.service.types.v1.Subject;
  * The main entry point for running the member node.
  * <p>
  * Developers are expected to inherit from this, along with a new configuration object and implement
- *
- * @param <T> For the configuration object to support custom backends which require configuration
  */
-public class MNApplication<T extends MNConfiguration> extends Application<T> {
+public class MNApplication extends Application<DataRepoBackendConfiguration> {
 
   private static final String APPLICATION_NAME = "DataONE Member Node";
 
   public static void main(String[] args) throws Exception {
-    new MNApplication<MNConfiguration>().run(args);
+    new MNApplication().run(args);
   }
 
   @Override
@@ -56,12 +57,12 @@ public class MNApplication<T extends MNConfiguration> extends Application<T> {
   }
 
   @Override
-  public final void initialize(Bootstrap<T> bootstrap) {
+  public final void initialize(Bootstrap<DataRepoBackendConfiguration> bootstrap) {
     bootstrap.addBundle(new MultiPartBundle());
   }
 
   @Override
-  public final void run(T configuration, Environment environment) {
+  public final void run(DataRepoBackendConfiguration configuration, Environment environment) {
     Node self = self(configuration);
 
     // Replace all exception handling with custom handling required by the DataONE specification
@@ -71,12 +72,12 @@ public class MNApplication<T extends MNConfiguration> extends Application<T> {
     // providers
     // TODO: read config here to support overwriting OIDs in certificates
     environment.jersey().register(new SessionProvider(CertificateUtils.newInstance()));
-    environment.jersey().register(new TierSupportFilter(Tier.TIER4)); // TODO: read from config
+    environment.jersey().register(new TierSupportFilter(configuration.getTier()));
     environment.jersey().register(new IdentifierProvider());
 
     // RESTful resources
     CoordinatingNode cn = coordinatingNode(configuration);
-    MNBackend backend = getBackend(configuration);
+    MNBackend backend = getBackend(configuration, environment);
     AuthorizationManager auth = AuthorizationManagers.newAuthorizationManager(backend, cn, self);
     EventBus asyncBus = new EventBus("Asynchronous services"); // decouples long running tasks
     environment.jersey().register(new ArchiveResource(auth));
@@ -89,7 +90,7 @@ public class MNApplication<T extends MNConfiguration> extends Application<T> {
   }
 
   // TODO: implement a CN client
-  private CoordinatingNode coordinatingNode(MNConfiguration configuration) {
+  private static CoordinatingNode coordinatingNode(MNConfiguration configuration) {
     return new CoordinatingNode() {
 
       @Override
@@ -102,18 +103,12 @@ public class MNApplication<T extends MNConfiguration> extends Application<T> {
   /**
    * Removes all instances of {@link ExceptionMapper} from the environment.
    */
-  private void removeAllExceptionMappers(JerseyEnvironment environment) {
+  private static void removeAllExceptionMappers(JerseyEnvironment environment) {
     DropwizardResourceConfig jrConfig = environment.getResourceConfig();
     Set<Object> dwSingletons = jrConfig.getSingletons();
-    Set<Object> keysToRemove = Sets.newHashSet();
-    for (Object s : jrConfig.getSingletons()) {
-      if (s instanceof ExceptionMapper) {
-        keysToRemove.add(s);
-      }
-    }
-    for (Object s : keysToRemove) {
-      dwSingletons.remove(s);
-    }
+    jrConfig.getSingletons().stream()
+      .filter(s -> s instanceof  ExceptionMapper)
+      .forEach(dwSingletons::remove);
   }
 
   /**
@@ -140,7 +135,12 @@ public class MNApplication<T extends MNConfiguration> extends Application<T> {
   /**
    * Creates the backend using the configuration. Developers implementing custom backends will override this method.
    */
-  protected MNBackend getBackend(T configuration) {
+  protected MNBackend getBackend(DataRepoBackendConfiguration configuration, Environment environment) {
+    if (DataRepoBackendConfiguration.class.isInstance(configuration)) {
+      DataRepoConfiguration dataRepoConfiguration = configuration.getDataRepoConfiguration();
+      DataRepoModule dataRepoModule = new DataRepoModule(dataRepoConfiguration, environment);
+      return new DataRepoBackend(dataRepoModule.dataRepository(), dataRepoModule.doiRegistrationService());
+    }
     return new InMemoryBackend();
   }
 }

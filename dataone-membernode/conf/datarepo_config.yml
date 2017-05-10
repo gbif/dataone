@@ -1,0 +1,48 @@
+dataRepoPath: ${dataRepoPath}
+doiCommonPrefix: ${doiCommonPrefix}
+gbifApiUrl: ${gbifApiUrl}
+dataPackageApiUrl: ${dataPackageApiUrl}
+usersDb:
+  dataSourceClassName: com.mysql.jdbc.jdbc2.optional.MysqlDataSource
+  serverName: ${usersDb.serverName}
+  databaseName: ${usersDb.databaseName}
+  user: ${usersDb.user}
+  password: ${usersDb.password}
+  maximumPoolSize: ${usersDb.maximumPoolSize}
+  connectionTimeout: ${usersDb.connectionTimeout}
+dbConfig:
+  dataSourceClassName: org.postgresql.ds.PGSimpleDataSource
+  maximumPoolSize: 6
+  minimumIdle: 1
+  idleTimeout: 60000
+  connectionTimeout: 5000
+  dataSource.serverName: ${dbConfig.server}
+  dataSource.databaseName: ${dbConfig.databaseName}
+  dataSource.user: ${dbConfig.user}
+  dataSource.password: ${dbConfig.password}
+  dataSource.portNumber: ${dbConfig.portNumber}
+  poolName: datapackages
+appKey:
+  appKey: ${appKey}
+  appSecretKey: ${appSecretKey}
+#required to avoid Exception in thread "main" java.lang.IllegalArgumentException: Unable to override server.applicationConnectors[0].port; node with index not found.
+#Defaults port can be overriden
+server:
+ applicationConnectors:
+    - type: http
+      port: 8080
+    - type: https
+      port: 8443
+      keyStorePath: conf/certificates/server.p12
+      keyStoreType: PKCS12
+      keyStorePassword: password
+      trustStorePath: conf/certificates/truststore.jks
+      trustStorePassword: password
+      needClientAuth: true
+      wantClientAuth: true
+ adminConnectors:
+     - type: http
+       port: 8081
+service:
+  zkHost: ${zkHost}
+  zkPath: ${zkPath}

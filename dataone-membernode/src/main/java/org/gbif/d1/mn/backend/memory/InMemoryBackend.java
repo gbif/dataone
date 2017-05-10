@@ -66,7 +66,7 @@ public class InMemoryBackend implements MNBackend {
                     @Override
                     public String apply(@Nullable InputStream input) {
                       try {
-                        return DigestUtils.sha1Hex(input);
+                        return DigestUtils.shaHex(input);
                       } catch (IOException e) {
                         return null;
                       }

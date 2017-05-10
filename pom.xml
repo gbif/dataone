@@ -94,7 +94,7 @@
     <dataone-membernode.version>0.1-SNAPSHOT</dataone-membernode.version>
 
     <!-- libs -->
-    <dropwizard.version>0.9.1</dropwizard.version>
+    <dropwizard.version>0.9.2</dropwizard.version>
 
     <!-- START: We fix all of these to the same as dropwizard -->
     <slf4j.version>1.7.12</slf4j.version>
@@ -128,6 +128,10 @@
     <maven-jaxb2-plugin.version>0.11.0</maven-jaxb2-plugin.version>
     <jaxb2_commons.version>0.6.3</jaxb2_commons.version>
     <xjc-guava-plugin.version>0.3.1</xjc-guava-plugin.version>
+
+    <!-- GBIF DataRepo -->
+    <data-repo-server.version>1.0-SNAPSHOT</data-repo-server.version>
+    <gbif-doi.version>1.5</gbif-doi.version>
   </properties>
 
   <dependencyManagement>
@@ -146,6 +150,22 @@
         <groupId>org.gbif.dataone</groupId>
         <artifactId>dataone-membernode</artifactId>
         <version>${dataone-membernode.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.gbif.data</groupId>
+        <artifactId>data-repo-server</artifactId>
+        <version>${data-repo-server.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.gbif</groupId>
+        <artifactId>gbif-doi</artifactId>
+        <version>${gbif-doi.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>io.dropwizard</groupId>
@@ -291,8 +311,8 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>2.1</version>
           <configuration>
-            <source>1.7</source>
-            <target>1.7</target>
+            <source>1.8</source>
+            <target>1.8</target>
           </configuration>
         </plugin>
       </plugins>
