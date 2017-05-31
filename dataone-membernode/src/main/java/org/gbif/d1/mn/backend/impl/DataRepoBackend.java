@@ -13,6 +13,7 @@ import org.gbif.doi.metadata.datacite.DataCiteMetadata;
 import org.gbif.doi.service.InvalidMetadataException;
 import org.gbif.doi.service.datacite.DataCiteValidator;
 import org.gbif.registry.doi.DoiType;
+import org.gbif.registry.doi.registration.DoiRegistration;
 import org.gbif.registry.doi.registration.DoiRegistrationService;
 
 import java.io.ByteArrayInputStream;
@@ -20,10 +21,12 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -56,7 +59,7 @@ public class DataRepoBackend implements MNBackend {
   private static final String CHECKSUM_ALGORITHM  = "MD5";
   private static final String CONTENT_FILE  = "content";
   private static final String FORMAT_ID = "data_package";
-
+  private final String doiPrefix;
 
   private final DataRepository dataRepository;
   private final DoiRegistrationService doiRegistrationService;
@@ -89,14 +92,16 @@ public class DataRepoBackend implements MNBackend {
    * @param dataRepository data repository implementation
    * @param doiRegistrationService registration service
    */
-  public DataRepoBackend(DataRepository dataRepository, DoiRegistrationService doiRegistrationService) {
+  public DataRepoBackend(DataRepository dataRepository, DoiRegistrationService doiRegistrationService,
+                         String doiPrefix) {
     this.dataRepository = dataRepository;
     this.doiRegistrationService = doiRegistrationService;
+    this.doiPrefix = doiPrefix;
   }
 
   @Override
   public Checksum checksum(Identifier identifier, String checksumAlgorithm) {
-    return dataRepository.get(new DOI(identifier.getValue()))
+    return dataRepository.get(new DOI(doiPrefix, identifier.getValue()))
       .map(DataRepoBackend::dataPackageChecksum)
       .orElseThrow(() -> new NotFound("Identifier Not Found", identifier.getValue()));
 
@@ -110,9 +115,8 @@ public class DataRepoBackend implements MNBackend {
   @Override
   public Identifier create(Session session, Identifier pid, InputStream object, SystemMetadata sysmeta) {
     try {
-      DOI doi = new DOI(pid.getValue());
       DataPackage dataPackage = new DataPackage();
-      dataPackage.setDoi(doi);
+
       dataPackage.setCreated(new Date());
       dataPackage.setCreatedBy(session.getSubject().getValue());
       dataPackage.setTitle(pid.getValue());
@@ -125,19 +129,19 @@ public class DataRepoBackend implements MNBackend {
                                        .withValue(pid.getValue())
                                        .withIdentifierType(IdentifierType.DOI.name())
                                        .build());
-      List<DataCiteMetadata.Creators.Creator> creators = session.getSubjectInfo().getPerson().stream().map(person -> {
-        DataCiteMetadata.Creators.Creator creator = new DataCiteMetadata.Creators.Creator();
-        creator.setCreatorName(person.getGivenName() + " " + person.getFamilyName());
-        return creator;
-      }).collect(Collectors.toList());
-      creators.add(DataCiteMetadata.Creators.Creator.builder()
-                     .withCreatorName(session.getSubject().getValue()).build());
-      dataCiteMetadata.setCreators(DataCiteMetadata.Creators.builder()
-                                     .addCreator(creators)
-                                     .build());
+      dataCiteMetadata.setCreators(extractCreators(session));
       dataCiteMetadata.setPublisher(session.getSubject().getValue());
       dataCiteMetadata.setPublicationYear(Integer.toString(LocalDate.now().getYear()));
-      InputStream xmlMetadataData = new ByteArrayInputStream(DataCiteValidator.toXml(doi, dataCiteMetadata).getBytes(StandardCharsets.UTF_8));
+      DOI doi = new DOI(pid.getValue());
+      String metadataXML = DataCiteValidator.toXml(doi, dataCiteMetadata);
+      doiRegistrationService.register(DoiRegistration.builder()
+                                        .withDoi(new DOI(pid.getValue()))
+                                        .withType(DoiType.DATA_PACKAGE)
+                                        .withUser(session.getSubject().getValue())
+                                        .withMetadata(metadataXML)
+                                        .build());
+      InputStream xmlMetadataData = new ByteArrayInputStream(metadataXML.getBytes(StandardCharsets.UTF_8));
+      dataPackage.setDoi(doi);
       dataRepository.create(dataPackage, xmlMetadataData, Collections.singletonList(fileInputContent));
       return pid;
     } catch (InvalidMetadataException ex) {
@@ -146,10 +150,27 @@ public class DataRepoBackend implements MNBackend {
     }
   }
 
+  /**
+   * Extracts the Creators information from the session object.
+   */
+  private static DataCiteMetadata.Creators extractCreators(Session session) {
+    List<DataCiteMetadata.Creators.Creator> creators = Optional.ofNullable(session.getSubjectInfo())
+                                                        .map(subjectInfo -> subjectInfo.getPerson().stream()
+                                                          .map(person ->
+                                                            DataCiteMetadata.Creators.Creator.builder()
+                                                              .withCreatorName(person.getGivenName() + " "
+                                                                               + person.getFamilyName()).build()
+                                                       ).collect(Collectors.toList())).orElse(new ArrayList<>());
+    Optional.ofNullable(session.getSubject())
+      .ifPresent(subject -> creators.add(DataCiteMetadata.Creators.Creator.builder()
+                                           .withCreatorName(subject.getValue()).build()));
+    return DataCiteMetadata.Creators.builder().withCreator(creators).build();
+  }
+
   @Override
   public Identifier delete(Session session, Identifier pid) {
     LOG.info("Deleting data package {}, session: {}", pid, session);
-    dataRepository.delete(new DOI(pid.getValue()));
+    dataRepository.delete(new DOI(doiPrefix, pid.getValue()));
     return pid;
   }
 
@@ -168,7 +189,7 @@ public class DataRepoBackend implements MNBackend {
 
   @Override
   public InputStream get(Identifier identifier) {
-    return dataRepository.getFileInputStream(new DOI(identifier.getValue()), CONTENT_FILE)
+    return dataRepository.getFileInputStream(new DOI(doiPrefix, identifier.getValue()), CONTENT_FILE)
             .orElseThrow(() -> new NotFound("Identifier not found", identifier.getValue()));
   }
 
@@ -210,7 +231,7 @@ public class DataRepoBackend implements MNBackend {
   @Override
   public Identifier update(Session session, Identifier pid, InputStream object, Identifier newPid,
                            SystemMetadata sysmeta) {
-    dataRepository.delete(new DOI(pid.getValue()));
+    dataRepository.delete(new DOI(doiPrefix, pid.getValue()));
     return create(session,newPid,object, sysmeta);
   }
 
@@ -223,7 +244,7 @@ public class DataRepoBackend implements MNBackend {
    * Gets a data package and applies the mapper function to it.
    */
   private <T> T getAndConsume(Identifier identifier, Function<DataPackage,T> mapper) {
-    return dataRepository.get(new DOI(identifier.getValue()))
+    return dataRepository.get(new DOI(doiPrefix, identifier.getValue()))
       .map(mapper::apply)
       .orElseThrow(() -> new NotFound("Identifier Not Found", identifier.getValue()));
   }

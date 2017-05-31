@@ -7,7 +7,6 @@ import org.gbif.d1.mn.backend.BackendHealthCheck;
 import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.backend.impl.DataRepoBackend;
 import org.gbif.d1.mn.backend.impl.DataRepoBackendConfiguration;
-import org.gbif.d1.mn.backend.memory.InMemoryBackend;
 import org.gbif.d1.mn.exception.DefaultExceptionMapper;
 import org.gbif.d1.mn.provider.IdentifierProvider;
 import org.gbif.d1.mn.provider.SessionProvider;
@@ -22,7 +21,6 @@ import org.gbif.datarepo.conf.DataRepoModule;
 import java.util.Set;
 import javax.ws.rs.ext.ExceptionMapper;
 
-import com.google.common.eventbus.EventBus;
 import io.dropwizard.Application;
 import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.jersey.DropwizardResourceConfig;
@@ -79,7 +77,6 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     CoordinatingNode cn = coordinatingNode(configuration);
     MNBackend backend = getBackend(configuration, environment);
     AuthorizationManager auth = AuthorizationManagers.newAuthorizationManager(backend, cn, self);
-    EventBus asyncBus = new EventBus("Asynchronous services"); // decouples long running tasks
     environment.jersey().register(new ArchiveResource(auth));
     environment.jersey().register(new ObjectResource(auth, backend));
     environment.jersey().register(new MetaResource(auth, backend));
@@ -136,11 +133,9 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
    * Creates the backend using the configuration. Developers implementing custom backends will override this method.
    */
   protected MNBackend getBackend(DataRepoBackendConfiguration configuration, Environment environment) {
-    if (DataRepoBackendConfiguration.class.isInstance(configuration)) {
-      DataRepoConfiguration dataRepoConfiguration = configuration.getDataRepoConfiguration();
-      DataRepoModule dataRepoModule = new DataRepoModule(dataRepoConfiguration, environment);
-      return new DataRepoBackend(dataRepoModule.dataRepository(), dataRepoModule.doiRegistrationService());
-    }
-    return new InMemoryBackend();
+    DataRepoConfiguration dataRepoConfiguration = configuration.getDataRepoConfiguration();
+    DataRepoModule dataRepoModule = new DataRepoModule(dataRepoConfiguration, environment);
+    return new DataRepoBackend(dataRepoModule.dataRepository(), dataRepoModule.doiRegistrationService(),
+                               dataRepoConfiguration.getDoiCommonPrefix());
   }
 }

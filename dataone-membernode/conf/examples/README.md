@@ -8,9 +8,9 @@ This holds some sample calls which illustrate usage using curl.
 ```
 cd examples
 
-curl --insecure --cert ../certificates/client.p12:password --cert-type p12 -F "pid=XYZ33256" -F "object=@sciencemetadata.xml" -F "sysmeta=@sysmeta.xml" https://localhost:8443/mn/v1/object
+curl --insecure --cert ../certificates/client.p12:password --cert-type p12 -F "pid=10.5072/example-full" -F "object=@sciencemetadata.xml" -F "sysmeta=@sysmeta.xml" https://localhost:8443/mn/v1/object
 
-curl --insecure --cert ../certificates/client.p12:password --cert-type p12 https://localhost:8443/mn/v1/object/XYZ33256 
+curl --insecure --cert ../certificates/client.p12:password --cert-type p12 https://localhost:8443/mn/v1/object/10.5072/example-full 
 
 curl --insecure --cert ../certificates/client.p12:password --cert-type p12 https://localhost:8443/mn/v1
 
