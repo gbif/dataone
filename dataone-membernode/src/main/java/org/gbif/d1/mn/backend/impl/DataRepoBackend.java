@@ -18,6 +18,7 @@ import org.gbif.registry.doi.registration.DoiRegistrationService;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -29,11 +30,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.ServiceFailure;
@@ -58,11 +62,20 @@ public class DataRepoBackend implements MNBackend {
 
   private static final String CHECKSUM_ALGORITHM  = "MD5";
   private static final String CONTENT_FILE  = "content";
+  private static final String SYS_METADATA_FILE  = "system_metadata.xml";
   private static final String FORMAT_ID = "data_package";
-  private final String doiPrefix;
+  private static final JAXBContext JAXB_CONTEXT = getSystemMetadataJaxbContext();
 
   private final DataRepository dataRepository;
   private final DoiRegistrationService doiRegistrationService;
+
+  private static JAXBContext getSystemMetadataJaxbContext() {
+    try {
+      return JAXBContext.newInstance(SystemMetadata.class);
+    } catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
+  }
 
   /**
    * Gets the checksum of a data package.
@@ -92,16 +105,14 @@ public class DataRepoBackend implements MNBackend {
    * @param dataRepository data repository implementation
    * @param doiRegistrationService registration service
    */
-  public DataRepoBackend(DataRepository dataRepository, DoiRegistrationService doiRegistrationService,
-                         String doiPrefix) {
+  public DataRepoBackend(DataRepository dataRepository, DoiRegistrationService doiRegistrationService) {
     this.dataRepository = dataRepository;
     this.doiRegistrationService = doiRegistrationService;
-    this.doiPrefix = doiPrefix;
   }
 
   @Override
   public Checksum checksum(Identifier identifier, String checksumAlgorithm) {
-    return dataRepository.get(new DOI(doiPrefix, identifier.getValue()))
+    return dataRepository.get(new DOI(identifier.getValue()))
       .map(DataRepoBackend::dataPackageChecksum)
       .orElseThrow(() -> new NotFound("Identifier Not Found", identifier.getValue()));
 
@@ -116,11 +127,14 @@ public class DataRepoBackend implements MNBackend {
   public Identifier create(Session session, Identifier pid, InputStream object, SystemMetadata sysmeta) {
     try {
       DataPackage dataPackage = new DataPackage();
-
       dataPackage.setCreated(new Date());
       dataPackage.setCreatedBy(session.getSubject().getValue());
       dataPackage.setTitle(pid.getValue());
       FileInputContent fileInputContent = new FileInputContent(CONTENT_FILE, object);
+      StringWriter xmlMetadata = new StringWriter();
+      JAXB_CONTEXT.createMarshaller().marshal(sysmeta, xmlMetadata);
+      FileInputContent fileInputMetadata = new FileInputContent(SYS_METADATA_FILE,
+                                                                new ByteArrayInputStream(xmlMetadata.toString().getBytes(StandardCharsets.UTF_8)));
       DataCiteMetadata dataCiteMetadata = new DataCiteMetadata();
       dataCiteMetadata.setTitles(DataCiteMetadata.Titles.builder()
                                    .withTitle(DataCiteMetadata.Titles.Title.builder().withValue(pid.getValue()).build())
@@ -142,11 +156,10 @@ public class DataRepoBackend implements MNBackend {
                                         .build());
       InputStream xmlMetadataData = new ByteArrayInputStream(metadataXML.getBytes(StandardCharsets.UTF_8));
       dataPackage.setDoi(doi);
-      dataRepository.create(dataPackage, xmlMetadataData, Collections.singletonList(fileInputContent));
+      dataRepository.create(dataPackage, xmlMetadataData, Lists.newArrayList(fileInputContent, fileInputMetadata));
       return pid;
-    } catch (InvalidMetadataException ex) {
+    } catch (InvalidMetadataException |JAXBException ex) {
       throw new InvalidRequest("Error registering data package metadata", ex);
-
     }
   }
 
@@ -170,7 +183,7 @@ public class DataRepoBackend implements MNBackend {
   @Override
   public Identifier delete(Session session, Identifier pid) {
     LOG.info("Deleting data package {}, session: {}", pid, session);
-    dataRepository.delete(new DOI(doiPrefix, pid.getValue()));
+    dataRepository.delete(new DOI(pid.getValue()));
     return pid;
   }
 
@@ -189,7 +202,7 @@ public class DataRepoBackend implements MNBackend {
 
   @Override
   public InputStream get(Identifier identifier) {
-    return dataRepository.getFileInputStream(new DOI(doiPrefix, identifier.getValue()), CONTENT_FILE)
+    return dataRepository.getFileInputStream(new DOI(identifier.getValue()), CONTENT_FILE)
             .orElseThrow(() -> new NotFound("Identifier not found", identifier.getValue()));
   }
 
@@ -217,22 +230,21 @@ public class DataRepoBackend implements MNBackend {
 
   @Override
   public SystemMetadata systemMetadata(Identifier identifier) {
-    return getAndConsume(identifier,
-                         dataPackage -> SystemMetadata.builder()
-                                          .withFormatId(FORMAT_ID)
-                                          .withChecksum(dataPackageChecksum(dataPackage))
-                                          .withDateUploaded(toXmlGregorianCalendar(dataPackage.getCreated()))
-                                          .withDateSysMetadataModified(toXmlGregorianCalendar(dataPackage.getModified()))
-                                          .withIdentifier(identifier)
-                                          .withSubmitter(Subject.builder().withValue(dataPackage.getCreatedBy()).build())
-                                          .build());
+    return dataRepository.getFileInputStream(new DOI(identifier.getValue()), SYS_METADATA_FILE)
+      .map(file -> {
+                      try {
+                        return (SystemMetadata)JAXB_CONTEXT.createUnmarshaller().unmarshal(file);
+                      } catch (JAXBException ex) {
+                       throw new RuntimeException(ex);
+                      }
+                    }).orElseThrow(() -> new NotFound("Metadata Not Found", identifier.getValue()));
   }
 
   @Override
   public Identifier update(Session session, Identifier pid, InputStream object, Identifier newPid,
                            SystemMetadata sysmeta) {
-    dataRepository.delete(new DOI(doiPrefix, pid.getValue()));
-    return create(session,newPid,object, sysmeta);
+    dataRepository.delete(new DOI(pid.getValue()));
+    return create(session, newPid, object, sysmeta);
   }
 
   @Override
@@ -244,7 +256,7 @@ public class DataRepoBackend implements MNBackend {
    * Gets a data package and applies the mapper function to it.
    */
   private <T> T getAndConsume(Identifier identifier, Function<DataPackage,T> mapper) {
-    return dataRepository.get(new DOI(doiPrefix, identifier.getValue()))
+    return dataRepository.get(new DOI(identifier.getValue()))
       .map(mapper::apply)
       .orElseThrow(() -> new NotFound("Identifier Not Found", identifier.getValue()));
   }

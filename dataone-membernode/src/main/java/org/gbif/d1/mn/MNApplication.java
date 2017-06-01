@@ -135,7 +135,6 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
   protected MNBackend getBackend(DataRepoBackendConfiguration configuration, Environment environment) {
     DataRepoConfiguration dataRepoConfiguration = configuration.getDataRepoConfiguration();
     DataRepoModule dataRepoModule = new DataRepoModule(dataRepoConfiguration, environment);
-    return new DataRepoBackend(dataRepoModule.dataRepository(), dataRepoModule.doiRegistrationService(),
-                               dataRepoConfiguration.getDoiCommonPrefix());
+    return new DataRepoBackend(dataRepoModule.dataRepository(), dataRepoModule.doiRegistrationService());
   }
 }

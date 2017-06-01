@@ -132,7 +132,6 @@ public final class ObjectResource {
   @Timed
   public Identifier delete(@Authenticate Session session, @PathParam("pid") Identifier pid) {
     auth.checkIsAuthorized(session, pid.getValue(), Permission.WRITE);
-
     backend.delete(session, pid);
     return pid;
   }
@@ -200,7 +199,7 @@ public final class ObjectResource {
                                 @QueryParam("replicaStatus") @Nullable Boolean replicaStatus, @QueryParam("start") @Nullable Integer start,
                                 @QueryParam("count") @Nullable Integer count) {
     checkNotNull(fromDate, "Query parameter[fromDate] is required");
-    return null;
+    return backend.listObjects(null,fromDate, toDate, formatId, replicaStatus, start, count);
   }
 
   /**
@@ -238,6 +237,6 @@ public final class ObjectResource {
     checkNotNull(pid, "Form parameter[file] is required");
     checkNotNull(pid, "Form parameter[newPid] is required");
     checkNotNull(pid, "Form parameter[sysmeta] is required");
-    return null;
+    return backend.update(session, pid, object, newPid, sysmeta);
   }
 }
