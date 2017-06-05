@@ -47,6 +47,7 @@ import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.NodeReference;
 import org.dataone.ns.service.types.v1.ObjectInfo;
 import org.dataone.ns.service.types.v1.ObjectList;
+import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.Subject;
 import org.dataone.ns.service.types.v1.SystemMetadata;
@@ -58,6 +59,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DataRepoBackend implements MNBackend {
 
+  public static final int MAX_PAGE_SIZE = 20;
   private static final Logger LOG = LoggerFactory.getLogger(DataRepoBackend.class);
 
   private static final String CHECKSUM_ALGORITHM  = "MD5";
@@ -189,10 +191,15 @@ public class DataRepoBackend implements MNBackend {
 
   @Override
   public DescribeResponse describe(Identifier identifier) {
-    return getAndConsume(identifier, dataPackage -> new DescribeResponse(identifier.getValue(),
-                                                                         BigInteger.valueOf(dataPackage.getSize()),
-                                                                         dataPackage.getModified(),
-                                                                         dataPackageChecksum(dataPackage),null));
+
+    return getAndConsume(identifier, dataPackage -> {
+                                      SystemMetadata systemMetadata = systemMetadata(identifier);
+                                      return new DescribeResponse(systemMetadata.getFormatId(),
+                                                                  BigInteger.valueOf(dataPackage.getSize()),
+                                                                  dataPackage.getModified(),
+                                                                  dataPackageChecksum(dataPackage),
+                                                                  systemMetadata.getSerialVersion());
+                                      });
   }
 
   @Override
@@ -214,7 +221,11 @@ public class DataRepoBackend implements MNBackend {
   @Override
   public ObjectList listObjects(NodeReference self, Date fromDate, @Nullable Date toDate, @Nullable String formatId,
                                 @Nullable Boolean replicaStatus, @Nullable Integer start, @Nullable Integer count) {
-    PagingResponse<DataPackage> response = dataRepository.list(null, new PagingRequest(start, count), fromDate, toDate);
+    PagingRequest pagingRequest = new PagingRequest(Optional.ofNullable(start).orElse(0),
+                                                    Optional.ofNullable(count)
+                                                      .map(value -> Integer.min(value, MAX_PAGE_SIZE))
+                                                      .orElse(MAX_PAGE_SIZE));
+    PagingResponse<DataPackage> response = dataRepository.list(null, pagingRequest, fromDate, toDate);
     return ObjectList.builder().withCount(response.getLimit())
       .withStart(Long.valueOf(response.getOffset()).intValue())
       .withTotal(response.getCount().intValue())
@@ -250,6 +261,20 @@ public class DataRepoBackend implements MNBackend {
   @Override
   public SystemMetadata getSystemMetadata(Session session, Identifier identifier) {
     return systemMetadata(identifier);
+  }
+
+  @Override
+  public void archive(Identifier identifier) {
+    dataRepository.archive(new DOI(identifier.getValue()));
+  }
+
+  @Override
+  public boolean isAuthorized(Session session, Identifier identifier, Permission action) {
+    return getAndConsume(identifier, dataPackage ->
+      (action == Permission.READ) ||
+      ((action == Permission.WRITE || action == Permission.CHANGE_PERMISSION)
+       && dataPackage.getCreatedBy().equals(session.getSubject().getValue()))
+    );
   }
 
   /**

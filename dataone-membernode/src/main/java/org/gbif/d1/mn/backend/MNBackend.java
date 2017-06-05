@@ -1,9 +1,13 @@
 package org.gbif.d1.mn.backend;
 
+import org.gbif.d1.mn.provider.Authenticate;
+
 import java.io.InputStream;
 import java.util.Date;
 
 import javax.annotation.Nullable;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 import org.dataone.ns.service.apis.v1.SystemMetadataProvider;
 import org.dataone.ns.service.types.v1.Checksum;
@@ -11,6 +15,7 @@ import org.dataone.ns.service.types.v1.DescribeResponse;
 import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.NodeReference;
 import org.dataone.ns.service.types.v1.ObjectList;
+import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
 
@@ -23,7 +28,7 @@ public interface MNBackend extends SystemMetadataProvider {
 
   /**
    * Provides the checksum for the identified object.
-   * 
+   *
    * @param identifier for the object
    * @param checksumAlgorithm which the checksum should have been calculated with
    * @return the checksum or null if not found
@@ -50,7 +55,7 @@ public interface MNBackend extends SystemMetadataProvider {
 
   /**
    * Returns a description of the identified object.
-   * 
+   *
    * @param identifier for the object
    * @return the description or null if not found
    */
@@ -60,17 +65,31 @@ public interface MNBackend extends SystemMetadataProvider {
 
   /**
    * Gets a stream to the identified object.
-   * 
+   *
    * @param identifier for the object
    * @return the stream or null if not found
    */
   InputStream get(Identifier identifier);
 
   /**
+   * Gets a stream to the identified object.
+   *
+   * @param identifier for the object
+   * @return the stream or null if not found
+   */
+  void archive(Identifier identifier);
+
+  /**
+   * Test if the client identified by the session is allowed to perform an operation at the stated permission level on
+   * the specific object.
+   */
+  boolean isAuthorized(Session session, Identifier identifier, Permission action);
+
+  /**
    * A health test for the back-end. The back-end should perform some minimum test to ensure that it is operational.
    * This is may be called frequently so should be a very high speed operation. A sample SQL call, or verification that
    * a file system can be read would be examples of suitable implementations.
-   * 
+   *
    * @return the result of the health test
    */
   Health health();
@@ -83,7 +102,7 @@ public interface MNBackend extends SystemMetadataProvider {
 
   /**
    * Returns the system metadata for the identified object.
-   * 
+   *
    * @param identifier for the object
    * @return the metadata or null if not found
    */

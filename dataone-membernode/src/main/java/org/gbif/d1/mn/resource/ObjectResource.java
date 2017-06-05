@@ -25,6 +25,8 @@ import javax.ws.rs.core.MediaType;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Objects;
+import com.google.common.base.Optional;
+import io.dropwizard.jersey.params.DateTimeParam;
 import org.dataone.ns.service.exceptions.IdentifierNotUnique;
 import org.dataone.ns.service.exceptions.InsufficientResources;
 import org.dataone.ns.service.exceptions.InvalidRequest;
@@ -149,9 +151,10 @@ public final class ObjectResource {
   @HEAD
   @Path("{pid}")
   @DataONE(DataONE.Method.DESCRIBE)
+  @Produces(MediaType.APPLICATION_OCTET_STREAM)
   @Timed
   public DescribeResponse describe(@Authenticate Session session, @PathParam("pid") Identifier pid) {
-    return null;
+    return backend.describe(pid);
   }
 
   /**
@@ -194,12 +197,15 @@ public final class ObjectResource {
   @GET
   @DataONE(DataONE.Method.LIST_OBJECTS)
   @Timed
-  public ObjectList listObjects(@Authenticate Session session, @QueryParam("fromDate") Date fromDate,
-                                @QueryParam("toDate") @Nullable Date toDate, @QueryParam("formatId") @Nullable String formatId,
+  @Produces(MediaType.APPLICATION_XML)
+  public ObjectList listObjects(@Authenticate Session session, @QueryParam("fromDate") DateTimeParam fromDate,
+                                @QueryParam("toDate") @Nullable DateTimeParam toDate, @QueryParam("formatId") @Nullable String formatId,
                                 @QueryParam("replicaStatus") @Nullable Boolean replicaStatus, @QueryParam("start") @Nullable Integer start,
                                 @QueryParam("count") @Nullable Integer count) {
     checkNotNull(fromDate, "Query parameter[fromDate] is required");
-    return backend.listObjects(null,fromDate, toDate, formatId, replicaStatus, start, count);
+    return backend.listObjects(null, java.util.Optional.ofNullable(fromDate).map(date -> date.get().toLocalDate().toDate()).orElse(null),
+                               java.util.Optional.ofNullable(toDate).map(date -> date.get().toLocalDate().toDate()).orElse(null),
+                               formatId, replicaStatus, start, count);
   }
 
   /**

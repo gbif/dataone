@@ -34,6 +34,7 @@ import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.NodeReference;
 import org.dataone.ns.service.types.v1.ObjectInfo;
 import org.dataone.ns.service.types.v1.ObjectList;
+import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
 
@@ -254,5 +255,15 @@ public class InMemoryBackend implements MNBackend {
     }
 
     return results.build();
+  }
+
+  @Override
+  public void archive(Identifier identifier) {
+    this.delete(null, identifier);
+  }
+
+  @Override
+  public boolean isAuthorized(Session session, Identifier identifier, Permission action) {
+    return true;
   }
 }

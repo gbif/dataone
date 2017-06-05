@@ -86,7 +86,6 @@ public final class DirtySystemMetadataResource {
     checkNotNull(serialVersion, "Form parameter[serialVersion] is required");
     checkNotNull(dateSystemMetadataLastModified, "Form parameter[dateSystemMetadataLastModified] is required");
     auth.checkIsAuthorized(request, pid.getValue(), Permission.CHANGE_PERMISSION);
-    // TODO: fire an internal event
     return true;
   }
 }

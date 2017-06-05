@@ -10,8 +10,8 @@
 
   <!--
     All classes that require to be serialized by Jersey need to be declared here.
-    This asserts which objects should be annotated with @XmlRootElement 
-    http://codereview.stackexchange.com/questions/1877/jaxb-xjc-code-generation-adding-xmlrootelement-and-joda-datetime 
+    This asserts which objects should be annotated with @XmlRootElement
+    http://codereview.stackexchange.com/questions/1877/jaxb-xjc-code-generation-adding-xmlrootelement-and-joda-datetime
   -->
 
   <!-- org.example.SomeRootType @XmlRootElement -->
@@ -49,6 +49,11 @@
     <jaxb:bindings node="//xs:complexType[@name='Checksum']">
       <annox:annotate>
         <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="checksum"/>
+      </annox:annotate>
+    </jaxb:bindings>
+    <jaxb:bindings node="//xs:complexType[@name='ObjectList']">
+      <annox:annotate>
+        <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="objectList"/>
       </annox:annotate>
     </jaxb:bindings>
   </jaxb:bindings>

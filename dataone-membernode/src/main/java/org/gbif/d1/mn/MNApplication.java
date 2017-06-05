@@ -8,6 +8,7 @@ import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.backend.impl.DataRepoBackend;
 import org.gbif.d1.mn.backend.impl.DataRepoBackendConfiguration;
 import org.gbif.d1.mn.exception.DefaultExceptionMapper;
+import org.gbif.d1.mn.provider.DescribeResponseHeaderProvider;
 import org.gbif.d1.mn.provider.IdentifierProvider;
 import org.gbif.d1.mn.provider.SessionProvider;
 import org.gbif.d1.mn.provider.TierSupportFilter;
@@ -21,6 +22,8 @@ import org.gbif.datarepo.conf.DataRepoModule;
 import java.util.Set;
 import javax.ws.rs.ext.ExceptionMapper;
 
+import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
+import com.yunspace.dropwizard.xml.XmlBundle;
 import io.dropwizard.Application;
 import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.jersey.DropwizardResourceConfig;
@@ -62,7 +65,7 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
   @Override
   public final void run(DataRepoBackendConfiguration configuration, Environment environment) {
     Node self = self(configuration);
-
+    environment.getObjectMapper().registerModules(new JaxbAnnotationModule());
     // Replace all exception handling with custom handling required by the DataONE specification
     removeAllExceptionMappers(environment.jersey());
     environment.jersey().register(new DefaultExceptionMapper(self.getIdentifier().getValue()));
@@ -72,12 +75,13 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     environment.jersey().register(new SessionProvider(CertificateUtils.newInstance()));
     environment.jersey().register(new TierSupportFilter(configuration.getTier()));
     environment.jersey().register(new IdentifierProvider());
+    environment.jersey().register(new DescribeResponseHeaderProvider());
 
     // RESTful resources
     CoordinatingNode cn = coordinatingNode(configuration);
     MNBackend backend = getBackend(configuration, environment);
     AuthorizationManager auth = AuthorizationManagers.newAuthorizationManager(backend, cn, self);
-    environment.jersey().register(new ArchiveResource(auth));
+    environment.jersey().register(new ArchiveResource(auth, backend));
     environment.jersey().register(new ObjectResource(auth, backend));
     environment.jersey().register(new MetaResource(auth, backend));
     environment.jersey().register(new ChecksumResource(auth, backend));

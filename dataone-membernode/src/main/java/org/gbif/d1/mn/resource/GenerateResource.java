@@ -1,6 +1,7 @@
 package org.gbif.d1.mn.resource;
 
 import org.gbif.d1.mn.auth.AuthorizationManager;
+import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.exception.DataONE;
 
 import javax.inject.Singleton;
@@ -45,8 +46,12 @@ public final class GenerateResource {
   private HttpServletRequest request;
 
   private final AuthorizationManager auth;
+  private final MNBackend backend;
 
-  public GenerateResource(AuthorizationManager auth) {this.auth = auth;}
+  public GenerateResource(AuthorizationManager auth, MNBackend backend) {
+    this.auth = auth;
+    this.backend = backend;
+  }
 
   /**
    * Given a scheme and optional fragment, generates an identifier with that scheme and fragment that is unique.
@@ -63,6 +68,6 @@ public final class GenerateResource {
     checkNotNull(scheme, "Form parameter[scheme] is required");
     checkNotNull(fragment, "Form parameter[fragment] is required");
     Session session = auth.checkIsAuthorized(request, Permission.WRITE);
-    return null; // TODO
+    return backend.generateIdentifier(session, scheme, fragment);
   }
 }

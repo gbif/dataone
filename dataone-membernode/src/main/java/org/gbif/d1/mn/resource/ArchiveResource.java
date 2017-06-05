@@ -1,6 +1,7 @@
 package org.gbif.d1.mn.resource;
 
 import org.gbif.d1.mn.auth.AuthorizationManager;
+import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.exception.DataONE;
 import org.gbif.d1.mn.exception.DataONE.Method;
 
@@ -45,9 +46,11 @@ public final class ArchiveResource {
   private HttpServletRequest request;
 
   private final AuthorizationManager auth;
+  private final MNBackend backend;
 
-  public ArchiveResource(AuthorizationManager auth) {
+  public ArchiveResource(AuthorizationManager auth, MNBackend backend) {
     this.auth = auth;
+    this.backend = backend;
   }
 
   /**
@@ -73,10 +76,10 @@ public final class ArchiveResource {
   @DataONE(Method.ARCHIVE)
   @Timed
   public Identifier archive(@PathParam("id") String encodedId) {
-    String id = URLDecoder.decode(encodedId);
-    auth.checkIsAuthorized(request, id, Permission.CHANGE_PERMISSION);
-    // TODO: stuff
-    return null;
+    Identifier id = Identifier.builder().withValue(URLDecoder.decode(encodedId)).build();
+    auth.checkIsAuthorized(request, id.getValue(), Permission.CHANGE_PERMISSION);
+    backend.archive(id);
+    return id;
   }
 
 }

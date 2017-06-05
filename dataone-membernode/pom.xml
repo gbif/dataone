@@ -21,7 +21,15 @@
       <id>gbif-all</id>
       <url>http://repository.gbif.org/content/groups/gbif</url>
     </repository>
+    <repository>
+      <id>jcenter</id>
+      <url>http://jcenter.bintray.com</url>
+    </repository>
   </repositories>
+
+  <properties>
+    <dropwizard-xml.version>0.9.0-37</dropwizard-xml.version>
+  </properties>
 
   <build>
     <plugins>
@@ -111,6 +119,12 @@
     <dependency>
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-forms</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.yunspace.dropwizard</groupId>
+      <artifactId>dropwizard-xml</artifactId>
+      <version>${dropwizard-xml.version}</version>
+      <scope>compile</scope>
     </dependency>
     <!--
     REPLACED BY FORMS?

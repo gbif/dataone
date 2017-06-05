@@ -1,6 +1,7 @@
 package org.gbif.d1.mn.resource;
 
 import org.gbif.d1.mn.auth.AuthorizationManager;
+import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.exception.DataONE;
 import org.gbif.d1.mn.provider.Authenticate;
 
@@ -18,6 +19,7 @@ import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
+import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
 import org.omg.CosNaming.NamingContextPackage.NotFound;
@@ -44,8 +46,11 @@ public final class IsAuthorizedResource {
 
   private final AuthorizationManager auth;
 
-  public IsAuthorizedResource(AuthorizationManager auth) {
+  private final MNBackend backend;
+
+  public IsAuthorizedResource(AuthorizationManager auth, MNBackend backend) {
     this.auth = auth;
+    this.backend = backend;
   }
 
   /**
@@ -68,7 +73,7 @@ public final class IsAuthorizedResource {
                               @QueryParam("action") Permission action) {
     String id = URLDecoder.decode(encodedId);
     auth.checkIsAuthorized(request, id, Permission.CHANGE_PERMISSION);
-    return true;
+    return backend.isAuthorized(session, Identifier.builder().withValue(id).build(), action);
   }
 
 }
