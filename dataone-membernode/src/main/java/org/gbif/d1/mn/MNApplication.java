@@ -116,14 +116,14 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
    * Returns a Node representing this installation, based on the provided configuration.
    * TODO: extract config
    */
-  private Node self(MNConfiguration configuration) {
+  private Node self(DataRepoBackendConfiguration configuration) {
     // nonsense for now
     return Node.builder()
       .addSubject(Subject.builder().withValue("CN=GBIFS Member Node").build())
       .withIdentifier(NodeReference.builder().withValue("urn:node:GBIFS").build())
       .withName("GBIFS Member Node")
-      .withDescription("TODO")
-      .withBaseURL("https://localhost:8443/d1/mn")
+      .withDescription("GBIFS DataOne Member Node")
+      .withBaseURL(configuration.getExternalUrl())
       .withServices(Services.builder()
         .addService(Service.builder().withAvailable(true).withName("MNCore").withVersion("v1").build())
         .addService(Service.builder().withAvailable(true).withName("MNRead").withVersion("v1").build())
@@ -136,7 +136,7 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
   /**
    * Creates the backend using the configuration. Developers implementing custom backends will override this method.
    */
-  protected MNBackend getBackend(DataRepoBackendConfiguration configuration, Environment environment) {
+  protected static MNBackend getBackend(DataRepoBackendConfiguration configuration, Environment environment) {
     DataRepoConfiguration dataRepoConfiguration = configuration.getDataRepoConfiguration();
     DataRepoModule dataRepoModule = new DataRepoModule(dataRepoConfiguration, environment);
     return new DataRepoBackend(dataRepoModule.dataRepository(), dataRepoModule.doiRegistrationService());
