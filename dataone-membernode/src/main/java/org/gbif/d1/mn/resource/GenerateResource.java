@@ -59,7 +59,6 @@ public final class GenerateResource {
    * @throws InvalidRequest if any argument is null or fails validation
    */
   @POST
-  @Path("generate")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @DataONE(DataONE.Method.GENERATE_IDENTIFIER)
   @Timed

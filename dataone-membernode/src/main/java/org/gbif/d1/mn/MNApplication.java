@@ -13,7 +13,9 @@ import org.gbif.d1.mn.provider.IdentifierProvider;
 import org.gbif.d1.mn.provider.SessionProvider;
 import org.gbif.d1.mn.provider.TierSupportFilter;
 import org.gbif.d1.mn.resource.ArchiveResource;
+import org.gbif.d1.mn.resource.CapabilitiesResource;
 import org.gbif.d1.mn.resource.ChecksumResource;
+import org.gbif.d1.mn.resource.GenerateResource;
 import org.gbif.d1.mn.resource.MetaResource;
 import org.gbif.d1.mn.resource.ObjectResource;
 import org.gbif.datarepo.conf.DataRepoConfiguration;
@@ -65,6 +67,7 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
   @Override
   public final void run(DataRepoBackendConfiguration configuration, Environment environment) {
     Node self = self(configuration);
+    CertificateUtils certificateUtils = CertificateUtils.newInstance();
     environment.getObjectMapper().registerModules(new JaxbAnnotationModule());
     // Replace all exception handling with custom handling required by the DataONE specification
     removeAllExceptionMappers(environment.jersey());
@@ -72,7 +75,7 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
 
     // providers
     // TODO: read config here to support overwriting OIDs in certificates
-    environment.jersey().register(new SessionProvider(CertificateUtils.newInstance()));
+    environment.jersey().register(new SessionProvider(certificateUtils));
     environment.jersey().register(new TierSupportFilter(configuration.getTier()));
     environment.jersey().register(new IdentifierProvider());
     environment.jersey().register(new DescribeResponseHeaderProvider());
@@ -81,10 +84,12 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     CoordinatingNode cn = coordinatingNode(configuration);
     MNBackend backend = getBackend(configuration, environment);
     AuthorizationManager auth = AuthorizationManagers.newAuthorizationManager(backend, cn, self);
+    environment.jersey().register(new CapabilitiesResource(self, certificateUtils));
     environment.jersey().register(new ArchiveResource(auth, backend));
     environment.jersey().register(new ObjectResource(auth, backend));
     environment.jersey().register(new MetaResource(auth, backend));
     environment.jersey().register(new ChecksumResource(auth, backend));
+    environment.jersey().register(new GenerateResource(auth, backend));
 
     // health checks
     environment.healthChecks().register("backend", new BackendHealthCheck(backend));
