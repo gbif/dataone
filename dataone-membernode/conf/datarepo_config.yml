@@ -25,6 +25,12 @@ dbConfig:
 appKey:
   appKey: ${appKey}
   appSecretKey: ${appSecretKey}
+elasticSearch:
+  host: ${logEsServer}
+  port: 9300
+  cluster: ${logEsCluster}
+  idx: ${logEsIndex}
+
 #required to avoid Exception in thread "main" java.lang.IllegalArgumentException: Unable to override server.applicationConnectors[0].port; node with index not found.
 #Defaults port can be overriden
 server:

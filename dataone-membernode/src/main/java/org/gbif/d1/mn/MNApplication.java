@@ -16,6 +16,7 @@ import org.gbif.d1.mn.resource.ArchiveResource;
 import org.gbif.d1.mn.resource.CapabilitiesResource;
 import org.gbif.d1.mn.resource.ChecksumResource;
 import org.gbif.d1.mn.resource.GenerateResource;
+import org.gbif.d1.mn.resource.LogResource;
 import org.gbif.d1.mn.resource.MetaResource;
 import org.gbif.d1.mn.resource.ObjectResource;
 import org.gbif.datarepo.conf.DataRepoConfiguration;
@@ -90,6 +91,8 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     environment.jersey().register(new MetaResource(auth, backend));
     environment.jersey().register(new ChecksumResource(auth, backend));
     environment.jersey().register(new GenerateResource(auth, backend));
+    environment.jersey().register(new LogResource(configuration.getElasticSearch().buildEsClient(),
+                                                  configuration.getElasticSearch().getIdx()));
 
     // health checks
     environment.healthChecks().register("backend", new BackendHealthCheck(backend));

@@ -15,8 +15,12 @@ import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
+import org.dataone.ns.service.types.v1.Event;
 import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import static org.gbif.d1.mn.util.D1Preconditions.checkNotNull;
 
@@ -36,6 +40,9 @@ import static org.gbif.d1.mn.util.D1Preconditions.checkNotNull;
  */
 @Path("/mn/v1/error")
 public final class ErrorResource {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ErrorResource.class);
+
   @Context
   private HttpServletRequest request;
 
@@ -62,7 +69,15 @@ public final class ErrorResource {
     throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure {
     checkNotNull(detail, "The exception detail is required");
     auth.checkIsAuthorized(request, Permission.CHANGE_PERMISSION);
-    // TODO: write to an audit log
+    MDC.put("event", Event.SYNCHRONIZATION_FAILED.value());
+    MDC.put("pId", detail.getPid());
+    MDC.put("nodeId", detail.getNodeId());
+    MDC.put("errorCode", Integer.toString(detail.getErrorCode()));
+    MDC.put("detailCode", detail.getDetailCode());
+    MDC.put("name", detail.getName());
+    MDC.put("description", detail.getDescription());
+    MDC.put("subject", session.getSubject().getValue());
+    LOG.error("Error synchronizing resources");
     return true; // pointless, but the specification mandates it
   }
 }

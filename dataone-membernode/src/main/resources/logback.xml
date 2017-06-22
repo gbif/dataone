@@ -21,12 +21,18 @@
     <resetJUL>true</resetJUL>
   </contextListener>
 
-  <property name="defaultPattern" value="%-5level [%date{'yyyy-MM-dd HH:mm:ss,SSSZ'}] [%thread] %logger: %msg%n%xEx"/>
+  <property name="defaultPattern" value="%-5level [%date{'yyyy-MM-dd HH:mm:ss,SSSZ'}] [%thread] %X{Event} %logger: %msg%n%xEx"/>
 
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
       <pattern>${defaultPattern}</pattern>
     </encoder>
+  </appender>
+
+  <appender name="STASH" class="net.logstash.logback.appender.LogstashSocketAppender">
+    <host>${logstashServer}</host>
+    <!-- port is optional (default value shown) -->
+    <port>${logstashPort}</port>
   </appender>
 
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">

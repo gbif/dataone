@@ -20,8 +20,13 @@ import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
+import org.dataone.ns.service.types.v1.Event;
 import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Permission;
+import org.dataone.ns.service.types.v1.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 /**
  * Operations related to the archival (hiding) of objects in DataONE.
@@ -41,6 +46,8 @@ import org.dataone.ns.service.types.v1.Permission;
 @Produces(MediaType.APPLICATION_XML)
 @Singleton
 public final class ArchiveResource {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ArchiveResource.class);
 
   @Context
   private HttpServletRequest request;
@@ -77,7 +84,11 @@ public final class ArchiveResource {
   @Timed
   public Identifier archive(@PathParam("id") String encodedId) {
     Identifier id = Identifier.builder().withValue(URLDecoder.decode(encodedId)).build();
-    auth.checkIsAuthorized(request, id.getValue(), Permission.CHANGE_PERMISSION);
+    Session session = auth.checkIsAuthorized(request, id.getValue(), Permission.CHANGE_PERMISSION);
+    MDC.put("event",Method.ARCHIVE.name().toLowerCase());
+    MDC.put("identifier", encodedId);
+    MDC.put("subject", session.getSubject().getValue());
+    LOG.info("Archiving");
     backend.archive(id);
     return id;
   }

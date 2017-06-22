@@ -23,12 +23,15 @@ import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.exceptions.UnsupportedType;
+import org.dataone.ns.service.types.v1.Event;
+import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.Subject;
 import org.dataone.ns.service.types.v1.SystemMetadata;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import static org.gbif.d1.mn.util.D1Preconditions.checkNotNull;
 
@@ -55,6 +58,16 @@ public final class ReplicateResource {
   private final CertificateUtils certificateUtils;
   @Context
   private HttpServletRequest request;
+
+  /**
+   * Writes entries into the log.
+   */
+  private static void log(Session session, Identifier identifier, Event event, String message) {
+    MDC.put("subject", session.getSubject().getValue());
+    MDC.put("event", event.value());
+    MDC.put("identifier", identifier.getValue());
+    LOG.info(message);
+  }
 
   public ReplicateResource(EventBus queue, CertificateUtils certificateUtils) {
     this.queue = queue;
@@ -97,6 +110,7 @@ public final class ReplicateResource {
                                   request.getRemoteAddr(),
                                   request.getHeader("User-Agent"),
                                   session.getSubject()));
+    log(session, sysmeta.getIdentifier(), Event.REPLICATE, "Replicating resource");
     return true;
   }
 

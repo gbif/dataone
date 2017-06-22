@@ -38,12 +38,16 @@ import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.exceptions.UnsupportedType;
 import org.dataone.ns.service.types.v1.DescribeResponse;
+import org.dataone.ns.service.types.v1.Event;
 import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.ObjectList;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
 import org.dataone.ns.service.types.v1.Permission;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import static org.gbif.d1.mn.util.D1Preconditions.checkNotNull;
 import static org.gbif.d1.mn.util.D1Preconditions.checkState;
@@ -67,11 +71,23 @@ import static org.gbif.d1.mn.util.D1Throwables.propagateOrServiceFailure;
 @Singleton
 public final class ObjectResource {
 
+  private static final Logger LOG = LoggerFactory.getLogger(ObjectResource.class);
+
   @Context
   private HttpServletRequest request;
 
   private final AuthorizationManager auth;
   private final MNBackend backend;
+
+  /**
+   * Writes entries into the log.
+   */
+  private static void log(Session session, Identifier identifier, Event event, String message) {
+    MDC.put("subject", session.getSubject().getValue());
+    MDC.put("event", event.value());
+    MDC.put("identifier", identifier.getValue());
+    LOG.info(message);
+  }
 
   public ObjectResource(AuthorizationManager auth, MNBackend backend) {
     this.auth = auth;
@@ -99,14 +115,16 @@ public final class ObjectResource {
     checkNotNull(pid, "Form parameter[sysmeta] is required");
     checkState(Objects.equal(pid, sysmeta.getIdentifier().getValue()),
                "System metadata must have the correct identifier");
-
-
     // TODO: How do we decide who can create?
     // auth.checkIsAuthorized(request, Permission.WRITE);  // will fail, as only CN can create in current implementation
-
     try (InputStream in = object) {
-      return backend.create(session, Identifier.builder().withValue(pid).build(), in, sysmeta);
+      //Identifier identifier = backend.create(session, Identifier.builder().withValue(pid).build(), in, sysmeta);
+      Identifier identifier = Identifier.builder().withValue(pid).build();
+      log(session, identifier, Event.CREATE, "Resource created");
+      LOG.info("Resource {} created", identifier);
+      return identifier;
     } catch (Throwable e) {
+      LOG.error("Error creating resource {}, with metadata {}", pid, sysmeta);
       throw propagateOrServiceFailure(e, "Unexpected error from backend system");
     }
   }
@@ -135,6 +153,7 @@ public final class ObjectResource {
   public Identifier delete(@Authenticate Session session, @PathParam("pid") Identifier pid) {
     auth.checkIsAuthorized(session, pid.getValue(), Permission.WRITE);
     backend.delete(session, pid);
+    log(session, pid, Event.DELETE, "Deleting resource");
     return pid;
   }
 
@@ -172,7 +191,9 @@ public final class ObjectResource {
   @Timed
   public InputStream get(@Authenticate Session session, @PathParam("pid") Identifier pid) {
     auth.checkIsAuthorized(request, pid.getValue(), Permission.READ);
-    return backend.get(pid);
+    InputStream inputStream = backend.get(pid);
+    log(session, pid, Event.READ, "Resource read");
+    return  inputStream;
   }
 
   /**
@@ -243,6 +264,8 @@ public final class ObjectResource {
     checkNotNull(pid, "Form parameter[file] is required");
     checkNotNull(pid, "Form parameter[newPid] is required");
     checkNotNull(pid, "Form parameter[sysmeta] is required");
-    return backend.update(session, pid, object, newPid, sysmeta);
+    Identifier identifier = backend.update(session, pid, object, newPid, sysmeta);
+    log(session, pid, Event.CREATE, "Resource updated");
+    return  identifier;
   }
 }
