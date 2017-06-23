@@ -6,7 +6,6 @@ import org.gbif.d1.mn.exception.DataONE;
 import org.gbif.d1.mn.provider.Authenticate;
 
 import java.io.InputStream;
-import java.util.Date;
 import javax.annotation.Nullable;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
@@ -25,7 +24,6 @@ import javax.ws.rs.core.MediaType;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Objects;
-import com.google.common.base.Optional;
 import io.dropwizard.jersey.params.DateTimeParam;
 import org.dataone.ns.service.exceptions.IdentifierNotUnique;
 import org.dataone.ns.service.exceptions.InsufficientResources;

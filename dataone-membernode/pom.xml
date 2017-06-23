@@ -30,6 +30,7 @@
   <properties>
     <dropwizard-xml.version>0.9.0-37</dropwizard-xml.version>
     <elastic-search.version>5.2.2</elastic-search.version>
+    <log4j-to-slf4j.version>2.7</log4j-to-slf4j.version>
   </properties>
 
   <build>
@@ -88,6 +89,11 @@
     <dependency>
       <groupId>net.logstash.logback</groupId>
       <artifactId>logstash-logback-encoder</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-to-slf4j</artifactId>
+      <version>${log4j-to-slf4j.version}</version>
     </dependency>
     <dependency>
       <groupId>org.gbif.dataone</groupId>

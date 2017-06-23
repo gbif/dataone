@@ -3,7 +3,6 @@ package org.gbif.d1.mn.resource;
 import org.gbif.d1.mn.provider.Authenticate;
 import org.gbif.d1.mn.exception.DataONE;
 
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Date;

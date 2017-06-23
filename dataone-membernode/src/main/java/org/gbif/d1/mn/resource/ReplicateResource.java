@@ -97,10 +97,8 @@ public final class ReplicateResource {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @DataONE(Method.REPLICATE)
   @Timed
-  public boolean replicate(@Authenticate Session session,
-                           @FormDataParam("sysmeta") SystemMetadata sysmeta,
-    @FormDataParam("sourceNode") String sourceNode
-  ) {
+  public boolean replicate(@Authenticate Session session, @FormDataParam("sysmeta") SystemMetadata sysmeta,
+                           @FormDataParam("sourceNode") String sourceNode) {
     checkNotNull(sysmeta, "Form parameter[sysmeta] is required");
     checkNotNull(sourceNode, "Form parameter[sourceNode] is required");
 
