@@ -83,7 +83,7 @@ public final class LogResource {
     LogEntry.Builder builder = LogEntry.builder();
     Optional.ofNullable(searchHit.field("id"))
       .ifPresent(field -> builder.withEntryId(field.getValue()));
-    Optional.ofNullable(searchHit.field("date"))
+    Optional.ofNullable(searchHit.field("@timestamp"))
       .ifPresent(field -> builder.withDateLogged(toXmlGregorianCalendar(field.getValue())));
     Optional.ofNullable(searchHit.field("identifier"))
       .ifPresent(field -> builder.withIdentifier(Identifier.builder().withValue(field.getValue()).build()));
@@ -126,10 +126,10 @@ public final class LogResource {
     Optional.ofNullable(pidFilter)
       .ifPresent(pidFilterVal -> query.must().add(QueryBuilders.termQuery("identifier", pidFilterVal)));
     Optional.of(fromDate)
-      .ifPresent(fromDateVal -> query.must().add(QueryBuilders.rangeQuery("date")
+      .ifPresent(fromDateVal -> query.must().add(QueryBuilders.rangeQuery("@timestamp")
                                                    .gte(fromDateVal).includeLower(Boolean.TRUE)));
     Optional.of(toDate)
-      .ifPresent(toDateVal -> query.must().add(QueryBuilders.rangeQuery("date")
+      .ifPresent(toDateVal -> query.must().add(QueryBuilders.rangeQuery("@timestamp")
                                                    .lte(toDateVal).includeUpper(Boolean.TRUE)));
     searchRequestBuilder.setQuery(query);
     SearchResponse searchResponse = searchRequestBuilder.execute().actionGet();
