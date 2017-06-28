@@ -6,6 +6,7 @@ import org.gbif.d1.mn.exception.DataONE;
 import org.gbif.d1.mn.provider.Authenticate;
 
 import java.io.InputStream;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
@@ -84,6 +85,7 @@ public final class ObjectResource {
     MDC.put("subject", session.getSubject().getValue());
     MDC.put("event", event.value());
     MDC.put("identifier", identifier.getValue());
+    MDC.put("type","dataonemn");
     LOG.info(message);
   }
 
@@ -188,9 +190,10 @@ public final class ObjectResource {
   @DataONE(DataONE.Method.GET)
   @Timed
   public InputStream get(@Authenticate Session session, @PathParam("pid") Identifier pid) {
+    log(session, pid, Event.READ, "Resource read");
     auth.checkIsAuthorized(request, pid.getValue(), Permission.READ);
     InputStream inputStream = backend.get(pid);
-    log(session, pid, Event.READ, "Resource read");
+    //log(session, pid, Event.READ, "Resource read");
     return  inputStream;
   }
 
@@ -222,8 +225,8 @@ public final class ObjectResource {
                                 @QueryParam("replicaStatus") @Nullable Boolean replicaStatus, @QueryParam("start") @Nullable Integer start,
                                 @QueryParam("count") @Nullable Integer count) {
     checkNotNull(fromDate, "Query parameter[fromDate] is required");
-    return backend.listObjects(null, java.util.Optional.ofNullable(fromDate).map(date -> date.get().toLocalDate().toDate()).orElse(null),
-                               java.util.Optional.ofNullable(toDate).map(date -> date.get().toLocalDate().toDate()).orElse(null),
+    return backend.listObjects(null, Optional.ofNullable(fromDate).map(date -> date.get().toLocalDate().toDate()).orElse(null),
+                               Optional.ofNullable(toDate).map(date -> date.get().toLocalDate().toDate()).orElse(null),
                                formatId, replicaStatus, start, count);
   }
 

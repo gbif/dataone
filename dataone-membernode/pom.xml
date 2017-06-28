@@ -51,6 +51,12 @@
           <createDependencyReducedPom>true</createDependencyReducedPom>
           <filters>
             <filter>
+              <artifact>org.gbif.data:data-repo-server</artifact>
+              <excludes>
+                <exclude>org/slf4j/impl/**</exclude>
+              </excludes>
+            </filter>
+            <filter>
               <artifact>*:*</artifact>
               <excludes>
                 <exclude>META-INF/*.SF</exclude>
@@ -217,6 +223,12 @@
       <groupId>org.elasticsearch</groupId>
       <artifactId>elasticsearch</artifactId>
       <version>${elastic-search.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-core</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- TODO: investigate -->

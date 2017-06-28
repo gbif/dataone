@@ -21,7 +21,7 @@
     <resetJUL>true</resetJUL>
   </contextListener>
 
-  <property name="defaultPattern" value="%-5level [%date{'yyyy-MM-dd HH:mm:ss,SSSZ'}] [%thread] %X{Event} %logger: %msg%n%xEx"/>
+  <property name="defaultPattern" value="%-5level [%date{'yyyy-MM-dd HH:mm:ss,SSSZ'}] [%thread] %logger: %msg%n%xEx"/>
 
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
@@ -29,10 +29,15 @@
     </encoder>
   </appender>
 
-  <appender name="STASH" class="net.logstash.logback.appender.LogstashSocketAppender">
-    <host>${logstashServer}</host>
-    <!-- port is optional (default value shown) -->
-    <port>${logstashPort}</port>
+  <appender name="SOCKET" class="ch.qos.logback.classic.net.SocketAppender">
+    <remoteHost>${logstashserver}</remoteHost>
+    <port>${logstashport}</port>
+    <reconnectionDelay>10000</reconnectionDelay>
+    <includeCallerData>false</includeCallerData>
+  </appender>
+  <appender name="ASYNC_SOCKET" class="ch.qos.logback.classic.AsyncAppender">
+    <appender-ref ref="SOCKET" />
+    <neverBlock>true</neverBlock>
   </appender>
 
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -64,8 +69,9 @@
 
   <root level="DEBUG">
     <appender-ref ref="CONSOLE"/>
-    <!-- appender-ref ref="FILE"/>
-    <appender-ref ref="ERROR_FILE"/-->
+    <appender-ref ref="SOCKET"/>
+    <appender-ref ref="FILE"/>
+    <appender-ref ref="ERROR_FILE"/>
   </root>
 
 </configuration>
