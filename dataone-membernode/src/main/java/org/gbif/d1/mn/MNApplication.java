@@ -26,7 +26,6 @@ import java.util.Set;
 import javax.ws.rs.ext.ExceptionMapper;
 
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
-import com.yunspace.dropwizard.xml.XmlBundle;
 import io.dropwizard.Application;
 import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.jersey.DropwizardResourceConfig;

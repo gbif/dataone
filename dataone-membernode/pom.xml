@@ -51,12 +51,6 @@
           <createDependencyReducedPom>true</createDependencyReducedPom>
           <filters>
             <filter>
-              <artifact>org.gbif.data:data-repo-server</artifact>
-              <excludes>
-                <exclude>org/slf4j/impl/**</exclude>
-              </excludes>
-            </filter>
-            <filter>
               <artifact>*:*</artifact>
               <excludes>
                 <exclude>META-INF/*.SF</exclude>
@@ -93,8 +87,27 @@
 
   <dependencies>
     <dependency>
-      <groupId>net.logstash.logback</groupId>
-      <artifactId>logstash-logback-encoder</artifactId>
+      <groupId>com.wikia</groupId>
+      <artifactId>dropwizard-logstash-encoder</artifactId>
+      <version>1.1.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-annotations</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.dropwizard</groupId>
+          <artifactId>dropwizard-logging</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>

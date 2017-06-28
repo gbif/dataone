@@ -87,6 +87,7 @@ public final class ObjectResource {
     MDC.put("identifier", identifier.getValue());
     MDC.put("type","dataonemn");
     LOG.info(message);
+    MDC.clear();
   }
 
   public ObjectResource(AuthorizationManager auth, MNBackend backend) {
