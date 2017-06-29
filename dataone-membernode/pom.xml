@@ -91,6 +91,7 @@
       <groupId>com.wikia</groupId>
       <artifactId>dropwizard-logstash-encoder</artifactId>
       <version>${dropwizard-logstash-encoder.version}</version>
+      <scope>runtime</scope>
       <exclusions>
         <exclusion>
           <groupId>com.fasterxml.jackson.core</groupId>
@@ -111,9 +112,14 @@
       </exclusions>
     </dependency>
     <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-to-slf4j</artifactId>
       <version>${log4j-to-slf4j.version}</version>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.gbif.dataone</groupId>
@@ -128,12 +134,9 @@
       <artifactId>data-repo-server</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.gbif</groupId>
-      <artifactId>gbif-doi</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>io.dropwizard</groupId>
@@ -141,15 +144,17 @@
     </dependency>
     <dependency>
       <groupId>io.dropwizard</groupId>
-      <artifactId>dropwizard-testing</artifactId>
+      <artifactId>dropwizard-logging</artifactId>
     </dependency>
     <dependency>
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-jersey</artifactId>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-forms</artifactId>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>com.yunspace.dropwizard</groupId>
@@ -163,14 +168,6 @@
       <groupId>com.sun.jersey.contribs</groupId>
       <artifactId>jersey-multipart</artifactId>
     </dependency-->
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>joda-time</groupId>
-      <artifactId>joda-time</artifactId>
-    </dependency>
     <dependency>
       <groupId>com.codahale.metrics</groupId>
       <artifactId>metrics-annotation</artifactId>
@@ -187,14 +184,6 @@
       <groupId>com.sun.jersey</groupId>
       <artifactId>jersey-server</artifactId>
     </dependency-->
-    <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-    </dependency>
     <dependency>
       <groupId>javax.validation</groupId>
       <artifactId>validation-api</artifactId>
@@ -216,16 +205,8 @@
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
-      <groupId>uk.co.modular-it</groupId>
-      <artifactId>hamcrest-date</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
     </dependency>
 
     <dependency>

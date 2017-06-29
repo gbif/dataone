@@ -8,6 +8,7 @@ import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.backend.impl.DataRepoBackend;
 import org.gbif.d1.mn.backend.impl.DataRepoBackendConfiguration;
 import org.gbif.d1.mn.exception.DefaultExceptionMapper;
+import org.gbif.d1.mn.logging.impl.ElasticsearchLogSearchService;
 import org.gbif.d1.mn.provider.DescribeResponseHeaderProvider;
 import org.gbif.d1.mn.provider.EventProvider;
 import org.gbif.d1.mn.provider.IdentifierProvider;
@@ -92,8 +93,8 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     environment.jersey().register(new MetaResource(auth, backend));
     environment.jersey().register(new ChecksumResource(auth, backend));
     environment.jersey().register(new GenerateResource(auth, backend));
-    environment.jersey().register(new LogResource(configuration.getElasticSearch().buildEsClient(),
-                                                  configuration.getElasticSearch().getIdx()));
+    environment.jersey().register(new LogResource(new ElasticsearchLogSearchService(configuration.getElasticSearch().buildEsClient(),
+                                                  configuration.getElasticSearch().getIdx())));
 
     // health checks
     environment.healthChecks().register("backend", new BackendHealthCheck(backend));
