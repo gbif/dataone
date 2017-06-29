@@ -12,4 +12,14 @@ server:
       trustStorePassword: password
       needClientAuth: true
       wantClientAuth: true
+logging:
+  appenders:
+    - type: console
+      threshold: ALL
+      timeZone: UTC
+      target: stdout
+    - type: logstash-socket
+      host: ${logstash_server}
+      port: ${logstash_udp_port}
+      includeContext: true
 
