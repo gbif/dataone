@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -73,32 +74,33 @@ public final class LogResource {
 
   private static XMLGregorianCalendar toXmlGregorianCalendar(String date) {
     try {
-      return DatatypeFactory.newInstance().newXMLGregorianCalendar(GregorianCalendar.from((ZonedDateTime.parse(date))));
+      return DatatypeFactory.newInstance().newXMLGregorianCalendar(GregorianCalendar.from(ZonedDateTime.parse(date)));
     } catch (DatatypeConfigurationException ex) {
       throw new RuntimeException(ex);
     }
   }
 
   private static LogEntry toLogEntry(SearchHit searchHit) {
-    LogEntry.Builder builder = LogEntry.builder();
-    Optional.ofNullable(searchHit.field("id"))
-      .ifPresent(field -> builder.withEntryId(field.getValue()));
-    Optional.ofNullable(searchHit.field("@timestamp"))
-      .ifPresent(field -> builder.withDateLogged(toXmlGregorianCalendar(field.getValue())));
-    Optional.ofNullable(searchHit.field("identifier"))
-      .ifPresent(field -> builder.withIdentifier(Identifier.builder().withValue(field.getValue()).build()));
-    Optional.ofNullable(searchHit.field("subject"))
-      .ifPresent(field -> builder.withSubject(Subject.builder().withValue(field.getValue()).build()));
-    Optional.ofNullable(searchHit.field("event"))
-      .ifPresent(field -> builder.withEvent(Event.fromValue(field.getValue())));
-    Optional.ofNullable(searchHit.field("ip_address"))
-      .ifPresent(field -> builder.withIpAddress(field.getValue()).build());
-    Optional.ofNullable(searchHit.field("node_identifier"))
-      .ifPresent(field -> builder.withNodeIdentifier(NodeReference.builder().withValue(field.getValue()).build()).build());
-    Optional.ofNullable(searchHit.field("user_agent"))
-      .ifPresent(field -> builder.withUserAgent(field.getValue()).build());
+    LogEntry.Builder<Void> builder = LogEntry.builder();
+    builder.withEntryId(searchHit.id());
+    Map<String,Object> source =  searchHit.getSource();
+    Optional.ofNullable(source.get("@timestamp"))
+      .ifPresent(field -> builder.withDateLogged(toXmlGregorianCalendar(field.toString())));
+    Optional.ofNullable(source.get("identifier"))
+      .ifPresent(field -> builder.withIdentifier(Identifier.builder().withValue(field.toString()).build()));
+    Optional.ofNullable(source.get("subject"))
+      .ifPresent(field -> builder.withSubject(Subject.builder().withValue(field.toString()).build()));
+    Optional.ofNullable(source.get("event"))
+      .ifPresent(field -> builder.withEvent(Event.fromValue(field.toString())));
+    Optional.ofNullable(source.get("host"))
+      .ifPresent(field -> builder.withIpAddress(field.toString()).build());
+    Optional.ofNullable(source.get("node_identifier"))
+      .ifPresent(field -> builder.withNodeIdentifier(NodeReference.builder().withValue(field.toString()).build()).build());
+    Optional.ofNullable(source.get("user_agent"))
+      .ifPresent(field -> builder.withUserAgent(field.toString()).build());
     return builder.build();
   }
+
   /**
    * Retrieve log information from the Member Node for the specified slice parameters. Log entries will only return
    * PIDs.
@@ -108,7 +110,6 @@ public final class LogResource {
    * @throws NotAuthorized if the credentials presented do not have permission to perform the action
    */
   @GET
-  @Path("log")
   @DataONE(DataONE.Method.GET_LOG_RECORDS)
   @Timed
   public Log getLogRecords(@Authenticate Session session, @QueryParam("fromDate") Date fromDate,
@@ -116,19 +117,21 @@ public final class LogResource {
                            @QueryParam("pidFilter") @Nullable Identifier pidFilter, @QueryParam("start") @Nullable Integer start,
                            @QueryParam("count") @Nullable Integer count) {
 
-    SearchRequestBuilder searchRequestBuilder = esClient.prepareSearch(logIdx).addSort("date", SortOrder.DESC);
-    Integer realStart = Optional.of(start).orElse(DEFAULT_START);
+    SearchRequestBuilder searchRequestBuilder = esClient.prepareSearch(logIdx).addSort("@timestamp", SortOrder.DESC);
+    Integer realStart = Optional.ofNullable(start).orElse(DEFAULT_START);
     searchRequestBuilder.setFrom(realStart);
     searchRequestBuilder.setSize(Optional.ofNullable(count).orElse(DEFAULT_PAGE_SIZE));
     BoolQueryBuilder query =  QueryBuilders.boolQuery();
     Optional.ofNullable(event)
       .ifPresent(eventVal -> query.must().add(QueryBuilders.termQuery("event", eventVal.value())));
     Optional.ofNullable(pidFilter)
-      .ifPresent(pidFilterVal -> query.must().add(QueryBuilders.termQuery("identifier", pidFilterVal)));
-    Optional.of(fromDate)
+      .ifPresent(pidFilterVal ->
+                   Optional.ofNullable(pidFilterVal.getValue())
+                     .ifPresent(pidValue -> query.must().add(QueryBuilders.termQuery("identifier", pidValue))));
+    Optional.ofNullable(fromDate)
       .ifPresent(fromDateVal -> query.must().add(QueryBuilders.rangeQuery("@timestamp")
                                                    .gte(fromDateVal).includeLower(Boolean.TRUE)));
-    Optional.of(toDate)
+    Optional.ofNullable(toDate)
       .ifPresent(toDateVal -> query.must().add(QueryBuilders.rangeQuery("@timestamp")
                                                    .lte(toDateVal).includeUpper(Boolean.TRUE)));
     searchRequestBuilder.setQuery(query);

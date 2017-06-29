@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import static org.gbif.d1.mn.util.D1Preconditions.checkNotNull;
+import static org.gbif.d1.mn.util.EventLogging.logError;
 
 /**
  * Operations for handling notifications from a CN that an error has occurred.
@@ -69,15 +70,7 @@ public final class ErrorResource {
     throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure {
     checkNotNull(detail, "The exception detail is required");
     auth.checkIsAuthorized(request, Permission.CHANGE_PERMISSION);
-    MDC.put("event", Event.SYNCHRONIZATION_FAILED.value());
-    MDC.put("pId", detail.getPid());
-    MDC.put("nodeId", detail.getNodeId());
-    MDC.put("errorCode", Integer.toString(detail.getErrorCode()));
-    MDC.put("detailCode", detail.getDetailCode());
-    MDC.put("name", detail.getName());
-    MDC.put("description", detail.getDescription());
-    MDC.put("subject", session.getSubject().getValue());
-    LOG.error("Error synchronizing resources");
+    logError(LOG, detail, session, "Error synchronizing resources");
     return true; // pointless, but the specification mandates it
   }
 }

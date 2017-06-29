@@ -31,6 +31,7 @@
     <dropwizard-xml.version>0.9.0-37</dropwizard-xml.version>
     <elastic-search.version>5.2.2</elastic-search.version>
     <log4j-to-slf4j.version>2.7</log4j-to-slf4j.version>
+    <dropwizard-logstash-encoder.version>1.1.0</dropwizard-logstash-encoder.version>
   </properties>
 
   <build>
@@ -89,7 +90,7 @@
     <dependency>
       <groupId>com.wikia</groupId>
       <artifactId>dropwizard-logstash-encoder</artifactId>
-      <version>1.1.0</version>
+      <version>${dropwizard-logstash-encoder.version}</version>
       <exclusions>
         <exclusion>
           <groupId>com.fasterxml.jackson.core</groupId>

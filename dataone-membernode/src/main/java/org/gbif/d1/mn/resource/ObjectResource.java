@@ -46,11 +46,11 @@ import org.dataone.ns.service.types.v1.Permission;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import static org.gbif.d1.mn.util.D1Preconditions.checkNotNull;
 import static org.gbif.d1.mn.util.D1Preconditions.checkState;
 import static org.gbif.d1.mn.util.D1Throwables.propagateOrServiceFailure;
+import static org.gbif.d1.mn.util.EventLogging.log;
 
 /**
  * Operations relating to CRUD operations on an Object.
@@ -78,17 +78,6 @@ public final class ObjectResource {
   private final AuthorizationManager auth;
   private final MNBackend backend;
 
-  /**
-   * Writes entries into the log.
-   */
-  private static void log(Session session, Identifier identifier, Event event, String message) {
-    MDC.put("subject", session.getSubject().getValue());
-    MDC.put("event", event.value());
-    MDC.put("identifier", identifier.getValue());
-    MDC.put("type","dataonemn");
-    LOG.info(message);
-    MDC.clear();
-  }
 
   public ObjectResource(AuthorizationManager auth, MNBackend backend) {
     this.auth = auth;
@@ -121,7 +110,7 @@ public final class ObjectResource {
     try (InputStream in = object) {
       //Identifier identifier = backend.create(session, Identifier.builder().withValue(pid).build(), in, sysmeta);
       Identifier identifier = Identifier.builder().withValue(pid).build();
-      log(session, identifier, Event.CREATE, "Resource created");
+      log(LOG, session, identifier, Event.CREATE, "Resource created");
       LOG.info("Resource {} created", identifier);
       return identifier;
     } catch (Throwable e) {
@@ -154,7 +143,7 @@ public final class ObjectResource {
   public Identifier delete(@Authenticate Session session, @PathParam("pid") Identifier pid) {
     auth.checkIsAuthorized(session, pid.getValue(), Permission.WRITE);
     backend.delete(session, pid);
-    log(session, pid, Event.DELETE, "Deleting resource");
+    log(LOG, session, pid, Event.DELETE, "Deleting resource");
     return pid;
   }
 
@@ -191,7 +180,7 @@ public final class ObjectResource {
   @DataONE(DataONE.Method.GET)
   @Timed
   public InputStream get(@Authenticate Session session, @PathParam("pid") Identifier pid) {
-    log(session, pid, Event.READ, "Resource read");
+    log(LOG, session, pid, Event.READ, "Resource read");
     auth.checkIsAuthorized(request, pid.getValue(), Permission.READ);
     InputStream inputStream = backend.get(pid);
     //log(session, pid, Event.READ, "Resource read");
@@ -267,7 +256,7 @@ public final class ObjectResource {
     checkNotNull(pid, "Form parameter[newPid] is required");
     checkNotNull(pid, "Form parameter[sysmeta] is required");
     Identifier identifier = backend.update(session, pid, object, newPid, sysmeta);
-    log(session, pid, Event.CREATE, "Resource updated");
+    log(LOG, session, pid, Event.CREATE, "Resource updated");
     return  identifier;
   }
 }

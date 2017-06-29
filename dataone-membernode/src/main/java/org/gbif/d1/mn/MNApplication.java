@@ -9,6 +9,7 @@ import org.gbif.d1.mn.backend.impl.DataRepoBackend;
 import org.gbif.d1.mn.backend.impl.DataRepoBackendConfiguration;
 import org.gbif.d1.mn.exception.DefaultExceptionMapper;
 import org.gbif.d1.mn.provider.DescribeResponseHeaderProvider;
+import org.gbif.d1.mn.provider.EventProvider;
 import org.gbif.d1.mn.provider.IdentifierProvider;
 import org.gbif.d1.mn.provider.SessionProvider;
 import org.gbif.d1.mn.provider.TierSupportFilter;
@@ -79,6 +80,7 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     environment.jersey().register(new TierSupportFilter(configuration.getTier()));
     environment.jersey().register(new IdentifierProvider());
     environment.jersey().register(new DescribeResponseHeaderProvider());
+    environment.jersey().register(new EventProvider());
 
     // RESTful resources
     CoordinatingNode cn = coordinatingNode(configuration);

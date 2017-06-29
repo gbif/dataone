@@ -103,7 +103,6 @@
     <jackson.api.version>2.6.0</jackson.api.version>
     <jackson.version>2.6.3</jackson.version>
     <logback.version>1.2.3</logback.version>
-    <logstash-logback-encoder.version>4.10</logstash-logback-encoder.version>
     <!-- END: Fixing to dropwizard dependencies -->
 
     <servlet-api.version>3.1.0</servlet-api.version>
@@ -187,11 +186,6 @@
         <groupId>ch.qos.logback</groupId>
         <artifactId>logback-classic</artifactId>
         <version>${logback.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>net.logstash.logback</groupId>
-        <artifactId>logstash-logback-encoder</artifactId>
-        <version>${logstash-logback-encoder.version}</version>
       </dependency>
       <dependency>
         <groupId>org.gbif.data</groupId>

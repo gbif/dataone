@@ -20,14 +20,13 @@ import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
-import org.dataone.ns.service.types.v1.Event;
 import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
+import static org.gbif.d1.mn.util.EventLogging.log;
 /**
  * Operations related to the archival (hiding) of objects in DataONE.
  * <p>
@@ -85,10 +84,7 @@ public final class ArchiveResource {
   public Identifier archive(@PathParam("id") String encodedId) {
     Identifier id = Identifier.builder().withValue(URLDecoder.decode(encodedId)).build();
     Session session = auth.checkIsAuthorized(request, id.getValue(), Permission.CHANGE_PERMISSION);
-    MDC.put("event",Method.ARCHIVE.name().toLowerCase());
-    MDC.put("identifier", encodedId);
-    MDC.put("subject", session.getSubject().getValue());
-    LOG.info("Archiving");
+    log(LOG, session, id, Method.ARCHIVE.name().toLowerCase(), "Archiving");
     backend.archive(id);
     return id;
   }
