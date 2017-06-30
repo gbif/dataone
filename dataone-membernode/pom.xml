@@ -60,6 +60,12 @@
                 <exclude>META-INF/*.RSA</exclude>
               </excludes>
             </filter>
+            <filter>
+              <artifact>org.gbif.data:data-repo-server</artifact>
+              <excludes>
+                <exclude>META-INF/MANIFEST.MF</exclude>
+              </excludes>
+            </filter>
           </filters>
         </configuration>
         <executions>
