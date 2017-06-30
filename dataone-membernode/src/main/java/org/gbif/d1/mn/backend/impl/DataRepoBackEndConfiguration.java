@@ -30,7 +30,7 @@ public class DataRepoBackendConfiguration extends MNConfiguration {
 
     public String cluster = "content-cluster";
 
-    public String idx = ".kibana";
+    public String idx = "logstash-datanone-*";
 
     @JsonProperty
     public String getHost() {

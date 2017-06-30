@@ -67,14 +67,6 @@
     </repository>
   </repositories>
 
-  <pluginRepositories>
-    <pluginRepository>
-      <id>jaxb2-plugins</id>
-      <name>JAXB2 XJC Plugin Repository</name>
-      <url>http://maven.klemm-scs.com/release</url>
-    </pluginRepository>
-  </pluginRepositories>
-
   <modules>
     <module>dataone-api</module>
     <module>dataone-auth</module>
