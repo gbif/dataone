@@ -33,13 +33,16 @@
   <description>The project that provides java libraries for DataONE</description>
   <url>http://sites.gbif.org/dataone</url>
 
-  <!-- TODO: GBIF or DataONE -->
-  <!--scm> <connection></connection> <developerConnection></developerConnection>
-    <url></url> </scm> -->
+  <scm>
+    <connection>scm:git:git@github.com:gbif/dataone.git</connection>
+    <url>https://github.com/gbif/dataone</url>
+    <developerConnection>scm:git:git@github.com:gbif/dataone.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
 
   <issueManagement>
-    <system>jira</system>
-    <url>http://dev.gbif.org/issues/browse/D1</url>
+    <system>github</system>
+    <url>http://github.com/gbif/dataone/issues</url>
   </issueManagement>
 
   <ciManagement>
