@@ -117,8 +117,8 @@
     <hamcrest.date.version>0.9.5</hamcrest.date.version>
 
     <!-- plugins -->
-    <maven-shade-plugin.version>1.6</maven-shade-plugin.version>
-    <maven-jar-plugin.version>2.4</maven-jar-plugin.version>
+    <maven-shade-plugin.version>2.3</maven-shade-plugin.version>
+    <maven-jar-plugin.version>3.0.0</maven-jar-plugin.version>
     <jaxb2-rich-contract-plugin.version>1.17.0</jaxb2-rich-contract-plugin.version>
     <maven-jaxb2-plugin.version>0.11.0</maven-jaxb2-plugin.version>
     <jaxb2_commons.version>0.6.3</jaxb2_commons.version>
@@ -278,18 +278,6 @@
  <build>
     <pluginManagement>
       <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-jar-plugin</artifactId>
-          <version>${maven-jar-plugin.version}</version>
-          <configuration>
-            <archive>
-              <manifest>
-                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-              </manifest>
-            </archive>
-          </configuration>
-        </plugin>
         <!-- 1.7 required for hamcrest and generating source  -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
