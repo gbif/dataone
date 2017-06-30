@@ -32,6 +32,7 @@
     <elastic-search.version>5.2.2</elastic-search.version>
     <log4j-to-slf4j.version>2.7</log4j-to-slf4j.version>
     <dropwizard-logstash-encoder.version>1.1.0</dropwizard-logstash-encoder.version>
+    <mail.version>1.4.3</mail.version>
   </properties>
 
   <build>
@@ -230,7 +231,7 @@
     <dependency>
       <groupId>javax.mail</groupId>
       <artifactId>mail</artifactId>
-      <version>1.4.3</version>
+      <version>${mail.version}</version>
     </dependency>
 
   </dependencies>
