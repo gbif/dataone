@@ -87,6 +87,7 @@
     <dataone-api.version>0.1-SNAPSHOT</dataone-api.version>
     <dataone-auth.version>0.1-SNAPSHOT</dataone-auth.version>
     <dataone-membernode.version>0.1-SNAPSHOT</dataone-membernode.version>
+    <service-discovery.version>0.1</service-discovery.version>
 
     <!-- libs -->
     <dropwizard.version>0.9.2</dropwizard.version>
@@ -131,6 +132,11 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>org.gbif</groupId>
+        <artifactId>service-discovery</artifactId>
+        <version>${service-discovery.version}</version>
+      </dependency>
       <dependency>
         <groupId>org.gbif.dataone</groupId>
         <artifactId>dataone-api</artifactId>

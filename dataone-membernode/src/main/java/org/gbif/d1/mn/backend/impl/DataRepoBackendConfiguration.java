@@ -3,6 +3,7 @@ package org.gbif.d1.mn.backend.impl;
 import org.gbif.d1.mn.MNConfiguration;
 import org.gbif.d1.mn.Tier;
 import org.gbif.datarepo.conf.DataRepoConfiguration;
+import org.gbif.discovery.conf.ServiceConfiguration;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -86,6 +87,8 @@ public class DataRepoBackendConfiguration extends MNConfiguration {
 
   private ElasticSearch elasticSearch;
 
+  private ServiceConfiguration service;
+
   @JsonProperty
   public DataRepoConfiguration getDataRepoConfiguration() {
     return dataRepoConfiguration;
@@ -102,6 +105,15 @@ public class DataRepoBackendConfiguration extends MNConfiguration {
 
   public void setElasticSearch(ElasticSearch elasticSearch) {
     this.elasticSearch = elasticSearch;
+  }
+
+  @JsonProperty
+  public ServiceConfiguration getService() {
+    return service;
+  }
+
+  public void setService(ServiceConfiguration service) {
+    this.service = service;
   }
 
   /**

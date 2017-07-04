@@ -23,6 +23,7 @@ import org.gbif.d1.mn.resource.MetaResource;
 import org.gbif.d1.mn.resource.ObjectResource;
 import org.gbif.datarepo.conf.DataRepoConfiguration;
 import org.gbif.datarepo.conf.DataRepoModule;
+import org.gbif.discovery.lifecycle.DiscoveryLifeCycle;
 
 import java.util.Set;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -68,6 +69,11 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
 
   @Override
   public final void run(DataRepoBackendConfiguration configuration, Environment environment) {
+    //Can be discovered in zookeeper
+    if (configuration.getService().isDiscoverable()) {
+      environment.lifecycle().manage(new DiscoveryLifeCycle(configuration.getService()));
+    }
+
     Node self = self(configuration);
     CertificateUtils certificateUtils = CertificateUtils.newInstance();
     environment.getObjectMapper().registerModules(new JaxbAnnotationModule());
