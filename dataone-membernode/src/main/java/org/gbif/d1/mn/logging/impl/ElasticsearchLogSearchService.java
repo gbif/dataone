@@ -109,16 +109,16 @@ public class ElasticsearchLogSearchService implements LogSearchService {
     searchRequestBuilder.setSize(Math.min(Optional.ofNullable(count).orElse(DEFAULT_PAGE_SIZE), MAX_PAGE_SIZE));
     BoolQueryBuilder query =  QueryBuilders.boolQuery();
     Optional.ofNullable(event)
-      .ifPresent(eventVal -> query.must().add(QueryBuilders.termQuery("event", eventVal.value())));
+      .ifPresent(eventVal -> query.must(QueryBuilders.termQuery("event", eventVal.value())));
     Optional.ofNullable(pidFilter)
       .ifPresent(pidFilterVal ->
                    Optional.ofNullable(pidFilterVal.getValue())
-                     .ifPresent(pidValue -> query.must().add(QueryBuilders.termQuery("identifier", pidValue))));
+                     .ifPresent(pidValue -> query.must(QueryBuilders.termQuery("identifier", pidValue))));
     Optional.ofNullable(fromDate)
-      .ifPresent(fromDateVal -> query.must().add(QueryBuilders.rangeQuery("@timestamp")
+      .ifPresent(fromDateVal -> query.must(QueryBuilders.rangeQuery("@timestamp")
                                                    .gte(fromDateVal).includeLower(Boolean.TRUE)));
     Optional.ofNullable(toDate)
-      .ifPresent(toDateVal -> query.must().add(QueryBuilders.rangeQuery("@timestamp")
+      .ifPresent(toDateVal -> query.must(QueryBuilders.rangeQuery("@timestamp")
                                                  .lte(toDateVal).includeUpper(Boolean.TRUE)));
     searchRequestBuilder.setQuery(query);
     SearchResponse searchResponse = searchRequestBuilder.execute().actionGet();

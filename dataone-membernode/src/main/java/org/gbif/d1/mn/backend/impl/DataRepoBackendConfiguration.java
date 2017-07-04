@@ -10,9 +10,9 @@ import java.net.UnknownHostException;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
 
 /**
  * Configuration settings of a backend supported on the GBIF data repo.
@@ -75,8 +75,8 @@ public class DataRepoBackendConfiguration extends MNConfiguration {
     public Client buildEsClient() {
       try {
         Settings settings = Settings.builder().put("cluster.name", cluster).build();
-        return new PreBuiltTransportClient(settings).addTransportAddress(
-          new InetSocketTransportAddress(InetAddress.getByName(host), port));
+        return TransportClient.builder().settings(settings).build()
+                .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(host), port));
       } catch (UnknownHostException ex) {
         throw new IllegalStateException(ex);
       }
