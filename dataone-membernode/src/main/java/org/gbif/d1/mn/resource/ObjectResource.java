@@ -179,10 +179,9 @@ public final class ObjectResource {
   @DataONE(DataONE.Method.GET)
   @Timed
   public InputStream get(@Authenticate Session session, @PathParam("pid") Identifier pid) {
-    log(LOG, session, pid, Event.READ, "Resource read");
     auth.checkIsAuthorized(request, pid.getValue(), Permission.READ);
     InputStream inputStream = backend.get(pid);
-    //log(session, pid, Event.READ, "Resource read");
+    log(LOG, session, pid, Event.READ, "Resource read");
     return  inputStream;
   }
 

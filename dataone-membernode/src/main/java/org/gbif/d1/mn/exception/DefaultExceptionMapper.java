@@ -8,13 +8,11 @@ import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.reflect.Invokable;
 import org.dataone.ns.service.exceptions.DataONEException;
 import org.dataone.ns.service.exceptions.ExceptionDetail;
 import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.glassfish.jersey.server.ExtendedUriInfo;
-import org.glassfish.jersey.server.model.internal.ModelProcessorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
