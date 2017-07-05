@@ -78,7 +78,7 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     CertificateUtils certificateUtils = CertificateUtils.newInstance();
     environment.getObjectMapper().registerModules(new JaxbAnnotationModule());
     // Replace all exception handling with custom handling required by the DataONE specification
-    removeAllExceptionMappers(environment.jersey());
+    //removeAllExceptionMappers(environment.jersey());
     environment.jersey().register(new DefaultExceptionMapper(self.getIdentifier().getValue()));
 
     // providers
