@@ -108,8 +108,7 @@ public final class ObjectResource {
     // TODO: How do we decide who can create?
     // auth.checkIsAuthorized(request, Permission.WRITE);  // will fail, as only CN can create in current implementation
     try (InputStream in = object) {
-      //Identifier identifier = backend.create(session, Identifier.builder().withValue(pid).build(), in, sysmeta);
-      Identifier identifier = Identifier.builder().withValue(pid).build();
+      Identifier identifier = backend.create(session, Identifier.builder().withValue(pid).build(), in, sysmeta);
       log(LOG, session, identifier, Event.CREATE, "Resource created");
       LOG.info("Resource {} created", identifier);
       return identifier;
