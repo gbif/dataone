@@ -22,7 +22,7 @@ import org.gbif.d1.mn.resource.LogResource;
 import org.gbif.d1.mn.resource.MetaResource;
 import org.gbif.d1.mn.resource.ObjectResource;
 import org.gbif.datarepo.conf.DataRepoConfiguration;
-import org.gbif.datarepo.conf.DataRepoModule;
+import org.gbif.datarepo.inject.DataRepoModule;
 import org.gbif.discovery.lifecycle.DiscoveryLifeCycle;
 
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
