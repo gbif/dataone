@@ -25,19 +25,13 @@ import org.gbif.datarepo.conf.DataRepoConfiguration;
 import org.gbif.datarepo.conf.DataRepoModule;
 import org.gbif.discovery.lifecycle.DiscoveryLifeCycle;
 
-import java.util.Set;
-import javax.ws.rs.ext.ExceptionMapper;
-
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 import io.dropwizard.Application;
 import io.dropwizard.forms.MultiPartBundle;
-import io.dropwizard.jersey.DropwizardResourceConfig;
-import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.server.AbstractServerFactory;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.dataone.ns.service.apis.v1.CoordinatingNode;
-import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.Node;
 import org.dataone.ns.service.types.v1.NodeList;
 import org.dataone.ns.service.types.v1.NodeReference;
@@ -79,7 +73,6 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     CertificateUtils certificateUtils = CertificateUtils.newInstance();
     environment.getObjectMapper().registerModules(new JaxbAnnotationModule());
     // Replace all exception handling with custom handling required by the DataONE specification
-    //removeAllExceptionMappers(environment.jersey());
     ((AbstractServerFactory)configuration.getServerFactory()).setRegisterDefaultExceptionMappers(false);
     environment.jersey().register(new DefaultExceptionMapper(self.getIdentifier().getValue()));
 
@@ -110,31 +103,14 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
 
   // TODO: implement a CN client
   private static CoordinatingNode coordinatingNode(MNConfiguration configuration) {
-    return new CoordinatingNode() {
-
-      @Override
-      public NodeList listNodes() throws ServiceFailure {
-        return NodeList.builder().build();
-      }
-    };
-  }
-
-  /**
-   * Removes all instances of {@link ExceptionMapper} from the environment.
-   */
-  private static void removeAllExceptionMappers(JerseyEnvironment environment) {
-    DropwizardResourceConfig jrConfig = environment.getResourceConfig();
-    Set<Object> dwSingletons = jrConfig.getSingletons();
-    jrConfig.getSingletons().stream()
-      .filter(s -> s instanceof  ExceptionMapper)
-      .forEach(dwSingletons::remove);
+    return () -> NodeList.builder().build();
   }
 
   /**
    * Returns a Node representing this installation, based on the provided configuration.
    * TODO: extract config
    */
-  private Node self(DataRepoBackendConfiguration configuration) {
+  private static Node self(DataRepoBackendConfiguration configuration) {
     // nonsense for now
     return Node.builder()
       .addSubject(Subject.builder().withValue("CN=GBIFS Member Node").build())
