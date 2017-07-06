@@ -33,6 +33,7 @@ import io.dropwizard.Application;
 import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.jersey.DropwizardResourceConfig;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
+import io.dropwizard.server.AbstractServerFactory;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.dataone.ns.service.apis.v1.CoordinatingNode;
@@ -79,6 +80,7 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     environment.getObjectMapper().registerModules(new JaxbAnnotationModule());
     // Replace all exception handling with custom handling required by the DataONE specification
     //removeAllExceptionMappers(environment.jersey());
+    ((AbstractServerFactory)configuration.getServerFactory()).setRegisterDefaultExceptionMappers(false);
     environment.jersey().register(new DefaultExceptionMapper(self.getIdentifier().getValue()));
 
     // providers
