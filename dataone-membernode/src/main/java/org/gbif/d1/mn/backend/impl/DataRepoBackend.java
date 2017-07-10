@@ -38,7 +38,10 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+import org.dataone.ns.service.exceptions.DataONEException;
+import org.dataone.ns.service.exceptions.IdentifierNotUnique;
 import org.dataone.ns.service.exceptions.InvalidRequest;
+import org.dataone.ns.service.exceptions.InvalidSystemMetadata;
 import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.Checksum;
@@ -103,6 +106,15 @@ public class DataRepoBackend implements MNBackend {
   }
 
   /**
+   *  Asserts that an pid exist, throws IdentifierNotUnique otherwise.
+   */
+  private void assertExists(Identifier pid) {
+    if (dataRepository.get(new DOI(pid.getValue())).isPresent()) {
+      throw new IdentifierNotUnique("Identifier already exists", pid.getValue());
+    }
+  }
+
+  /**
    * Full constructor.
    * @param dataRepository data repository implementation
    * @param doiRegistrationService registration service
@@ -125,9 +137,11 @@ public class DataRepoBackend implements MNBackend {
     // NOP
   }
 
+
   @Override
   public Identifier create(Session session, Identifier pid, InputStream object, SystemMetadata sysmeta) {
     try {
+      assertExists(pid);
       DataPackage dataPackage = new DataPackage();
       dataPackage.setCreated(new Date());
       dataPackage.setCreatedBy(session.getSubject().getValue());
@@ -160,8 +174,9 @@ public class DataRepoBackend implements MNBackend {
       dataPackage.setDoi(doi);
       dataRepository.create(dataPackage, xmlMetadataData, Lists.newArrayList(fileInputContent, fileInputMetadata));
       return pid;
-    } catch (InvalidMetadataException |JAXBException ex) {
-      throw new InvalidRequest("Error registering data package metadata", ex);
+    } catch (InvalidMetadataException | JAXBException ex) {
+      LOG.error("Error processing metadata", ex);
+      throw new InvalidSystemMetadata("Error registering data package metadata");
     }
   }
 
@@ -204,7 +219,7 @@ public class DataRepoBackend implements MNBackend {
 
   @Override
   public Identifier generateIdentifier(Session session, String scheme, String fragment) {
-    return  Identifier.builder().withValue(doiRegistrationService.generate(DoiType.DATA_PACKAGE).getDoiName()).build();
+    return Identifier.builder().withValue(doiRegistrationService.generate(DoiType.DATA_PACKAGE).getDoiName()).build();
   }
 
   @Override
@@ -225,7 +240,7 @@ public class DataRepoBackend implements MNBackend {
                                                     Optional.ofNullable(count)
                                                       .map(value -> Integer.min(value, MAX_PAGE_SIZE))
                                                       .orElse(MAX_PAGE_SIZE));
-    PagingResponse<DataPackage> response = dataRepository.list(null, pagingRequest, fromDate, toDate);
+    PagingResponse<DataPackage> response = dataRepository.list(null, pagingRequest, fromDate, toDate, false);
     return ObjectList.builder().withCount(response.getLimit())
       .withStart(Long.valueOf(response.getOffset()).intValue())
       .withTotal(response.getCount().intValue())
@@ -254,8 +269,44 @@ public class DataRepoBackend implements MNBackend {
   @Override
   public Identifier update(Session session, Identifier pid, InputStream object, Identifier newPid,
                            SystemMetadata sysmeta) {
-    dataRepository.delete(new DOI(pid.getValue()));
-    return create(session, newPid, object, sysmeta);
+    try {
+      assertExists(pid);
+      DataPackage dataPackage = new DataPackage();
+      dataPackage.setCreated(new Date());
+      dataPackage.setCreatedBy(session.getSubject().getValue());
+      dataPackage.setTitle(pid.getValue());
+      FileInputContent fileInputContent = new FileInputContent(CONTENT_FILE, object);
+      StringWriter xmlMetadata = new StringWriter();
+      JAXB_CONTEXT.createMarshaller().marshal(sysmeta, xmlMetadata);
+      FileInputContent fileInputMetadata = new FileInputContent(SYS_METADATA_FILE,
+                                                                new ByteArrayInputStream(xmlMetadata.toString().getBytes(StandardCharsets.UTF_8)));
+      DataCiteMetadata dataCiteMetadata = new DataCiteMetadata();
+      dataCiteMetadata.setTitles(DataCiteMetadata.Titles.builder()
+                                   .withTitle(DataCiteMetadata.Titles.Title.builder().withValue(pid.getValue()).build())
+                                   .build());
+      dataCiteMetadata.setIdentifier(DataCiteMetadata.Identifier.builder()
+                                       .withValue(pid.getValue())
+                                       .withIdentifierType(IdentifierType.DOI.name())
+                                       .build());
+      dataCiteMetadata.setCreators(extractCreators(session));
+      dataCiteMetadata.setPublisher(session.getSubject().getValue());
+      dataCiteMetadata.setPublicationYear(Integer.toString(LocalDate.now().getYear()));
+      DOI doi = new DOI(pid.getValue());
+      String metadataXML = DataCiteValidator.toXml(doi, dataCiteMetadata);
+      doiRegistrationService.update(DoiRegistration.builder()
+                                        .withDoi(new DOI(pid.getValue()))
+                                        .withType(DoiType.DATA_PACKAGE)
+                                        .withUser(session.getSubject().getValue())
+                                        .withMetadata(metadataXML)
+                                        .build());
+      InputStream xmlMetadataData = new ByteArrayInputStream(metadataXML.getBytes(StandardCharsets.UTF_8));
+      dataPackage.setDoi(doi);
+      dataRepository.update(dataPackage, xmlMetadataData, Lists.newArrayList(fileInputContent, fileInputMetadata));
+      return pid;
+    } catch (InvalidMetadataException | JAXBException ex) {
+      LOG.error("Error processing metadata", ex);
+      throw new InvalidSystemMetadata("Error registering data package metadata");
+    }
   }
 
   @Override

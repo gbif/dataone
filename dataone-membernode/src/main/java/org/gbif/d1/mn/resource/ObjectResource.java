@@ -110,7 +110,6 @@ public final class ObjectResource {
     try (InputStream in = object) {
       Identifier identifier = backend.create(session, Identifier.builder().withValue(pid).build(), in, sysmeta);
       log(LOG, session, identifier, Event.CREATE, "Resource created");
-      LOG.info("Resource {} created", identifier);
       return identifier;
     } catch (Throwable e) {
       LOG.error("Error creating resource {}, with metadata {}", pid, sysmeta);
@@ -254,7 +253,7 @@ public final class ObjectResource {
     checkNotNull(pid, "Form parameter[newPid] is required");
     checkNotNull(pid, "Form parameter[sysmeta] is required");
     Identifier identifier = backend.update(session, pid, object, newPid, sysmeta);
-    log(LOG, session, pid, Event.CREATE, "Resource updated");
+    log(LOG, session, pid, Event.UPDATE, "Resource updated");
     return  identifier;
   }
 }
