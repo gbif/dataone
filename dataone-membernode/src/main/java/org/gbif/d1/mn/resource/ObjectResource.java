@@ -250,8 +250,8 @@ public final class ObjectResource {
                            @FormDataParam("file") InputStream object, @FormDataParam("newPid") Identifier newPid,
                            @FormDataParam("sysmeta") SystemMetadata sysmeta) {
     checkNotNull(pid, "Form parameter[file] is required");
-    checkNotNull(pid, "Form parameter[newPid] is required");
-    checkNotNull(pid, "Form parameter[sysmeta] is required");
+    checkNotNull(newPid, "Form parameter[newPid] is required");
+    checkNotNull(sysmeta, "Form parameter[sysmeta] is required");
     Identifier identifier = backend.update(session, pid, object, newPid, sysmeta);
     log(LOG, session, pid, Event.UPDATE, "Resource updated");
     return  identifier;

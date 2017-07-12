@@ -161,7 +161,6 @@ public class DataRepoBackend implements MNBackend {
       dataPackage.setCreated(new Date());
       dataPackage.setCreatedBy(session.getSubject().getValue());
       dataPackage.setTitle(pid.getValue());
-      FileInputContent fileInputContent = new FileInputContent(CONTENT_FILE, object);
       DataCiteMetadata dataCiteMetadata = new DataCiteMetadata();
       dataCiteMetadata.setTitles(DataCiteMetadata.Titles.builder()
                                    .withTitle(DataCiteMetadata.Titles.Title.builder().withValue(pid.getValue()).build())
@@ -187,7 +186,7 @@ public class DataRepoBackend implements MNBackend {
                                         .build());
       dataPackage.setDoi(doi);
       dataRepository.create(dataPackage, new ByteArrayInputStream(metadataXML.getBytes(StandardCharsets.UTF_8)),
-                            Lists.newArrayList(fileInputContent, toFileContent(sysmeta)));
+                            Lists.newArrayList(new FileInputContent(CONTENT_FILE, object), toFileContent(sysmeta)));
       return pid;
     } catch (InvalidMetadataException | JAXBException ex) {
       LOG.error("Error processing metadata", ex);
@@ -261,7 +260,8 @@ public class DataRepoBackend implements MNBackend {
       .withTotal(response.getCount().intValue())
       .withObjectInfo(response.getResults().stream()
                         .map(dataPackage -> ObjectInfo.builder()
-                                              .withIdentifier(Identifier.builder().withValue(dataPackage.getDoi().getDoiName()).build())
+                                              .withIdentifier(Identifier.builder()
+                                                                .withValue(dataPackage.getDoi().getDoiName()).build())
                                               .withChecksum(dataPackageChecksum(dataPackage))
                                               .withDateSysMetadataModified(toXmlGregorianCalendar(dataPackage.getModified()))
                                               .withSize(BigInteger.valueOf(dataPackage.getSize()))
@@ -291,8 +291,10 @@ public class DataRepoBackend implements MNBackend {
                                             .newCopyBuilder().withObsoletedBy(newPid)
                                             .withDateSysMetadataModified(now)
                                             .build();
-        DataCiteMetadata dataCiteMetadata = DataCiteMetadata
-                                              .copyOf(DataCiteValidator.fromXml(dataPackage.getMetadata())).build();
+        DataCiteMetadata dataCiteMetadata = DataCiteValidator.fromXml(dataRepository
+                                                                        .getFileInputStream(dataPackage.getDoi(),
+                                                                                            DataPackage.METADATA_FILE)
+                                                                        .get());
         dataCiteMetadata.setAlternateIdentifiers(DataCiteMetadata.AlternateIdentifiers
                                                    .copyOf(dataCiteMetadata.getAlternateIdentifiers())
                                                    .addAlternateIdentifier(DataCiteMetadata.AlternateIdentifiers
