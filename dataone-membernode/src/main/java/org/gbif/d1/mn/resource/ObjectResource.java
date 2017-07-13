@@ -247,7 +247,7 @@ public final class ObjectResource {
   @DataONE(DataONE.Method.UPDATE)
   @Timed
   public Identifier update(@Authenticate Session session, @PathParam("pid") Identifier pid,
-                           @FormDataParam("file") InputStream object, @FormDataParam("newPid") Identifier newPid,
+                           @FormDataParam("object") InputStream object, @FormDataParam("newPid") Identifier newPid,
                            @FormDataParam("sysmeta") SystemMetadata sysmeta) {
     checkNotNull(pid, "Form parameter[file] is required");
     checkNotNull(newPid, "Form parameter[newPid] is required");

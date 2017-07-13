@@ -172,7 +172,7 @@ public class DataRepoBackend implements MNBackend {
       dataCiteMetadata.setCreators(extractCreators(session));
       dataCiteMetadata.setPublisher(session.getSubject().getValue());
       dataCiteMetadata.setPublicationYear(Integer.toString(LocalDate.now().getYear()));
-      DataCiteMetadata.AlternateIdentifiers.Builder altIds =  DataCiteMetadata.AlternateIdentifiers.builder();
+      DataCiteMetadata.AlternateIdentifiers.Builder altIds = DataCiteMetadata.AlternateIdentifiers.builder();
       toAlternateIdentifier(sysmeta.getObsoletedBy()).ifPresent(altIds::addAlternateIdentifier);
       toAlternateIdentifier(sysmeta.getObsoletes()).ifPresent(altIds::addAlternateIdentifier);
       dataCiteMetadata.setAlternateIdentifiers(altIds.build());
@@ -281,16 +281,41 @@ public class DataRepoBackend implements MNBackend {
                     }).orElseThrow(() -> new NotFound("Metadata Not Found", identifier.getValue()));
   }
 
+  /**
+   * Validates that the system metadata is valid for a an update operation.
+   */
+  private static void validateUpdateMetadata(SystemMetadata sysmeta, Identifier pid) {
+    if (Optional.ofNullable(sysmeta.getObsoletedBy()).map(Identifier::getValue).isPresent()) {
+      throw new InvalidSystemMetadata("A new object cannot be created in an obsoleted state");
+    }
+    if (Optional.ofNullable(sysmeta.getObsoletes()).filter(obseletesId -> !obseletesId.equals(pid)).isPresent()) {
+      throw new InvalidSystemMetadata("Obsoletes is set does not match the pid of the object being obsoleted");
+    }
+  }
+
+  /**
+   * Validates that the systemMetadata is not already being obsoleted.
+   */
+  private static void validateIsObsoleted(SystemMetadata systemMetadata) {
+    if (Optional.ofNullable(systemMetadata.getObsoletedBy()).map(Identifier::getValue).isPresent()) {
+      throw new InvalidSystemMetadata("ObsoletedBy is already set on the object being obsoleted");
+    }
+  }
+
   @Override
   public Identifier update(Session session, Identifier pid, InputStream object, Identifier newPid,
                            SystemMetadata sysmeta) {
     return getAndConsume(pid, dataPackage -> {
       try {
+        validateUpdateMetadata(sysmeta, pid);
+        assertNotExists(newPid);
         XMLGregorianCalendar now = toXmlGregorianCalendar(new Date());
-        SystemMetadata obsoletedMetadata = getSystemMetadata(session, pid)
-                                            .newCopyBuilder().withObsoletedBy(newPid)
-                                            .withDateSysMetadataModified(now)
-                                            .build();
+        SystemMetadata obsoletedMetadata = getSystemMetadata(session, pid);
+        validateIsObsoleted(obsoletedMetadata);
+        obsoletedMetadata = obsoletedMetadata
+                              .newCopyBuilder().withObsoletedBy(newPid)
+                              .withDateSysMetadataModified(now)
+                              .build();
         DataCiteMetadata dataCiteMetadata = DataCiteValidator.fromXml(dataRepository
                                                                         .getFileInputStream(dataPackage.getDoi(),
                                                                                             DataPackage.METADATA_FILE)
