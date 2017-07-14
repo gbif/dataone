@@ -10,6 +10,8 @@ import org.gbif.datarepo.api.DataRepository;
 import org.gbif.datarepo.api.model.DataPackage;
 import org.gbif.datarepo.api.model.FileInputContent;
 import org.gbif.doi.metadata.datacite.DataCiteMetadata;
+import org.gbif.doi.metadata.datacite.DataCiteMetadata.AlternateIdentifiers.AlternateIdentifier;
+import org.gbif.doi.metadata.datacite.DataCiteMetadata.AlternateIdentifiers;
 import org.gbif.doi.service.InvalidMetadataException;
 import org.gbif.doi.service.datacite.DataCiteValidator;
 import org.gbif.registry.doi.DoiType;
@@ -86,10 +88,7 @@ public class DataRepoBackend implements MNBackend {
    * Gets the checksum of a data package.
    */
   private static Checksum dataPackageChecksum(DataPackage dataPackage) {
-    return Checksum.builder()
-      .withValue(dataPackage.getChecksum())
-      .withAlgorithm(CHECKSUM_ALGORITHM)
-      .build();
+    return Checksum.builder().withValue(dataPackage.getChecksum()).withAlgorithm(CHECKSUM_ALGORITHM).build();
   }
 
   /**
@@ -109,23 +108,32 @@ public class DataRepoBackend implements MNBackend {
   /**
    *  Transforms a SystemMetadata object into a FileInputContent.
    */
-  private static FileInputContent toFileContent(SystemMetadata sysmeta) throws JAXBException {
-    StringWriter xmlMetadata = new StringWriter();
-    JAXB_CONTEXT.createMarshaller().marshal(sysmeta, xmlMetadata);
-    return new FileInputContent(SYS_METADATA_FILE,
-                                new ByteArrayInputStream(xmlMetadata.toString().getBytes(StandardCharsets.UTF_8)));
+  private static FileInputContent toFileContent(SystemMetadata sysmeta) throws InvalidSystemMetadata {
+    try {
+      StringWriter xmlMetadata = new StringWriter();
+      JAXB_CONTEXT.createMarshaller().marshal(sysmeta, xmlMetadata);
+      return new FileInputContent(SYS_METADATA_FILE, wrapInInputStream(xmlMetadata.toString()));
+    } catch (JAXBException ex) {
+      LOG.error("Error reading xml metadata", ex);
+      throw new InvalidSystemMetadata("Error reading system metadata");
+    }
+  }
+
+  /**
+   *  Transforms a object into a FileInputContent.
+   */
+  private static FileInputContent toFileContent(InputStream object) throws JAXBException {
+    return new FileInputContent(CONTENT_FILE, object);
   }
 
   /**
    * Translates a Identifier into a DataCite AlternateIdentifier.
    */
-  private static Optional<DataCiteMetadata.AlternateIdentifiers.AlternateIdentifier> toAlternateIdentifier(Identifier pid) {
-    return Optional.ofNullable(pid).map(obsoleteIdentifier ->
-                                                       DataCiteMetadata.AlternateIdentifiers.AlternateIdentifier
-                                                         .builder()
-                                                         .withValue(obsoleteIdentifier.getValue())
-                                                         .withAlternateIdentifierType(IdentifierType.DOI.name())
-                                                         .build());
+  private static Optional<AlternateIdentifier> toAlternateIdentifier(Identifier pid) {
+    return Optional.ofNullable(pid).map(obsoleteIdentifier -> AlternateIdentifier.builder()
+                                                                .withValue(obsoleteIdentifier.getValue())
+                                                                .withAlternateIdentifierType(IdentifierType.DOI.name())
+                                                                .build());
   }
 
   /**
@@ -135,6 +143,37 @@ public class DataRepoBackend implements MNBackend {
     if (dataRepository.get(new DOI(pid.getValue())).isPresent()) {
       throw new IdentifierNotUnique("Identifier already exists", pid.getValue());
     }
+  }
+
+  /**
+   * Wraps a String in a ByteArrayInputStream.
+   */
+  private static InputStream wrapInInputStream(String in) {
+    return new ByteArrayInputStream(in.getBytes(StandardCharsets.UTF_8));
+  }
+
+  /**
+   * Creates DataCiteMetadata XML string out from the parameteres provided.
+   */
+  private static String toDataRepoMetadata(DOI doi, Session session, SystemMetadata sysmeta)
+    throws InvalidMetadataException {
+    String doiName = doi.getDoiName();
+    DataCiteMetadata dataCiteMetadata = new DataCiteMetadata();
+    dataCiteMetadata.setTitles(DataCiteMetadata.Titles.builder()
+                                 .withTitle(DataCiteMetadata.Titles.Title.builder().withValue(doiName).build())
+                                 .build());
+    dataCiteMetadata.setIdentifier(DataCiteMetadata.Identifier.builder()
+                                     .withValue(doiName)
+                                     .withIdentifierType(IdentifierType.DOI.name())
+                                     .build());
+    dataCiteMetadata.setCreators(extractCreators(session));
+    dataCiteMetadata.setPublisher(session.getSubject().getValue());
+    dataCiteMetadata.setPublicationYear(Integer.toString(LocalDate.now().getYear()));
+    AlternateIdentifiers.Builder<?> altIds = AlternateIdentifiers.builder();
+    toAlternateIdentifier(sysmeta.getObsoletedBy()).ifPresent(altIds::addAlternateIdentifier);
+    toAlternateIdentifier(sysmeta.getObsoletes()).ifPresent(altIds::addAlternateIdentifier);
+    dataCiteMetadata.setAlternateIdentifiers(altIds.build());
+    return DataCiteValidator.toXml(doi, dataCiteMetadata);
   }
 
   /**
@@ -170,32 +209,17 @@ public class DataRepoBackend implements MNBackend {
       dataPackage.setCreated(new Date());
       dataPackage.setCreatedBy(session.getSubject().getValue());
       dataPackage.setTitle(pid.getValue());
-      DataCiteMetadata dataCiteMetadata = new DataCiteMetadata();
-      dataCiteMetadata.setTitles(DataCiteMetadata.Titles.builder()
-                                   .withTitle(DataCiteMetadata.Titles.Title.builder().withValue(pid.getValue()).build())
-                                   .build());
-      dataCiteMetadata.setIdentifier(DataCiteMetadata.Identifier.builder()
-                                       .withValue(pid.getValue())
-                                       .withIdentifierType(IdentifierType.DOI.name())
-                                       .build());
-      dataCiteMetadata.setCreators(extractCreators(session));
-      dataCiteMetadata.setPublisher(session.getSubject().getValue());
-      dataCiteMetadata.setPublicationYear(Integer.toString(LocalDate.now().getYear()));
-      DataCiteMetadata.AlternateIdentifiers.Builder<?> altIds = DataCiteMetadata.AlternateIdentifiers.builder();
-      toAlternateIdentifier(sysmeta.getObsoletedBy()).ifPresent(altIds::addAlternateIdentifier);
-      toAlternateIdentifier(sysmeta.getObsoletes()).ifPresent(altIds::addAlternateIdentifier);
-      dataCiteMetadata.setAlternateIdentifiers(altIds.build());
       DOI doi = new DOI(pid.getValue());
-      String metadataXML = DataCiteValidator.toXml(doi, dataCiteMetadata);
+      String metadataXML = toDataRepoMetadata(doi, session, sysmeta);
       doiRegistrationService.register(DoiRegistration.builder()
-                                        .withDoi(new DOI(pid.getValue()))
+                                        .withDoi(doi)
                                         .withType(DoiType.DATA_PACKAGE)
                                         .withUser(session.getSubject().getValue())
                                         .withMetadata(metadataXML)
                                         .build());
       dataPackage.setDoi(doi);
-      dataRepository.create(dataPackage, new ByteArrayInputStream(metadataXML.getBytes(StandardCharsets.UTF_8)),
-                            Lists.newArrayList(new FileInputContent(CONTENT_FILE, object), toFileContent(sysmeta)));
+      dataRepository.create(dataPackage, wrapInInputStream(metadataXML),
+                            Lists.newArrayList(toFileContent(object), toFileContent(sysmeta)));
       return pid;
     } catch (InvalidMetadataException | JAXBException ex) {
       LOG.error("Error processing metadata", ex);
@@ -271,10 +295,12 @@ public class DataRepoBackend implements MNBackend {
                                               .withIdentifier(Identifier.builder()
                                                                 .withValue(dataPackage.getDoi().getDoiName()).build())
                                               .withChecksum(dataPackageChecksum(dataPackage))
-                                              .withDateSysMetadataModified(toXmlGregorianCalendar(dataPackage.getModified()))
+                                              .withDateSysMetadataModified(toXmlGregorianCalendar(dataPackage
+                                                                                                    .getModified()))
                                               .withSize(BigInteger.valueOf(dataPackage.getSize()))
                                               .build())
-                        .collect(Collectors.toList())).build();
+                        .collect(Collectors.toList()))
+      .build();
   }
 
   @Override
@@ -284,7 +310,8 @@ public class DataRepoBackend implements MNBackend {
                       try {
                         return (SystemMetadata)JAXB_CONTEXT.createUnmarshaller().unmarshal(file);
                       } catch (JAXBException ex) {
-                       throw new RuntimeException(ex);
+                        LOG.error("Error reading XML system metadata", ex);
+                       throw new InvalidSystemMetadata("Error reading system metadata");
                       }
                     }).orElseThrow(() -> new NotFound("Identifier Not Found", identifier.getValue()));
   }
@@ -310,45 +337,43 @@ public class DataRepoBackend implements MNBackend {
     }
   }
 
+  private String addAlternateIdentifiersMetadata(DOI doi, Identifier altPid) {
+    try {
+      DataCiteMetadata metadata =
+        DataCiteValidator.fromXml(dataRepository.getFileInputStream(doi, DataPackage.METADATA_FILE).get());
+      metadata.setAlternateIdentifiers(AlternateIdentifiers.copyOf(metadata.getAlternateIdentifiers())
+                                         .addAlternateIdentifier(AlternateIdentifier.builder()
+                                                                   .withValue(altPid.getValue())
+                                                                   .withAlternateIdentifierType(IdentifierType.DOI
+                                                                                                  .name())
+                                                                   .build())
+                                         .build());
+      return DataCiteValidator.toXml(doi, metadata);
+    } catch (JAXBException | InvalidMetadataException ex) {
+      LOG.error("Error reading metadata", ex);
+      throw new InvalidSystemMetadata("Error reading metadata");
+    }
+  }
   @Override
   public Identifier update(Session session, Identifier pid, InputStream object, Identifier newPid,
                            SystemMetadata sysmeta) {
     return getAndConsume(pid, dataPackage -> {
-      try {
         validateUpdateMetadata(sysmeta, pid);
         assertNotExists(newPid);
-        XMLGregorianCalendar now = toXmlGregorianCalendar(new Date());
         SystemMetadata obsoletedMetadata = getSystemMetadata(session, pid);
         validateIsObsoleted(obsoletedMetadata);
-        obsoletedMetadata = obsoletedMetadata
-                              .newCopyBuilder().withObsoletedBy(newPid)
-                              .withDateSysMetadataModified(now)
-                              .build();
-        DataCiteMetadata dataCiteMetadata = DataCiteValidator.fromXml(dataRepository
-                                                                        .getFileInputStream(dataPackage.getDoi(),
-                                                                                            DataPackage.METADATA_FILE)
-                                                                        .get());
-        dataCiteMetadata.setAlternateIdentifiers(DataCiteMetadata.AlternateIdentifiers
-                                                   .copyOf(dataCiteMetadata.getAlternateIdentifiers())
-                                                   .addAlternateIdentifier(DataCiteMetadata.AlternateIdentifiers
-                                                                             .AlternateIdentifier.builder()
-                                                                             .withValue(newPid.getValue())
-                                                                             .withAlternateIdentifierType(
-                                                                               IdentifierType.DOI.name()).build())
-                                                   .build());
-        dataRepository.update(dataPackage, new ByteArrayInputStream(DataCiteValidator
-                                                                      .toXml(dataPackage.getDoi(), dataCiteMetadata)
-                                                                      .getBytes(StandardCharsets.UTF_8)),
-                              Collections.singletonList(toFileContent(obsoletedMetadata)),
+        XMLGregorianCalendar now = toXmlGregorianCalendar(new Date());
+        dataRepository.update(dataPackage,
+                              wrapInInputStream(addAlternateIdentifiersMetadata(dataPackage.getDoi(), newPid)),
+                              Collections.singletonList(toFileContent(obsoletedMetadata.newCopyBuilder()
+                                                                        .withObsoletedBy(newPid)
+                                                                        .withDateSysMetadataModified(now)
+                                                                        .build())),
                               DataRepository.UpdateMode.APPEND);
-        SystemMetadata newObsoletedMetadata = sysmeta.newCopyBuilder()
+        return create(session, newPid, object, sysmeta.newCopyBuilder()
                                                 .withDateSysMetadataModified(now)
                                                 .withObsoletes(pid)
-                                                .build();
-        return create(session, newPid, object, newObsoletedMetadata);
-      } catch (JAXBException | InvalidMetadataException ex) {
-        throw new RuntimeException(ex);
-      }
+                                                .build());
     });
 
   }
