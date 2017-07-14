@@ -337,6 +337,10 @@ public class DataRepoBackend implements MNBackend {
     }
   }
 
+  /**
+   * Add the altPid identifier to the list of AlternateIdentifiers of the metadata associated to the DOI parameter.
+   *
+   */
   private String addAlternateIdentifiersMetadata(DOI doi, Identifier altPid) {
     try {
       DataCiteMetadata metadata =
