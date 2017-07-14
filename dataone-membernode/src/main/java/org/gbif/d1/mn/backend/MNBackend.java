@@ -1,13 +1,9 @@
 package org.gbif.d1.mn.backend;
 
-import org.gbif.d1.mn.provider.Authenticate;
-
 import java.io.InputStream;
 import java.util.Date;
 
 import javax.annotation.Nullable;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 
 import org.dataone.ns.service.apis.v1.SystemMetadataProvider;
 import org.dataone.ns.service.types.v1.Checksum;
@@ -109,4 +105,6 @@ public interface MNBackend extends SystemMetadataProvider {
   SystemMetadata systemMetadata(Identifier identifier);
 
   Identifier update(Session session, Identifier pid, InputStream object, Identifier newPid, SystemMetadata sysmeta);
+
+  long getEstimateCapacity();
 }

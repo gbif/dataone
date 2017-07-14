@@ -65,12 +65,15 @@ public class DataRepoBackend implements MNBackend {
   private static final String CHECKSUM_ALGORITHM  = "MD5";
   private static final String CONTENT_FILE  = "content";
   private static final String SYS_METADATA_FILE  = "system_metadata.xml";
-  private static final String FORMAT_ID = "data_package";
   private static final JAXBContext JAXB_CONTEXT = getSystemMetadataJaxbContext();
 
   private final DataRepository dataRepository;
   private final DoiRegistrationService doiRegistrationService;
+  private final DataRepoBackendConfiguration configuration;
 
+  /**
+   * Initializes a JAXBContext.
+   */
   private static JAXBContext getSystemMetadataJaxbContext() {
     try {
       return JAXBContext.newInstance(SystemMetadata.class);
@@ -98,10 +101,14 @@ public class DataRepoBackend implements MNBackend {
       gregorianCalendar.setTime(date);
       return DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar);
     } catch (DatatypeConfigurationException ex) {
+      LOG.error("Error converting date", ex);
       throw new ServiceFailure("Error reading data package date");
     }
   }
 
+  /**
+   *  Transforms a SystemMetadata object into a FileInputContent.
+   */
   private static FileInputContent toFileContent(SystemMetadata sysmeta) throws JAXBException {
     StringWriter xmlMetadata = new StringWriter();
     JAXB_CONTEXT.createMarshaller().marshal(sysmeta, xmlMetadata);
@@ -109,15 +116,16 @@ public class DataRepoBackend implements MNBackend {
                                 new ByteArrayInputStream(xmlMetadata.toString().getBytes(StandardCharsets.UTF_8)));
   }
 
+  /**
+   * Translates a Identifier into a DataCite AlternateIdentifier.
+   */
   private static Optional<DataCiteMetadata.AlternateIdentifiers.AlternateIdentifier> toAlternateIdentifier(Identifier pid) {
-    return Optional.ofNullable(pid).map( obsoleteIdentifier ->
+    return Optional.ofNullable(pid).map(obsoleteIdentifier ->
                                                        DataCiteMetadata.AlternateIdentifiers.AlternateIdentifier
                                                          .builder()
                                                          .withValue(obsoleteIdentifier.getValue())
                                                          .withAlternateIdentifierType(IdentifierType.DOI.name())
-                                                         .build()
-
-    );
+                                                         .build());
   }
 
   /**
@@ -134,17 +142,18 @@ public class DataRepoBackend implements MNBackend {
    * @param dataRepository data repository implementation
    * @param doiRegistrationService registration service
    */
-  public DataRepoBackend(DataRepository dataRepository, DoiRegistrationService doiRegistrationService) {
+  public DataRepoBackend(DataRepository dataRepository, DoiRegistrationService doiRegistrationService,
+                         DataRepoBackendConfiguration configuration) {
     this.dataRepository = dataRepository;
     this.doiRegistrationService = doiRegistrationService;
+    this.configuration = configuration;
   }
 
   @Override
   public Checksum checksum(Identifier identifier, String checksumAlgorithm) {
     return dataRepository.get(new DOI(identifier.getValue()))
-      .map(DataRepoBackend::dataPackageChecksum)
-      .orElseThrow(() -> new NotFound("Identifier Not Found", identifier.getValue()));
-
+          .map(DataRepoBackend::dataPackageChecksum)
+          .orElseThrow(() -> new NotFound("Identifier Not Found", identifier.getValue()));
   }
 
   @Override
@@ -172,7 +181,7 @@ public class DataRepoBackend implements MNBackend {
       dataCiteMetadata.setCreators(extractCreators(session));
       dataCiteMetadata.setPublisher(session.getSubject().getValue());
       dataCiteMetadata.setPublicationYear(Integer.toString(LocalDate.now().getYear()));
-      DataCiteMetadata.AlternateIdentifiers.Builder altIds = DataCiteMetadata.AlternateIdentifiers.builder();
+      DataCiteMetadata.AlternateIdentifiers.Builder<?> altIds = DataCiteMetadata.AlternateIdentifiers.builder();
       toAlternateIdentifier(sysmeta.getObsoletedBy()).ifPresent(altIds::addAlternateIdentifier);
       toAlternateIdentifier(sysmeta.getObsoletes()).ifPresent(altIds::addAlternateIdentifier);
       dataCiteMetadata.setAlternateIdentifiers(altIds.build());
@@ -220,7 +229,6 @@ public class DataRepoBackend implements MNBackend {
 
   @Override
   public DescribeResponse describe(Identifier identifier) {
-
     return getAndConsume(identifier, dataPackage -> {
                                       SystemMetadata systemMetadata = systemMetadata(identifier);
                                       return new DescribeResponse(systemMetadata.getFormatId(),
@@ -278,7 +286,7 @@ public class DataRepoBackend implements MNBackend {
                       } catch (JAXBException ex) {
                        throw new RuntimeException(ex);
                       }
-                    }).orElseThrow(() -> new NotFound("Metadata Not Found", identifier.getValue()));
+                    }).orElseThrow(() -> new NotFound("Identifier Not Found", identifier.getValue()));
   }
 
   /**
@@ -362,6 +370,11 @@ public class DataRepoBackend implements MNBackend {
       ((action == Permission.WRITE || action == Permission.CHANGE_PERMISSION)
        && dataPackage.getCreatedBy().equals(session.getSubject().getValue()))
     );
+  }
+
+  @Override
+  public long getEstimateCapacity() {
+    return configuration.getStorageCapacity() - dataRepository.getStats().getTotalSize();
   }
 
   /**

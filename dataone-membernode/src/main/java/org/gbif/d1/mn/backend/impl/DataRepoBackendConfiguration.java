@@ -89,6 +89,8 @@ public class DataRepoBackendConfiguration extends MNConfiguration {
 
   private ServiceConfiguration service;
 
+  private long storageCapacity;
+
   @JsonProperty
   public DataRepoConfiguration getDataRepoConfiguration() {
     return dataRepoConfiguration;
@@ -114,6 +116,15 @@ public class DataRepoBackendConfiguration extends MNConfiguration {
 
   public void setService(ServiceConfiguration service) {
     this.service = service;
+  }
+
+  @JsonProperty
+  public long getStorageCapacity() {
+    return storageCapacity;
+  }
+
+  public void setStorageCapacity(long storageCapacity) {
+    this.storageCapacity = storageCapacity;
   }
 
   /**

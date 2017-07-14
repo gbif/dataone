@@ -85,6 +85,15 @@ public final class ObjectResource {
   }
 
   /**
+   * Checks that request data can be stored.
+   */
+  private void checkSystemCapacity() {
+    if (request.getContentLengthLong() >= backend.getEstimateCapacity()) {
+      throw new InsufficientResources("The system has reached its maximum storage capacity");
+    }
+  }
+
+  /**
    * Called by a client to adds a new object to the Member Node.
    *
    * @throws IdentifierNotUnique if the identifier already exists within DataONE
@@ -105,6 +114,7 @@ public final class ObjectResource {
     checkNotNull(pid, "Form parameter[sysmeta] is required");
     checkState(Objects.equal(pid, sysmeta.getIdentifier().getValue()),
                "System metadata must have the correct identifier");
+    checkSystemCapacity();
     // TODO: How do we decide who can create?
     // auth.checkIsAuthorized(request, Permission.WRITE);  // will fail, as only CN can create in current implementation
     try (InputStream in = object) {
@@ -252,6 +262,7 @@ public final class ObjectResource {
     checkNotNull(pid, "Form parameter[file] is required");
     checkNotNull(newPid, "Form parameter[newPid] is required");
     checkNotNull(sysmeta, "Form parameter[sysmeta] is required");
+    checkSystemCapacity();
     Identifier identifier = backend.update(session, pid, object, newPid, sysmeta);
     log(LOG, session, pid, Event.UPDATE, "Resource updated");
     return  identifier;

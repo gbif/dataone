@@ -266,4 +266,9 @@ public class InMemoryBackend implements MNBackend {
   public boolean isAuthorized(Session session, Identifier identifier, Permission action) {
     return true;
   }
+
+  @Override
+  public long getEstimateCapacity() {
+    return Runtime.getRuntime().freeMemory();
+  }
 }

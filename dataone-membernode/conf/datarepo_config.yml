@@ -30,6 +30,8 @@ elasticSearch:
   port: 9300
   cluster: ${logEsCluster}
   idx: ${logEsIndex}
+#storage capacity in bytes
+storageCapacity: 1000000
 
 #required to avoid Exception in thread "main" java.lang.IllegalArgumentException: Unable to override server.applicationConnectors[0].port; node with index not found.
 #Defaults port can be overriden
