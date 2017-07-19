@@ -120,6 +120,7 @@ public class ElasticsearchLogSearchService implements LogSearchService {
     Optional.ofNullable(toDate)
       .ifPresent(toDateVal -> query.must(QueryBuilders.rangeQuery("@timestamp")
                                                  .lte(toDateVal).includeUpper(Boolean.TRUE)));
+    query.must(QueryBuilders.existsQuery("event"));
     searchRequestBuilder.setQuery(query);
     SearchResponse searchResponse = searchRequestBuilder.execute().actionGet();
     return Log.builder().withTotal(Long.valueOf(searchResponse.getHits().getTotalHits()).intValue())

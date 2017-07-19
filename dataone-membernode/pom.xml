@@ -31,7 +31,7 @@
     <dropwizard-xml.version>0.9.0-37</dropwizard-xml.version>
     <elastic-search.version>2.4.1</elastic-search.version>
     <log4j-to-slf4j.version>2.7</log4j-to-slf4j.version>
-    <dropwizard-logstash-encoder.version>1.1.0</dropwizard-logstash-encoder.version>
+    <dropwizard-logstash-encoder.version>1.0.2</dropwizard-logstash-encoder.version>
     <mail.version>1.4.3</mail.version>
   </properties>
 
@@ -64,6 +64,7 @@
               <artifact>org.gbif.data:data-repo-server</artifact>
               <excludes>
                 <exclude>META-INF/MANIFEST.MF</exclude>
+                <exclude>org.slf4j.impl.*</exclude>
               </excludes>
             </filter>
           </filters>
@@ -220,6 +221,11 @@
           <artifactId>jackson-core</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>janino</groupId>
+      <artifactId>janino</artifactId>
+      <version>2.5.10</version>
     </dependency>
 
     <!-- TODO: investigate -->

@@ -8,7 +8,14 @@ import org.gbif.discovery.conf.ServiceConfiguration;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.util.ContextInitializer;
+import ch.qos.logback.core.joran.spi.JoranException;
+import com.codahale.metrics.MetricRegistry;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.dropwizard.logging.LoggingFactory;
+import io.dropwizard.logging.LoggingUtil;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
@@ -133,5 +140,41 @@ public class DataRepoBackendConfiguration extends MNConfiguration {
    */
   public Tier getTier() {
     return Tier.TIER4;
+  }
+
+  @Override
+  public LoggingFactory getLoggingFactory() {
+    return new LogbackAutoConfigLoggingFactory();
+  }
+
+  /**
+   * https://github.com/dropwizard/dropwizard/issues/1567
+   * Override getLoggingFactory for your configuration
+   */
+  public class LogbackAutoConfigLoggingFactory implements LoggingFactory {
+
+    @JsonIgnore
+    private LoggerContext loggerContext;
+    @JsonIgnore
+    private final ContextInitializer contextInitializer;
+
+    public LogbackAutoConfigLoggingFactory() {
+      loggerContext = LoggingUtil.getLoggerContext();
+      contextInitializer = new ContextInitializer(loggerContext);
+    }
+
+    @Override
+    public void configure(MetricRegistry metricRegistry, String name) {
+      try {
+        contextInitializer.autoConfig();
+      } catch (JoranException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override
+    public void stop() {
+      loggerContext.stop();
+    }
   }
 }
