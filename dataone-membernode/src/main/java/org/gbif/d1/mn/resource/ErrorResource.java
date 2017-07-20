@@ -15,15 +15,13 @@ import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
-import org.dataone.ns.service.types.v1.Event;
 import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import static org.gbif.d1.mn.util.D1Preconditions.checkNotNull;
-import static org.gbif.d1.mn.util.EventLogging.logError;
+import static org.gbif.d1.mn.logging.EventLogging.logError;
 
 /**
  * Operations for handling notifications from a CN that an error has occurred.

@@ -26,7 +26,7 @@ import org.dataone.ns.service.types.v1.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.gbif.d1.mn.util.EventLogging.log;
+import static org.gbif.d1.mn.logging.EventLogging.log;
 /**
  * Operations related to the archival (hiding) of objects in DataONE.
  * <p>

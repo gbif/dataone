@@ -1,4 +1,4 @@
-package org.gbif.d1.mn.util;
+package org.gbif.d1.mn.logging;
 
 import org.dataone.ns.service.exceptions.ExceptionDetail;
 import org.dataone.ns.service.types.v1.Event;

@@ -46,12 +46,11 @@ import org.dataone.ns.service.types.v1.Permission;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import static org.gbif.d1.mn.util.D1Preconditions.checkNotNull;
 import static org.gbif.d1.mn.util.D1Preconditions.checkState;
 import static org.gbif.d1.mn.util.D1Throwables.propagateOrServiceFailure;
-import static org.gbif.d1.mn.util.EventLogging.log;
+import static org.gbif.d1.mn.logging.EventLogging.log;
 
 /**
  * Operations relating to CRUD operations on an Object.
