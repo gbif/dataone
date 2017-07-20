@@ -18,8 +18,9 @@ public class EventLogging {
   private EventLogging() {
     //NOP
   }
+
   //Type field used later by Logstash to route entries into different outputs
-  private static final String LOG_TYPE = "dataonemn";
+  public static final String LOG_TYPE = "dataonemn";
 
   /**
    * Writes an event into the events log.

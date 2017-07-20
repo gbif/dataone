@@ -1,5 +1,6 @@
 package org.gbif.d1.mn.logging.impl;
 
+import org.gbif.d1.mn.logging.EventLogging;
 import org.gbif.d1.mn.logging.LogSearchService;
 
 import java.time.ZonedDateTime;
@@ -121,6 +122,7 @@ public class ElasticsearchLogSearchService implements LogSearchService {
       .ifPresent(toDateVal -> query.must(QueryBuilders.rangeQuery("@timestamp")
                                                  .lte(toDateVal).includeUpper(Boolean.TRUE)));
     query.must(QueryBuilders.existsQuery("event"));
+     query.must(QueryBuilders.termQuery("event_type", EventLogging.LOG_TYPE));
     searchRequestBuilder.setQuery(query);
     SearchResponse searchResponse = searchRequestBuilder.execute().actionGet();
     return Log.builder().withTotal(Long.valueOf(searchResponse.getHits().getTotalHits()).intValue())
