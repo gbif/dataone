@@ -3,7 +3,7 @@ package org.gbif.d1.mn.provider;
 import org.gbif.d1.mn.Tier;
 import org.gbif.d1.mn.exception.DataONE;
 
-import java.lang.annotation.Annotation;
+import java.util.Optional;
 import javax.ws.rs.container.DynamicFeature;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.FeatureContext;
@@ -22,9 +22,9 @@ public class TierSupportFilter implements DynamicFeature {
   public void configure(ResourceInfo resourceInfo, FeatureContext context) {
     // Only methods that are annotated with DataONE annotations are checked, as there are
     // methods that we wish to skip (such as those that can provide WSDL or Dropwizards GC resources)
-    Annotation annotation = resourceInfo.getResourceMethod().getAnnotation(DataONE.class);
-    if (annotation != null) {
-      operatingLevel.checkIsSupported(resourceInfo.getResourceMethod().getAnnotation(DataONE.class));
-    }
+    Optional.ofNullable(resourceInfo.getResourceMethod().getAnnotation(DataONE.class))
+      .ifPresent(annotation -> operatingLevel.checkIsSupported(resourceInfo.getResourceMethod()
+                                                                 .getAnnotation(DataONE.class)));
+
   }
 }

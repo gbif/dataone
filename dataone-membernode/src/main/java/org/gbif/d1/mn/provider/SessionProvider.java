@@ -58,7 +58,7 @@ public class SessionProvider extends AbstractBinder {
 
     @Inject
     public SessionValueFactoryProvider(final MultivaluedParameterExtractorProvider extractorProvider,
-                                     final ServiceLocator injector,
+                                       final ServiceLocator injector,
                                        final CertificateUtils certificateUtils) {
       super(extractorProvider, injector, Parameter.Source.UNKNOWN);
       this.certificateUtils = certificateUtils;

@@ -1,5 +1,6 @@
 package org.gbif.d1.mn.exception;
 
+import java.util.regex.Pattern;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -33,6 +34,9 @@ import org.slf4j.LoggerFactory;
 public class DefaultExceptionMapper implements ExceptionMapper<Throwable> {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultExceptionMapper.class);
+
+  private static final Pattern DOT = Pattern.compile("\\.");
+
   private final String nodeId;
 
   @VisibleForTesting
@@ -110,11 +114,11 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable> {
     }
   }
 
-  private int httpCode(DataONEException d1e) {
+  private static int httpCode(DataONEException d1e) {
     Integer code = HttpCodes.codeFor(d1e.getClass()); // can return null
     if (code == null) {
       LOG.warn("Missing HTTP code for exception[{}], using default[{}]", d1e.getClass().getSimpleName(),
-        DEFAULT_HTTP_CODE);
+               DEFAULT_HTTP_CODE);
       return DEFAULT_HTTP_CODE;
     } else {
       return code;
@@ -142,8 +146,8 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable> {
     if (d1e.getDetailCode() == null) {
       // the exception did not have one, and we return the registered code or default
       if (prefix == null) {
-        LOG.warn("No registered detailCode exists for method[{}] and exception[{}] - using default[{}]", method, d1e
-          .getClass().getSimpleName(), DEFAULT_DETAIL_CODE);
+        LOG.warn("No registered detailCode exists for method[{}] and exception[{}] - using default[{}]", method,
+                 d1e.getClass().getSimpleName(), DEFAULT_DETAIL_CODE);
         return DEFAULT_DETAIL_CODE;
       } else {
         return prefix;
@@ -159,7 +163,7 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable> {
         return d1e.getDetailCode();
       } else {
         // careful not to introduce double dots
-        return prefix + "." + d1e.getDetailCode().replaceFirst("\\.", "");
+        return prefix + '.' + DOT.matcher(d1e.getDetailCode()).replaceFirst("");
       }
     }
   }

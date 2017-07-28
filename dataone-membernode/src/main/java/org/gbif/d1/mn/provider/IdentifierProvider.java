@@ -17,7 +17,7 @@ import org.dataone.ns.service.types.v1.Identifier;
 @Singleton
 public class IdentifierProvider implements ParamConverterProvider {
 
-  private ParamConverter PARAM_CONVERT_INSTANCE = new IdentifierParamConverter();
+  private static final ParamConverter<?> PARAM_CONVERT_INSTANCE = new IdentifierParamConverter();
 
   @Override
   public <T> ParamConverter<T> getConverter(Class<T> rawType, Type type, Annotation[] annotations) {

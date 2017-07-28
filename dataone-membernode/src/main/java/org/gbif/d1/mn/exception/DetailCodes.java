@@ -30,6 +30,13 @@ import org.dataone.ns.service.exceptions.UnsupportedType;
 class DetailCodes {
 
   /**
+   * Private constructor.
+   */
+  private DetailCodes() {
+    //empty
+  }
+
+  /**
    * Container class to improve readability only (removes need for Map of Maps with illegible generics).
    */
   @Immutable
@@ -47,7 +54,8 @@ class DetailCodes {
     public boolean equals(Object obj) {
       if (this == obj) {
         return true;
-      } else if (obj instanceof Key) {
+      }
+      if (obj instanceof Key) {
         Key that = (Key) obj;
         return Objects.equal(this.exception, that.exception)
           && Objects.equal(this.method, that.method);

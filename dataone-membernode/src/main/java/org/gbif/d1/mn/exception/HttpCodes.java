@@ -15,7 +15,6 @@ import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
-import org.dataone.ns.service.exceptions.SynchronizationFailed;
 import org.dataone.ns.service.exceptions.UnsupportedMetadataType;
 import org.dataone.ns.service.exceptions.UnsupportedType;
 import org.dataone.ns.service.exceptions.VersionMismatch;
@@ -24,6 +23,13 @@ import org.dataone.ns.service.exceptions.VersionMismatch;
  * HTTP codes for raised exceptions.
  */
 class HttpCodes {
+
+  /**
+   * Private constructor.
+   */
+  private HttpCodes() {
+    //empty
+  }
 
   private static final Map<Class<? extends DataONEException>, Integer> HTTP_CODES = ImmutableMap
     .<Class<? extends DataONEException>, Integer>builder()

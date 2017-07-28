@@ -3,6 +3,7 @@ package org.gbif.d1.mn.backend.model;
 import java.util.Date;
 import javax.annotation.concurrent.Immutable;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import org.dataone.ns.service.types.v1.Event;
 
@@ -88,7 +89,7 @@ public final class MNLogEntry {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
       .add("key", key)
       .add("identifier", identifier)
       .add("ipAddress", ipAddress)

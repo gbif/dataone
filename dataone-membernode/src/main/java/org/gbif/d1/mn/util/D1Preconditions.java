@@ -18,10 +18,10 @@ public final class D1Preconditions {
 
   /**
    * Ensures that an object reference passed as a parameter is not null.
-   * 
+   *
    * @param reference an object reference
    * @param identifier the unique DataONE identifier for the object
-   * @param message the exception message to use if the check fails
+   * @param errorMessage the exception message to use if the check fails
    * @return the non-null reference that was validated
    * @throws NotFound if {@code reference} is null
    */
@@ -35,7 +35,7 @@ public final class D1Preconditions {
 
   /**
    * Ensure that the provided object reference is not null, indicating that it is supported by this configuration.
-   * 
+   *
    * @param reference an object reference
    * @return the non-null reference that was validated
    * @throws NotImplemented If {@code reference} is null
@@ -49,7 +49,7 @@ public final class D1Preconditions {
 
   /**
    * Ensures that an object reference passed as a parameter to the calling method is not null.
-   * 
+   *
    * @param reference an object reference
    * @param errorMessage the exception message to use if the check fails
    * @return the non-null reference that was validated
@@ -64,7 +64,7 @@ public final class D1Preconditions {
 
   /**
    * Ensures the truth of an expression.
-   * 
+   *
    * @param expression a boolean expression
    * @param errorMessage the exception message to use if the check fails; will be converted to a
    *        string using {@link String#valueOf(Object)}

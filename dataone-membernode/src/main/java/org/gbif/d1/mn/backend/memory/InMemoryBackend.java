@@ -7,9 +7,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
@@ -17,16 +20,11 @@ import javax.annotation.concurrent.ThreadSafe;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.dataone.ns.service.exceptions.IdentifierNotUnique;
-import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.Checksum;
 import org.dataone.ns.service.types.v1.DescribeResponse;
@@ -97,11 +95,7 @@ public class InMemoryBackend implements MNBackend {
       throw new ServiceFailure("Unable to compute checksum");
     }
 
-    Checksum checksum = Checksum.builder()
-            .withValue(checksumStr)
-            .withAlgorithm(checksumAlgorithm)
-            .build();
-    return checksum;
+    return Checksum.builder().withValue(checksumStr).withAlgorithm(checksumAlgorithm).build();
   }
 
   /**
@@ -187,7 +181,7 @@ public class InMemoryBackend implements MNBackend {
   @Override
   public ObjectList listObjects(NodeReference self, Date fromDate, @Nullable Date toDate, @Nullable String formatId,
     @Nullable Boolean replicaStatus, @Nullable Integer start, @Nullable Integer count) {
-    ImmutableList<PersistedObject> filtered = filter(self, fromDate, toDate, formatId, replicaStatus, start, count);
+    List<PersistedObject> filtered = filter(self, fromDate, toDate, formatId, replicaStatus, start, count);
     ObjectList.Builder<?> builder = ObjectList.builder();
     for (PersistedObject po : filtered) {
       SystemMetadata sysmeta = po.getSysmeta();
@@ -216,50 +210,35 @@ public class InMemoryBackend implements MNBackend {
 
   @Override
   public Identifier update(Session session, Identifier pid, InputStream object, Identifier newPid,
-    SystemMetadata sysmeta) {
+                           SystemMetadata sysmeta) {
     return null;
   }
 
   @VisibleForTesting
-  ImmutableList<PersistedObject> filter(NodeReference self, Date fromDate, @Nullable Date toDate,
-    @Nullable String formatId, @Nullable Boolean replicaStatus, @Nullable Integer start, @Nullable Integer count) {
+  List<PersistedObject> filter(NodeReference self, Date fromDate, @Nullable Date toDate,
+                                        @Nullable String formatId, @Nullable Boolean replicaStatus,
+                                        @Nullable Integer start, @Nullable Integer count) {
     // set defaults
-    start = start == null ? 0 : start;
-    count = count == null ? 1000 : count;
+    start = Optional.ofNullable(start).orElse(0);
+    count = Optional.ofNullable(count).orElse(1000);
 
     // Filter the objects to find those matching the criteria
     // the static factories in Filters returns "alwaysTrue" for null values
-    ImmutableList<Predicate<PersistedObject>> filter = ImmutableList.of(
-      Filters.after(fromDate),
-      Filters.before(toDate),
-      Filters.formatId(formatId),
-      Filters.replicaStatus(replicaStatus, self)
-      );
-    Iterable<PersistedObject> satisfied = null; // candidate objects meeting the filter criteria
+    Predicate<PersistedObject> filter = Filters.after(fromDate)
+                                          .and(Filters.before(toDate))
+                                          .and(Filters.formatId(formatId))
+                                          .and(Filters.replicaStatus(replicaStatus, self));
+    List<PersistedObject> satisfied = null; // candidate objects meeting the filter criteria
     synchronized (lock) {
-      satisfied = Iterables.filter(data.values(), Predicates.and(filter));
+      satisfied = data.values().stream().filter(filter).skip(start).limit(count).collect(Collectors.toList());
     }
 
-    // Build the results, taking care of the paging supplied in count and start
-    ImmutableList.Builder<PersistedObject> results = ImmutableList.builder();
-    Iterator<PersistedObject> iter = satisfied.iterator();
-    int index = 0;
-    int resultSize = 0;
-    while (iter.hasNext() && resultSize < count) {
-      PersistedObject object = iter.next();
-      // skip until we hit the page we wish to include
-      if (index++ >= start) {
-        results.add(object);
-        resultSize++;
-      }
-    }
-
-    return results.build();
+    return satisfied;
   }
 
   @Override
   public void archive(Identifier identifier) {
-    this.delete(null, identifier);
+    delete(null, identifier);
   }
 
   @Override
