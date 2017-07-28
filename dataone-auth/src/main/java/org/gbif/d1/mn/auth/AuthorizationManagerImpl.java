@@ -98,13 +98,12 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
 
     LOG.debug("Checking permission for {}", id);
     SystemMetadata sysMetadata = systemMetadataProvider.getSystemMetadata(session,
-            Identifier.builder().withValue(id).build());
+                                                                          Identifier.builder().withValue(id).build());
     if (sysMetadata == null) {
       throw new NotFound("Cannot perform action since object not found", id);
     }
 
-    boolean approved = checkIsAuthorized(session, sysMetadata, permission);
-    if (!approved) {
+    if (!checkIsAuthorized(session, sysMetadata, permission)) {
       throw new NotAuthorized("No subject represented by the certificate have permission to perform action");
     }
     return session;
@@ -138,20 +137,14 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
   /**
    * @return true if subjects contains the target
    */
-  private boolean contains(List<Subject> subjects, final String target) {
-    return Iterables.any(subjects, new Predicate<Subject>() {
-
-      @Override
-      public boolean apply(Subject input) {
-        return target.equals(input.getValue());
-      }
-    });
+  private static boolean contains(List<Subject> subjects, final String target) {
+    return subjects.stream().anyMatch(subject -> target.equals(subject.getValue()));
   }
 
   /**
    * Returns true if the rights holder in the system metadata is one of the subjects passed in.
    */
-  private boolean isRightsHolder(SystemMetadata sysMetadata, Set<String> subjects) {
+  private static boolean isRightsHolder(SystemMetadata sysMetadata, Set<String> subjects) {
     Subject rightsHolder = sysMetadata.getRightsHolder();
     Preconditions.checkNotNull(rightsHolder, "An object cannot exist without a rights holder");
     boolean approved = subjects.contains(rightsHolder.getValue());
@@ -186,8 +179,7 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
 
     // the rights holder is granted permission
     if (isRightsHolder(sysMetadata, subjects)) {
-      LOG
-        .info("The rights holder named in the system metadata[{}] is found in the session[{}]", sysMetadata, session);
+      LOG.info("The rights holder named in the system metadata[{}] is found in the session[{}]", sysMetadata, session);
       return true;
     }
 
@@ -199,7 +191,6 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
 
     LOG.debug("The session[{}] is not permitted", session);
     return false;
-
   }
 
   /**
@@ -224,19 +215,16 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
     // if the original request comes from a CN or the named authoritative MN then it is granted
     try {
       for (Node node : cn.listNodes().getNode()) {
-
         if (NodeType.CN == node.getType()
           && contains(node.getSubject(), subject)) {
           LOG.debug("Request received from a known alias[{}] of a CN[{}]", subject, node.getSubject());
           return true;
-
         } else if (NodeType.MN == node.getType()
           && contains(node.getSubject(), authoritativeMN)
           && contains(node.getSubject(), subject)) {
           LOG.debug("Request received from a known alias[{}] of the listed authoritative MN[{}]", subject,
-            node.getSubject());
+                    node.getSubject());
           return true;
-
         }
       }
     } catch (ServiceFailure e) {
@@ -250,7 +238,7 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
    * permission sought.
    */
   @VisibleForTesting
-  boolean isGrantedByAccessPolicy(SystemMetadata sysMetadata, Set<String> subjects, Permission permission) {
+  static boolean isGrantedByAccessPolicy(SystemMetadata sysMetadata, Set<String> subjects, Permission permission) {
     AccessPolicy accessPolicy = sysMetadata.getAccessPolicy();
     if (accessPolicy != null) {
       for (AccessRule rule : accessPolicy.getAllow()) {

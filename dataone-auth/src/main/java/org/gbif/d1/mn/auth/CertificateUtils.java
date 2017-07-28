@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package org.gbif.d1.mn.auth;
 
@@ -15,13 +15,11 @@ import javax.security.auth.x500.X500Principal;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.Closer;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DEROctetString;
@@ -74,7 +72,7 @@ public final class CertificateUtils {
 
   /**
    * Builds a new session from the given request
-   * 
+   *
    * @param request The HTTP request; must be present and hold a single certificate
    * @return The session
    * @throws InvalidToken Should it be impossible to create a session from the given request
@@ -97,20 +95,12 @@ public final class CertificateUtils {
     }
   }
 
-  private SubjectInfo parseSubjectInfo(String subjectInfoAsXMLString) throws IOException, JAXBException {
+  private static SubjectInfo parseSubjectInfo(String subjectInfoAsXMLString) throws JAXBException {
     LOG.debug("SubjectInfo as XML: {}", subjectInfoAsXMLString);
     if (subjectInfoAsXMLString != null) {
-      Unmarshaller unmarshaller = SUBJECT_INFO_CONTEXT.createUnmarshaller();
       // not strictly required for a StringReader, but good practice
-      Closer closer = Closer.create();
-      try {
-        StringReader reader = closer.register(new StringReader(subjectInfoAsXMLString));
-        return (SubjectInfo) unmarshaller.unmarshal(reader);
-
-      } catch (Throwable e) { // required for Closer
-        throw closer.rethrow(e);
-      } finally {
-        closer.close();
+      try (StringReader reader = new StringReader(subjectInfoAsXMLString)) {
+        return (SubjectInfo) SUBJECT_INFO_CONTEXT.createUnmarshaller().unmarshal(reader);
       }
     }
     return null;
@@ -120,28 +110,21 @@ public final class CertificateUtils {
    * @see <a
    *      href="http://stackoverflow.com/questions/2409618/how-do-i-decode-a-der-encoded-string-in-java">StackOverflow</a>
    */
-  private DERObject toDERObject(byte[] data) throws IOException {
-    Closer closer = Closer.create();
-    try {
-      ByteArrayInputStream in = closer.register(new ByteArrayInputStream(data));
-      ASN1InputStream asn1In = closer.register(new ASN1InputStream(in));
+  private static DERObject toDERObject(byte[] data) throws IOException {
+    try (ASN1InputStream asn1In = new ASN1InputStream(new ByteArrayInputStream(data))) {
       return asn1In.readObject();
-    } catch (Throwable e) { // required for Closer
-      throw closer.rethrow(e);
-    } finally {
-      closer.close();
     }
   }
 
   /**
    * Retrieves the extension value given by the object id.
    * Not intended for client use - visible only for testing.
-   * 
+   *
    * @see <a
    *      href="http://stackoverflow.com/questions/2409618/how-do-i-decode-a-der-encoded-string-in-java">StackOverflow</a>
    */
   @VisibleForTesting
-  String getExtension(X509Certificate X509Certificate, String oid) throws IOException {
+  static String getExtension(X509Certificate X509Certificate, String oid) throws IOException {
     String decoded = null;
     byte[] extensionValue = X509Certificate.getExtensionValue(oid);
     if (extensionValue != null) {
@@ -160,7 +143,7 @@ public final class CertificateUtils {
 
   /**
    * Builds the session from the certificate.
-   * 
+   *
    * @throws InvalidToken Should the extension exist but be unparsable
    */
   @VisibleForTesting

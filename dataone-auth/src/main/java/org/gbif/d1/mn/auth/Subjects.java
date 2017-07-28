@@ -2,9 +2,8 @@ package org.gbif.d1.mn.auth;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-
-import javax.annotation.concurrent.ThreadSafe;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -109,7 +108,7 @@ final class Subjects {
    * The session object holds a primary subject and can have extra information indicating alternative identities for the
    * subject and their groups. This returns all subjects that can be expanded upon for the principle subject
    * based on the session object provided.
-   * 
+   *
    * @return The subjects from the session in an immutable set
    */
   static ImmutableSet<String> allSubjects(Session session) {
@@ -191,10 +190,6 @@ final class Subjects {
    */
   static String primary(Session session) {
     Preconditions.checkNotNull(session, "Session required to extract primary subject");
-    if (session.getSubject() != null) {
-      return session.getSubject().getValue();
-    } else {
-      return null;
-    }
+    return Optional.ofNullable(session.getSubject()).map(Subject::getValue).orElse(null);
   }
 }
