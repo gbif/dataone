@@ -115,8 +115,8 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
   private static Node self(DataRepoBackendConfiguration configuration) {
     // nonsense for now
     return Node.builder()
-      .addSubject(Subject.builder().withValue("CN=GBIFS Member Node").build())
-      .withIdentifier(NodeReference.builder().withValue("urn:node:GBIFS").build())
+      .addSubject(Subject.builder().withValue("CN=GBIFS Test Member Node").build())
+      .withIdentifier(NodeReference.builder().withValue("urn:node:mnTestGBIF").build())
       .withName("GBIFS Member Node")
       .withDescription("GBIFS DataOne Member Node")
       .withBaseURL(configuration.getExternalUrl())
