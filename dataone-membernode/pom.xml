@@ -31,7 +31,6 @@
     <dropwizard-xml.version>0.9.0-37</dropwizard-xml.version>
     <elastic-search.version>2.4.1</elastic-search.version>
     <log4j-to-slf4j.version>2.7</log4j-to-slf4j.version>
-    <dropwizard-logstash-encoder.version>1.0.2</dropwizard-logstash-encoder.version>
     <mail.version>1.4.3</mail.version>
   </properties>
 
@@ -58,13 +57,7 @@
                 <exclude>META-INF/*.SF</exclude>
                 <exclude>META-INF/*.DSA</exclude>
                 <exclude>META-INF/*.RSA</exclude>
-              </excludes>
-            </filter>
-            <filter>
-              <artifact>org.gbif.data:data-repo-server</artifact>
-              <excludes>
-                <exclude>META-INF/MANIFEST.MF</exclude>
-                <exclude>org.slf4j.impl.*</exclude>
+                <exclude>logback.xml</exclude>
               </excludes>
             </filter>
           </filters>
@@ -80,6 +73,9 @@
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>org.gbif.d1.mn.MNApplication</mainClass>
+                  <manifestEntries>
+                    <Class-Path>conf/</Class-Path>
+                  </manifestEntries>
                 </transformer>
               </transformers>
             </configuration>
@@ -91,38 +87,28 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.wikia</groupId>
-      <artifactId>dropwizard-logstash-encoder</artifactId>
-      <version>${dropwizard-logstash-encoder.version}</version>
-      <scope>runtime</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-annotations</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-core</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-databind</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>io.dropwizard</groupId>
-          <artifactId>dropwizard-logging</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>
+
+    <!-- Logging -->
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-to-slf4j</artifactId>
       <version>${log4j-to-slf4j.version}</version>
       <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.gbif.dataone</groupId>
@@ -131,15 +117,6 @@
     <dependency>
       <groupId>org.gbif.dataone</groupId>
       <artifactId>dataone-auth</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.gbif.data</groupId>
-      <artifactId>data-repo-server</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>io.dropwizard</groupId>
@@ -152,18 +129,23 @@
     <dependency>
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-jersey</artifactId>
-      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-forms</artifactId>
-      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>com.yunspace.dropwizard</groupId>
       <artifactId>dropwizard-xml</artifactId>
       <version>${dropwizard-xml.version}</version>
-      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif</groupId>
+      <artifactId>service-discovery</artifactId>
     </dependency>
     <!--
     REPLACED BY FORMS?
@@ -172,12 +154,12 @@
       <artifactId>jersey-multipart</artifactId>
     </dependency-->
     <dependency>
-      <groupId>com.codahale.metrics</groupId>
-      <artifactId>metrics-annotation</artifactId>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-healthchecks</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.codahale.metrics</groupId>
-      <artifactId>metrics-healthchecks</artifactId>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-annotation</artifactId>
     </dependency>
     <!--dependency>
       <groupId>com.sun.jersey</groupId>
@@ -222,10 +204,17 @@
         </exclusion>
       </exclusions>
     </dependency>
+
+    <dependency>
+      <groupId>org.gbif.data</groupId>
+      <artifactId>data-repo-server-fs</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>janino</groupId>
       <artifactId>janino</artifactId>
       <version>2.5.10</version>
+      <scope>runtime</scope>
     </dependency>
 
     <!-- TODO: investigate -->

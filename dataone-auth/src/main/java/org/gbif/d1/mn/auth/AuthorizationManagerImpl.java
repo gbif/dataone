@@ -7,9 +7,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import org.dataone.ns.service.apis.v1.CoordinatingNode;
 import org.dataone.ns.service.apis.v1.SystemMetadataProvider;
 import org.dataone.ns.service.exceptions.NotAuthorized;
@@ -123,7 +121,7 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
       for (Node node : cn.listNodes().getNode()) {
         if (NodeType.CN == node.getType()
             && contains(node.getSubject(), session.getSubject().toString())) {
-          LOG.debug("Request received from a known alias[{}] of a CN[{}]", session.getSubject().toString(), node.getSubject());
+          LOG.debug("Request received from a known alias[{}] of a CN[{}]", session.getSubject(), node.getSubject());
           return session;
         }
       }
@@ -161,7 +159,7 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
   @VisibleForTesting
   boolean checkIsAuthorized(Session session, SystemMetadata sysMetadata, Permission permission) {
     String primary = Subjects.primary(session);
-
+    LOG.info("Subject {}", primary);
     // Is this call coming with our own credentials?
     // Perhaps we've got local applications using the same certificate for example.
     if (selfSubjects.contains(primary)) {
@@ -204,7 +202,6 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
     NodeReference authNode = sysMetadata.getAuthoritativeMemberNode();
     Preconditions.checkNotNull(authNode, "The authoritative member node cannot be null on an object");
     String authoritativeMN = authNode.getValue();
-
     // short cut: if the sysMetadata lists the subject as the authoritative member node we can grant immediately
     if (authoritativeMN.equals(subject)) {
       LOG.debug("System metadata lists subject as authoritative MN: {}", subject);

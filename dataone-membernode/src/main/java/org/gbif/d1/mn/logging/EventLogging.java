@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.MDC;
 
 /**
- * Utliity class to write events to the MemberNode log.
+ * Utility class to write events to the MemberNode log.
  */
 public class EventLogging {
 

@@ -88,6 +88,7 @@
     <dataone-auth.version>0.1-SNAPSHOT</dataone-auth.version>
     <dataone-membernode.version>0.1-SNAPSHOT</dataone-membernode.version>
     <service-discovery.version>0.1</service-discovery.version>
+    <data-repo-server.version>1.0-SNAPSHOT</data-repo-server.version>
 
     <!-- libs -->
     <dropwizard.version>0.9.2</dropwizard.version>
@@ -102,12 +103,11 @@
     <!-- END: Fixing to dropwizard dependencies -->
 
     <servlet-api.version>3.1.0</servlet-api.version>
-    <metrics3.version>3.0.2</metrics3.version>
     <jsr305.version>3.0.1</jsr305.version>
     <joda-time.version>2.2</joda-time.version>
     <apache-commons-codec.version>1.10</apache-commons-codec.version>
     <apache-commons-io.version>2.5</apache-commons-io.version>
-    <metrics.version>3.0.2</metrics.version>
+    <metrics.version>3.1.2</metrics.version>
     <validation-api.version>1.1.0.Final</validation-api.version>
     <jetty.orbit-javax.servlet.version>3.0.0.v201112011016</jetty.orbit-javax.servlet.version>
     <bcprov-jdk16.version>1.46</bcprov-jdk16.version>
@@ -184,19 +184,14 @@
         <version>${dropwizard.version}</version>
       </dependency>
       <dependency>
+        <groupId>io.dropwizard</groupId>
+        <artifactId>dropwizard-client</artifactId>
+        <version>${dropwizard.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
         <version>${slf4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>ch.qos.logback</groupId>
-        <artifactId>logback-classic</artifactId>
-        <version>${logback.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.gbif.data</groupId>
-        <artifactId>data-repo-server</artifactId>
-        <version>${data-repo-server.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>
@@ -224,13 +219,22 @@
         <version>${jersey.version}</version>
       </dependency-->
       <dependency>
-        <groupId>com.codahale.metrics</groupId>
+        <groupId>io.dropwizard</groupId>
+        <artifactId>dropwizard-metrics</artifactId>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-healthchecks</artifactId>
+        <version>${metrics.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
         <artifactId>metrics-annotation</artifactId>
         <version>${metrics.version}</version>
       </dependency>
       <dependency>
         <groupId>com.codahale.metrics</groupId>
-        <artifactId>metrics-healthchecks</artifactId>
+        <artifactId>metrics-annotation</artifactId>
         <version>${metrics.version}</version>
       </dependency>
       <dependency>
@@ -242,6 +246,11 @@
         <groupId> org.eclipse.jetty.orbit</groupId>
         <artifactId>javax.servlet</artifactId>
         <version>${jetty.orbit-javax.servlet.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.gbif.data</groupId>
+        <artifactId>data-repo-server-fs</artifactId>
+        <version>${data-repo-server.version}</version>
       </dependency>
       <dependency>
         <groupId>javax.servlet</groupId>
@@ -277,6 +286,16 @@
         <artifactId>dropwizard-testing</artifactId>
         <version>${dropwizard.version}</version>
         <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>${logback.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-core</artifactId>
+        <version>${logback.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

@@ -1,5 +1,6 @@
 package org.gbif.d1.mn;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 
 /**
@@ -12,6 +13,8 @@ public class MNConfiguration extends Configuration {
   }
 
   private String externalUrl;
+
+  private String coordinatingNodeUrl;
 
   public Tier getTier(){
     return Tier.TIER4;
@@ -26,5 +29,14 @@ public class MNConfiguration extends Configuration {
 
   public void setExternalUrl(String externalUrl) {
     this.externalUrl = externalUrl;
+  }
+
+  @JsonProperty
+  public String getCoordinatingNodeUrl() {
+    return coordinatingNodeUrl;
+  }
+
+  public void setCoordinatingNodeUrl(String coordinatingNodeUrl) {
+    this.coordinatingNodeUrl = coordinatingNodeUrl;
   }
 }

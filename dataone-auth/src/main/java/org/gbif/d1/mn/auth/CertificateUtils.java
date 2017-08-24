@@ -25,6 +25,7 @@ import org.bouncycastle.asn1.DERObject;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERUTF8String;
 import org.dataone.ns.service.exceptions.InvalidToken;
+import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.Subject;
 import org.dataone.ns.service.types.v1.SubjectInfo;
@@ -86,12 +87,10 @@ public final class CertificateUtils {
       // session subject is the primary principle of the certificate
       X509Certificate x509Cert = (X509Certificate) certs[0];
       return newSession(x509Cert);
-
     } else if (certs != null && certs.length > 1) {
-      throw new InvalidToken("One certificate expected in the request, found " + certs.length);
-
+      throw new NotAuthorized("One certificate expected in the request, found " + certs.length);
     } else {
-      throw new InvalidToken("No certificate found in the request");
+      throw new NotAuthorized("No certificate found in the request");
     }
   }
 

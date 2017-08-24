@@ -2,7 +2,7 @@ package org.gbif.d1.mn.backend.impl;
 
 import org.gbif.d1.mn.MNConfiguration;
 import org.gbif.d1.mn.Tier;
-import org.gbif.datarepo.conf.DataRepoConfiguration;
+import org.gbif.datarepo.store.fs.conf.DataRepoConfiguration;
 import org.gbif.discovery.conf.ServiceConfiguration;
 
 import java.net.InetAddress;

@@ -1,5 +1,6 @@
 package org.gbif.d1.mn;
 
+import org.gbif.d1.cn.impl.CNClient;
 import org.gbif.d1.mn.auth.AuthorizationManager;
 import org.gbif.d1.mn.auth.AuthorizationManagers;
 import org.gbif.d1.mn.auth.CertificateUtils;
@@ -22,23 +23,26 @@ import org.gbif.d1.mn.resource.LogResource;
 import org.gbif.d1.mn.resource.MetaResource;
 import org.gbif.d1.mn.resource.MonitorResource;
 import org.gbif.d1.mn.resource.ObjectResource;
-import org.gbif.datarepo.conf.DataRepoConfiguration;
-import org.gbif.datarepo.inject.DataRepoModule;
+import org.gbif.datarepo.inject.DataRepoFsModule;
+import org.gbif.datarepo.store.fs.conf.DataRepoConfiguration;
 import org.gbif.discovery.lifecycle.DiscoveryLifeCycle;
+
 
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 import io.dropwizard.Application;
+import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.server.AbstractServerFactory;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.dataone.ns.service.apis.v1.CoordinatingNode;
 import org.dataone.ns.service.types.v1.Node;
-import org.dataone.ns.service.types.v1.NodeList;
 import org.dataone.ns.service.types.v1.NodeReference;
 import org.dataone.ns.service.types.v1.Service;
 import org.dataone.ns.service.types.v1.Services;
 import org.dataone.ns.service.types.v1.Subject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The main entry point for running the member node.
@@ -46,6 +50,8 @@ import org.dataone.ns.service.types.v1.Subject;
  * Developers are expected to inherit from this, along with a new configuration object and implement
  */
 public class MNApplication extends Application<DataRepoBackendConfiguration> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(MNApplication.class);
 
   private static final String APPLICATION_NAME = "DataONE Member Node";
 
@@ -65,10 +71,12 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
 
   @Override
   public final void run(DataRepoBackendConfiguration configuration, Environment environment) {
+    LOG.info("Starting");
     //Can be discovered in zookeeper
     if (configuration.getService().isDiscoverable()) {
       environment.lifecycle().manage(new DiscoveryLifeCycle(configuration.getService()));
     }
+
 
     Node self = self(configuration);
     CertificateUtils certificateUtils = CertificateUtils.newInstance();
@@ -86,7 +94,7 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     environment.jersey().register(new EventProvider());
 
     // RESTful resources
-    CoordinatingNode cn = coordinatingNode(configuration);
+    CoordinatingNode cn = coordinatingNode(configuration, environment);
     MNBackend backend = getBackend(configuration, environment);
     AuthorizationManager auth = AuthorizationManagers.newAuthorizationManager(backend, cn, self);
     environment.jersey().register(new CapabilitiesResource(self, certificateUtils));
@@ -103,9 +111,8 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     environment.healthChecks().register("backend", new BackendHealthCheck(backend));
   }
 
-  // TODO: implement a CN client
-  private static CoordinatingNode coordinatingNode(MNConfiguration configuration) {
-    return () -> NodeList.builder().build();
+  private static CoordinatingNode coordinatingNode(MNConfiguration configuration, Environment environment) {
+    return new CNClient(new JerseyClientBuilder(environment).build("CNClient"), configuration.getCoordinatingNodeUrl());
   }
 
   /**
@@ -120,6 +127,7 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
       .withName("GBIFS Member Node")
       .withDescription("GBIFS DataOne Member Node")
       .withBaseURL(configuration.getExternalUrl())
+      .withContactSubject(Subject.builder().withValue("CN=Informatics, DC=GBIFS, DC=org").build())
       .withServices(Services.builder()
         .addService(Service.builder().withAvailable(true).withName("MNCore").withVersion("v1").build())
         .addService(Service.builder().withAvailable(true).withName("MNRead").withVersion("v1").build())
@@ -134,7 +142,10 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
    */
   protected static MNBackend getBackend(DataRepoBackendConfiguration configuration, Environment environment) {
     DataRepoConfiguration dataRepoConfiguration = configuration.getDataRepoConfiguration();
-    DataRepoModule dataRepoModule = new DataRepoModule(dataRepoConfiguration, environment);
-    return new DataRepoBackend(dataRepoModule.dataRepository(), dataRepoModule.doiRegistrationService(), configuration);
+    DataRepoFsModule dataRepoModule = new DataRepoFsModule(dataRepoConfiguration, environment.metrics(),
+                                                           environment.healthChecks());
+    return new DataRepoBackend(dataRepoModule.dataRepository(environment.getObjectMapper()),
+                               dataRepoModule.doiRegistrationService(environment.getObjectMapper()),
+                               configuration);
   }
 }
