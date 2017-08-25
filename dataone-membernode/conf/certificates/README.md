@@ -32,4 +32,4 @@ openssl pkcs12 -inkey client.key -in client.crt -export -out client.p12
 ["password"]
 
 keytool -import -file client.crt -alias client -keystore truststore.jks
-```
+```          (\/)(?!.*\/)(.+)

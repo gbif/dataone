@@ -27,13 +27,6 @@
     </repository>
   </repositories>
 
-  <properties>
-    <dropwizard-xml.version>0.9.0-37</dropwizard-xml.version>
-    <elastic-search.version>2.4.1</elastic-search.version>
-    <log4j-to-slf4j.version>2.7</log4j-to-slf4j.version>
-    <mail.version>1.4.3</mail.version>
-  </properties>
-
   <build>
     <plugins>
       <plugin>
@@ -95,7 +88,6 @@
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-to-slf4j</artifactId>
-      <version>${log4j-to-slf4j.version}</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
@@ -111,13 +103,13 @@
       <artifactId>logback-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.gbif.dataone</groupId>
-      <artifactId>dataone-api</artifactId>
+      <groupId>janino</groupId>
+      <artifactId>janino</artifactId>
+      <scope>runtime</scope>
     </dependency>
-    <dependency>
-      <groupId>org.gbif.dataone</groupId>
-      <artifactId>dataone-auth</artifactId>
-    </dependency>
+
+
+    <!-- Dropwizard -->
     <dependency>
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-core</artifactId>
@@ -135,17 +127,8 @@
       <artifactId>dropwizard-forms</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.yunspace.dropwizard</groupId>
-      <artifactId>dropwizard-xml</artifactId>
-      <version>${dropwizard-xml.version}</version>
-    </dependency>
-    <dependency>
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.gbif</groupId>
-      <artifactId>service-discovery</artifactId>
     </dependency>
     <!--
     REPLACED BY FORMS?
@@ -154,6 +137,10 @@
       <artifactId>jersey-multipart</artifactId>
     </dependency-->
     <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-metrics</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-healthchecks</artifactId>
     </dependency>
@@ -161,17 +148,21 @@
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-annotation</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard</groupId>
+      <artifactId>dropwizard-lifecycle</artifactId>
+    </dependency>
     <!--dependency>
       <groupId>com.sun.jersey</groupId>
       <artifactId>jersey-core</artifactId>
-    </dependency>
+    </dependency -->
     <dependency>
-      <groupId>com.sun.jersey</groupId>
+      <groupId>org.glassfish.jersey.core</groupId>
       <artifactId>jersey-server</artifactId>
-    </dependency-->
-    <dependency>
-      <groupId>javax.validation</groupId>
-      <artifactId>validation-api</artifactId>
     </dependency>
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
@@ -182,8 +173,36 @@
       <artifactId>javax.servlet-api</artifactId>
     </dependency>
     <dependency>
-      <groupId> org.eclipse.jetty.orbit</groupId>
-      <artifactId>javax.servlet</artifactId>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>javax.ws.rs</groupId>
+      <artifactId>javax.ws.rs-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jersey.media</groupId>
+      <artifactId>jersey-media-multipart</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.module</groupId>
+      <artifactId>jackson-module-jaxb-annotations</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.hk2</groupId>
+      <artifactId>hk2-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -196,32 +215,42 @@
     <dependency>
       <groupId>org.elasticsearch</groupId>
       <artifactId>elasticsearch</artifactId>
-      <version>${elastic-search.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-core</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
+    <!-- GBIF -->
+    <dependency>
+      <groupId>org.gbif</groupId>
+      <artifactId>service-discovery</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif</groupId>
+      <artifactId>gbif-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif</groupId>
+      <artifactId>gbif-doi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif.registry</groupId>
+      <artifactId>registry-doi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif.dataone</groupId>
+      <artifactId>dataone-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif.dataone</groupId>
+      <artifactId>dataone-auth</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.gbif.data</groupId>
       <artifactId>data-repo-server-fs</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>janino</groupId>
-      <artifactId>janino</artifactId>
-      <version>2.5.10</version>
-      <scope>runtime</scope>
     </dependency>
 
     <!-- TODO: investigate -->
     <dependency>
       <groupId>javax.mail</groupId>
       <artifactId>mail</artifactId>
-      <version>${mail.version}</version>
     </dependency>
 
   </dependencies>

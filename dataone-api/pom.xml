@@ -26,13 +26,13 @@
 
   <build>
     <plugins>
-      <!-- 
-        Generates source from the XSD using plugins to provide immutable 
-        classes, fluent builders, annotations for selected @XmlRootElement and guava 
-        based equals, toString and hashcode. 
-        See also: 
-        - https://github.com/mklemm/jaxb2-rich-contract-plugin (immutable and builders) 
-        - https://github.com/danielwegener/xjc-guava-plugin (guava helpers) 
+      <!--
+        Generates source from the XSD using plugins to provide immutable
+        classes, fluent builders, annotations for selected @XmlRootElement and guava
+        based equals, toString and hashcode.
+        See also:
+        - https://github.com/mklemm/jaxb2-rich-contract-plugin (immutable and builders)
+        - https://github.com/danielwegener/xjc-guava-plugin (guava helpers)
       -->
       <plugin>
         <groupId>org.jvnet.jaxb2.maven2</groupId>
@@ -100,10 +100,6 @@
     </plugins>
   </build>
   <dependencies>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-    </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
