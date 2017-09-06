@@ -39,6 +39,7 @@ import org.dataone.ns.service.types.v1.Session;
 @Singleton
 public final class CapabilitiesResource {
 
+
   private final Node self;
   private final CertificateUtils certificateUtils;
 
@@ -74,6 +75,6 @@ public final class CapabilitiesResource {
   @GET
   @Path("whoAmI")
   public Session debugCertificate(@Context HttpServletRequest request) {
-    return certificateUtils.newSession(request);
+    return certificateUtils.newSession(request, true);
   }
 }

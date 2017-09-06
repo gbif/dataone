@@ -7,6 +7,7 @@ import org.gbif.api.vocabulary.IdentifierType;
 import org.gbif.d1.mn.backend.Health;
 import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.datarepo.api.DataRepository;
+import org.gbif.datarepo.api.model.AlternativeIdentifier;
 import org.gbif.datarepo.api.model.DataPackage;
 import org.gbif.datarepo.api.model.FileInputContent;
 import org.gbif.doi.metadata.datacite.DataCiteMetadata;
@@ -132,7 +133,8 @@ public class DataRepoBackend implements MNBackend {
   private static Optional<AlternateIdentifier> toAlternateIdentifier(Identifier pid) {
     return Optional.ofNullable(pid).map(obsoleteIdentifier -> AlternateIdentifier.builder()
                                                                 .withValue(obsoleteIdentifier.getValue())
-                                                                .withAlternateIdentifierType(IdentifierType.DOI.name())
+                                                                .withAlternateIdentifierType(IdentifierType.UNKNOWN
+                                                                                               .name())
                                                                 .build());
   }
 
@@ -140,7 +142,7 @@ public class DataRepoBackend implements MNBackend {
    *  Asserts that an pid exist, throws IdentifierNotUnique otherwise.
    */
   private void assertNotExists(Identifier pid) {
-    if (dataRepository.get(new DOI(pid.getValue())).isPresent()) {
+    if (dataRepository.getByAlternativeIdentifier(pid.getValue()).isPresent()) {
       throw new IdentifierNotUnique("Identifier already exists", pid.getValue());
     }
   }
@@ -190,7 +192,7 @@ public class DataRepoBackend implements MNBackend {
 
   @Override
   public Checksum checksum(Identifier identifier, String checksumAlgorithm) {
-    return dataRepository.get(new DOI(identifier.getValue()))
+    return dataRepository.getByAlternativeIdentifier(identifier.getValue())
           .map(DataRepoBackend::dataPackageChecksum)
           .orElseThrow(() -> new NotFound("Identifier Not Found", identifier.getValue()));
   }
@@ -207,13 +209,17 @@ public class DataRepoBackend implements MNBackend {
       assertNotExists(pid);
       DataPackage dataPackage = new DataPackage();
       dataPackage.setCreated(new Date());
+      AlternativeIdentifier alternativeIdentifier = new AlternativeIdentifier();
+      alternativeIdentifier.setType(AlternativeIdentifier.Type.UNKNOWN);
+      alternativeIdentifier.setIdentifier(pid.getValue());
       dataPackage.setCreatedBy(session.getSubject().getValue());
       dataPackage.setTitle(pid.getValue());
-      DOI doi = new DOI(pid.getValue());
+      dataPackage.addAlternativeIdentifier(alternativeIdentifier);
+      DOI doi = doiRegistrationService.generate(DoiType.DATA_PACKAGE);
       String metadataXML = toDataRepoMetadata(doi, session, sysmeta);
       doiRegistrationService.register(DoiRegistration.builder()
-                                        .withDoi(doi)
                                         .withType(DoiType.DATA_PACKAGE)
+                                        .withDoi(doi)
                                         .withUser(session.getSubject().getValue())
                                         .withMetadata(metadataXML)
                                         .build());
@@ -247,8 +253,10 @@ public class DataRepoBackend implements MNBackend {
   @Override
   public Identifier delete(Session session, Identifier pid) {
     LOG.info("Deleting data package {}, session: {}", pid, session);
-    dataRepository.delete(new DOI(pid.getValue()));
-    return pid;
+    return getAndConsume(pid, dataPackage -> {
+                                                dataRepository.delete(dataPackage.getDoi());
+                                                return pid;
+                                              });
   }
 
   @Override
@@ -270,8 +278,9 @@ public class DataRepoBackend implements MNBackend {
 
   @Override
   public InputStream get(Identifier identifier) {
-    return dataRepository.getFileInputStream(new DOI(identifier.getValue()), CONTENT_FILE)
-            .orElseThrow(() -> new NotFound("Identifier not found", identifier.getValue()));
+    return getAndConsume(identifier, dataPackage ->
+            dataRepository.getFileInputStream(dataPackage.getDoi(), CONTENT_FILE)
+          ).orElseThrow(() -> new NotFound("Content file not found for identifier", identifier.getValue()));
   }
 
   @Override
@@ -305,15 +314,17 @@ public class DataRepoBackend implements MNBackend {
 
   @Override
   public SystemMetadata systemMetadata(Identifier identifier) {
-    return dataRepository.getFileInputStream(new DOI(identifier.getValue()), SYS_METADATA_FILE)
-      .map(file -> {
-                      try {
-                        return (SystemMetadata)JAXB_CONTEXT.createUnmarshaller().unmarshal(file);
-                      } catch (JAXBException ex) {
-                        LOG.error("Error reading XML system metadata", ex);
-                       throw new InvalidSystemMetadata("Error reading system metadata");
-                      }
-                    }).orElseThrow(() -> new NotFound("Identifier Not Found", identifier.getValue()));
+    return getAndConsume(identifier,  dataPackage ->
+              dataRepository.getFileInputStream(dataPackage.getDoi(), SYS_METADATA_FILE)
+                .map(file -> {
+                  try {
+                    return (SystemMetadata)JAXB_CONTEXT.createUnmarshaller().unmarshal(file);
+                  } catch (JAXBException ex) {
+                    LOG.error("Error reading XML system metadata", ex);
+                    throw new InvalidSystemMetadata("Error reading system metadata");
+                  }
+                })
+           ).orElseThrow(() -> new NotFound("Metadata Not Found for Identifier", identifier.getValue()));
   }
 
   /**
@@ -348,7 +359,7 @@ public class DataRepoBackend implements MNBackend {
       metadata.setAlternateIdentifiers(AlternateIdentifiers.copyOf(metadata.getAlternateIdentifiers())
                                          .addAlternateIdentifier(AlternateIdentifier.builder()
                                                                    .withValue(altPid.getValue())
-                                                                   .withAlternateIdentifierType(IdentifierType.DOI
+                                                                   .withAlternateIdentifierType(IdentifierType.UNKNOWN
                                                                                                   .name())
                                                                    .build())
                                          .build());
@@ -362,23 +373,23 @@ public class DataRepoBackend implements MNBackend {
   public Identifier update(Session session, Identifier pid, InputStream object, Identifier newPid,
                            SystemMetadata sysmeta) {
     return getAndConsume(pid, dataPackage -> {
-        validateUpdateMetadata(sysmeta, pid);
-        assertNotExists(newPid);
-        SystemMetadata obsoletedMetadata = getSystemMetadata(session, pid);
-        validateIsObsoleted(obsoletedMetadata);
-        XMLGregorianCalendar now = toXmlGregorianCalendar(new Date());
-        dataRepository.update(dataPackage,
-                              wrapInInputStream(addAlternateIdentifiersMetadata(dataPackage.getDoi(), newPid)),
-                              Collections.singletonList(toFileContent(obsoletedMetadata.newCopyBuilder()
-                                                                        .withObsoletedBy(newPid)
-                                                                        .withDateSysMetadataModified(now)
-                                                                        .build())),
-                              DataRepository.UpdateMode.APPEND);
-        return create(session, newPid, object, sysmeta.newCopyBuilder()
-                                                .withDateSysMetadataModified(now)
-                                                .withObsoletes(pid)
-                                                .build());
-    });
+            validateUpdateMetadata(sysmeta, pid);
+            assertNotExists(newPid);
+            SystemMetadata obsoletedMetadata = getSystemMetadata(session, pid);
+            validateIsObsoleted(obsoletedMetadata);
+            XMLGregorianCalendar now = toXmlGregorianCalendar(new Date());
+            dataRepository.update(dataPackage,
+                                  wrapInInputStream(addAlternateIdentifiersMetadata(dataPackage.getDoi(), newPid)),
+                                  Collections.singletonList(toFileContent(obsoletedMetadata.newCopyBuilder()
+                                                                            .withObsoletedBy(newPid)
+                                                                            .withDateSysMetadataModified(now)
+                                                                            .build())),
+                                  DataRepository.UpdateMode.APPEND);
+            return create(session, newPid, object, sysmeta.newCopyBuilder()
+                                                    .withDateSysMetadataModified(now)
+                                                    .withObsoletes(pid)
+                                                    .build());
+        });
 
   }
 
@@ -389,7 +400,7 @@ public class DataRepoBackend implements MNBackend {
 
   @Override
   public void archive(Identifier identifier) {
-    dataRepository.archive(new DOI(identifier.getValue()));
+    getAndConsume(identifier, dataPackage -> { dataRepository.archive(dataPackage.getDoi()); return Void.TYPE;});
   }
 
   @Override
@@ -410,7 +421,7 @@ public class DataRepoBackend implements MNBackend {
    * Gets a data package and applies the mapper function to it.
    */
   private <T> T getAndConsume(Identifier identifier, Function<DataPackage,T> mapper) {
-    return dataRepository.get(new DOI(identifier.getValue()))
+    return dataRepository.getByAlternativeIdentifier(identifier.getValue())
       .map(mapper::apply)
       .orElseThrow(() -> new NotFound("Identifier Not Found", identifier.getValue()));
   }

@@ -26,6 +26,8 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
  */
 public class DataRepoBackendConfiguration extends MNConfiguration {
 
+  private static final LogbackAutoConfigLoggingFactory LOGGING_FACTORY = new LogbackAutoConfigLoggingFactory();
+
   /**
    * Configuration specific to interfacing with elastic search.
    */
@@ -144,14 +146,14 @@ public class DataRepoBackendConfiguration extends MNConfiguration {
 
   @Override
   public LoggingFactory getLoggingFactory() {
-    return new LogbackAutoConfigLoggingFactory();
+    return LOGGING_FACTORY;
   }
 
   /**
    * https://github.com/dropwizard/dropwizard/issues/1567
    * Override getLoggingFactory for your configuration
    */
-  public class LogbackAutoConfigLoggingFactory implements LoggingFactory {
+  private static class LogbackAutoConfigLoggingFactory implements LoggingFactory {
 
     @JsonIgnore
     private LoggerContext loggerContext;

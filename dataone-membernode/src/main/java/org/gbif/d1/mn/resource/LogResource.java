@@ -79,7 +79,7 @@ public final class LogResource {
   @GET
   @DataONE(DataONE.Method.GET_LOG_RECORDS)
   @Timed
-  public Log getLogRecords(@Authenticate Session session, @QueryParam("fromDate") Date fromDate,
+  public Log getLogRecords(@Authenticate(optional = true) Session session, @QueryParam("fromDate") Date fromDate,
                            @QueryParam("toDate") Date toDate, @QueryParam("event") Event event,
                            @QueryParam("pidFilter") @Nullable Identifier pidFilter, @QueryParam("start") @Nullable Integer start,
                            @QueryParam("count") @Nullable Integer count) {

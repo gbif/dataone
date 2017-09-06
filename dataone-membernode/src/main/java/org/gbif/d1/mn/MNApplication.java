@@ -41,6 +41,7 @@ import org.dataone.ns.service.types.v1.NodeReference;
 import org.dataone.ns.service.types.v1.Service;
 import org.dataone.ns.service.types.v1.Services;
 import org.dataone.ns.service.types.v1.Subject;
+import org.glassfish.jersey.filter.LoggingFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,6 +85,8 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     // Replace all exception handling with custom handling required by the DataONE specification
     ((AbstractServerFactory)configuration.getServerFactory()).setRegisterDefaultExceptionMappers(false);
     environment.jersey().register(new DefaultExceptionMapper(self.getIdentifier().getValue()));
+
+    environment.jersey().register(new LoggingFilter(java.util.logging.Logger.getLogger("InboundRequestResponse"), true));
 
     // providers
     // TODO: read config here to support overwriting OIDs in certificates

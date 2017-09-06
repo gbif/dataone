@@ -44,6 +44,10 @@ public final class CertificateUtils {
   private static final String REQ_X509CERTIFICATE = "javax.servlet.request.X509Certificate";
   private static final JAXBContext SUBJECT_INFO_CONTEXT = initJaxbContext(); // confirmed threadsafe
 
+  private static final Session PUBLIC_SESSION = Session.builder()
+                                                  .withSubject(Subject.builder().withValue("Public").build())
+                                                  .build();
+
   private final List<String> extensionOIDs;
 
   // not for instantiation by others
@@ -79,19 +83,22 @@ public final class CertificateUtils {
    * @throws InvalidToken Should it be impossible to create a session from the given request
    * @throws NullPointerException If the request is null
    */
-  public Session newSession(HttpServletRequest request) {
+  public Session newSession(HttpServletRequest request, boolean strict) {
     Preconditions.checkNotNull(request, "A request must be provided"); // indicates invalid use
-
     Certificate[] certs = (Certificate[]) request.getAttribute(REQ_X509CERTIFICATE);
     if (certs != null && certs.length == 1) {
       // session subject is the primary principle of the certificate
       X509Certificate x509Cert = (X509Certificate) certs[0];
+      LOG.info("Certificate found {}", x509Cert);
       return newSession(x509Cert);
     } else if (certs != null && certs.length > 1) {
+      LOG.info("One certificate expected in the request");
       throw new NotAuthorized("One certificate expected in the request, found " + certs.length);
-    } else {
+    } else if(strict) {
+      LOG.info("No certificate found in the request");
       throw new NotAuthorized("No certificate found in the request");
     }
+    return PUBLIC_SESSION;
   }
 
   private static SubjectInfo parseSubjectInfo(String subjectInfoAsXMLString) throws JAXBException {
