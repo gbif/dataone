@@ -155,7 +155,7 @@ public class DataRepoBackend implements MNBackend {
   }
 
   /**
-   * Creates DataCiteMetadata XML string out from the parameteres provided.
+   * Creates DataCiteMetadata XML string out from the parameters provided.
    */
   private static String toDataRepoMetadata(DOI doi, Session session, SystemMetadata sysmeta)
     throws InvalidMetadataException {
@@ -302,7 +302,7 @@ public class DataRepoBackend implements MNBackend {
       .withObjectInfo(response.getResults().stream()
                         .map(dataPackage -> ObjectInfo.builder()
                                               .withIdentifier(Identifier.builder()
-                                                                .withValue(dataPackage.getDoi().getDoiName()).build())
+                                                                .withValue(dataPackage.getAlternativeIdentifiers().get(0).getIdentifier()).build())
                                               .withChecksum(dataPackageChecksum(dataPackage))
                                               .withDateSysMetadataModified(toXmlGregorianCalendar(dataPackage
                                                                                                     .getModified()))
@@ -318,7 +318,11 @@ public class DataRepoBackend implements MNBackend {
               dataRepository.getFileInputStream(dataPackage.getDoi(), SYS_METADATA_FILE)
                 .map(file -> {
                   try {
-                    return (SystemMetadata)JAXB_CONTEXT.createUnmarshaller().unmarshal(file);
+                    SystemMetadata metadata = (SystemMetadata)JAXB_CONTEXT.createUnmarshaller().unmarshal(file);
+                    if (metadata.getSerialVersion() == null) {
+                      return metadata.newCopyBuilder().withSerialVersion(BigInteger.ONE).build();
+                    }
+                    return metadata;
                   } catch (JAXBException ex) {
                     LOG.error("Error reading XML system metadata", ex);
                     throw new InvalidSystemMetadata("Error reading system metadata");

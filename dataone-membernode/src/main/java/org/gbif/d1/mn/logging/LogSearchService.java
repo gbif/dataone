@@ -1,12 +1,11 @@
 package org.gbif.d1.mn.logging;
 
 
-import java.util.Date;
 import javax.annotation.Nullable;
 
 import org.dataone.ns.service.types.v1.Event;
-import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Log;
+import org.joda.time.DateTime;
 
 /**
  * This interface encapsulates the search method(s) to discover information in
@@ -23,6 +22,6 @@ public interface LogSearchService {
    * @param count number of results to return
    * @return
    */
-  Log getLogRecords(Date fromDate, Date toDate, Event event, @Nullable Identifier pidFilter, Integer start,
+  Log getLogRecords(DateTime fromDate, DateTime toDate, Event event, @Nullable String pidFilter, Integer start,
                     @Nullable Integer count);
 }

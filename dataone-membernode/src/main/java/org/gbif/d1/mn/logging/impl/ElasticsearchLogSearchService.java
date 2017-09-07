@@ -5,7 +5,6 @@ import org.gbif.d1.mn.logging.LogSearchService;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Map;
 import java.util.Optional;
@@ -31,6 +30,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortOrder;
+import org.joda.time.DateTime;
 
 /**
  * log search service backed by an Elasticsearch/logstash index.
@@ -101,8 +101,8 @@ public class ElasticsearchLogSearchService implements LogSearchService {
    * @throws NotAuthorized if the credentials presented do not have permission to perform the action
    */
    @Override
-   public Log getLogRecords(Date fromDate, Date toDate, Event event, @Nullable Identifier pidFilter,
-                           @Nullable Integer start, @Nullable Integer count) {
+   public Log getLogRecords(DateTime fromDate, DateTime toDate, Event event, @Nullable String pidFilter,
+                            @Nullable Integer start, @Nullable Integer count) {
 
     SearchRequestBuilder searchRequestBuilder = esClient.prepareSearch(logIdx).addSort("@timestamp", SortOrder.DESC);
     Integer realStart = Optional.ofNullable(start).orElse(DEFAULT_START);
@@ -112,17 +112,15 @@ public class ElasticsearchLogSearchService implements LogSearchService {
     Optional.ofNullable(event)
       .ifPresent(eventVal -> query.must(QueryBuilders.termQuery("event", eventVal.value())));
     Optional.ofNullable(pidFilter)
-      .ifPresent(pidFilterVal ->
-                   Optional.ofNullable(pidFilterVal.getValue())
-                     .ifPresent(pidValue -> query.must(QueryBuilders.termQuery("identifier", pidValue))));
+      .ifPresent(pidValue -> query.must(QueryBuilders.prefixQuery("identifier", pidValue)));
     Optional.ofNullable(fromDate)
       .ifPresent(fromDateVal -> query.must(QueryBuilders.rangeQuery("@timestamp")
                                                    .gte(fromDateVal).includeLower(Boolean.TRUE)));
     Optional.ofNullable(toDate)
       .ifPresent(toDateVal -> query.must(QueryBuilders.rangeQuery("@timestamp")
-                                                 .lte(toDateVal).includeUpper(Boolean.TRUE)));
+                                                 .lt(toDateVal).includeUpper(Boolean.TRUE)));
     query.must(QueryBuilders.existsQuery("event"));
-     query.must(QueryBuilders.termQuery("event_type", EventLogging.LOG_TYPE));
+     query.must(QueryBuilders.termQuery("type", EventLogging.LOG_TYPE));
     searchRequestBuilder.setQuery(query);
     SearchResponse searchResponse = searchRequestBuilder.execute().actionGet();
     return Log.builder().withTotal(Long.valueOf(searchResponse.getHits().getTotalHits()).intValue())

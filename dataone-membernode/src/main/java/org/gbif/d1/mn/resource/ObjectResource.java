@@ -170,7 +170,7 @@ public final class ObjectResource {
   @DataONE(DataONE.Method.DESCRIBE)
   @Produces(MediaType.APPLICATION_OCTET_STREAM)
   @Timed
-  public DescribeResponse describe(@Authenticate Session session, @PathParam("pid") Identifier pid) {
+  public DescribeResponse describe(@Authenticate(optional = true) Session session, @PathParam("pid") Identifier pid) {
     return backend.describe(pid);
   }
 
@@ -221,7 +221,6 @@ public final class ObjectResource {
                                 @QueryParam("toDate") @Nullable DateTimeParam toDate, @QueryParam("formatId") @Nullable String formatId,
                                 @QueryParam("replicaStatus") @Nullable Boolean replicaStatus, @QueryParam("start") @Nullable Integer start,
                                 @QueryParam("count") @Nullable Integer count) {
-    checkNotNull(fromDate, "Query parameter[fromDate] is required");
     return backend.listObjects(null, Optional.ofNullable(fromDate).map(date -> date.get().toLocalDate().toDate()).orElse(null),
                                Optional.ofNullable(toDate).map(date -> date.get().toLocalDate().toDate()).orElse(null),
                                formatId, replicaStatus, start, count);

@@ -21,6 +21,7 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import com.codahale.metrics.annotation.Timed;
+import io.dropwizard.jersey.params.DateTimeParam;
 import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
@@ -40,7 +41,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortOrder;
-
+import org.joda.time.DateTime;
 
 /**
  * Operations relating to querying of audit log entries.
@@ -79,11 +80,13 @@ public final class LogResource {
   @GET
   @DataONE(DataONE.Method.GET_LOG_RECORDS)
   @Timed
-  public Log getLogRecords(@Authenticate(optional = true) Session session, @QueryParam("fromDate") Date fromDate,
-                           @QueryParam("toDate") Date toDate, @QueryParam("event") Event event,
-                           @QueryParam("pidFilter") @Nullable Identifier pidFilter, @QueryParam("start") @Nullable Integer start,
+  public Log getLogRecords(@Authenticate(optional = true) Session session, @QueryParam("fromDate") DateTimeParam fromDate,
+                           @QueryParam("toDate") DateTimeParam toDate, @QueryParam("event") Event event,
+                           @QueryParam("idFilter") @Nullable String pidFilter, @QueryParam("start") @Nullable Integer start,
                            @QueryParam("count") @Nullable Integer count) {
-    return logSearchService.getLogRecords(fromDate, toDate, event, pidFilter, start, count);
+    return logSearchService.getLogRecords(Optional.ofNullable(fromDate).map(DateTimeParam::get).orElse(null),
+                                          Optional.ofNullable(toDate).map(DateTimeParam::get).orElse(null),
+                                          event, pidFilter, start, count);
   }
 
 }

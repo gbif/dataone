@@ -2,6 +2,7 @@ package org.gbif.d1.mn.provider;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.Optional;
 import javax.inject.Singleton;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -33,7 +34,9 @@ public class EventProvider implements ParamConverterProvider {
     @Override
     public Event fromString(String value) throws IllegalArgumentException {
       try {
-        return Event.fromValue(value.toLowerCase());
+        return Optional.ofNullable(value)
+                .map(val -> Event.fromValue(val.toLowerCase()))
+                .orElse(null);
       } catch (Exception ex) {
         throw new WebApplicationException("Wrong Event parameter", Response.Status.BAD_REQUEST);
       }
