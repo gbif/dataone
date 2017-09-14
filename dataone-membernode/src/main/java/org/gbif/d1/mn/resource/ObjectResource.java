@@ -217,12 +217,16 @@ public final class ObjectResource {
   @DataONE(DataONE.Method.LIST_OBJECTS)
   @Timed
   @Produces(MediaType.APPLICATION_XML)
-  public ObjectList listObjects(@Authenticate Session session, @QueryParam("fromDate") DateTimeParam fromDate,
-                                @QueryParam("toDate") @Nullable DateTimeParam toDate, @QueryParam("formatId") @Nullable String formatId,
-                                @QueryParam("replicaStatus") @Nullable Boolean replicaStatus, @QueryParam("start") @Nullable Integer start,
+  public ObjectList listObjects(@Authenticate Session session,
+                                @QueryParam("fromDate") DateTimeParam fromDate,
+                                @QueryParam("toDate") @Nullable DateTimeParam toDate,
+                                @QueryParam("formatId") @Nullable String formatId,
+                                @QueryParam("replicaStatus") @Nullable Boolean replicaStatus,
+                                @QueryParam("start") @Nullable Integer start,
                                 @QueryParam("count") @Nullable Integer count) {
-    return backend.listObjects(null, Optional.ofNullable(fromDate).map(date -> date.get().toLocalDate().toDate()).orElse(null),
-                               Optional.ofNullable(toDate).map(date -> date.get().toLocalDate().toDate()).orElse(null),
+    return backend.listObjects(null,
+                               Optional.ofNullable(fromDate).map(date -> date.get().toLocalDateTime().toDate()).orElse(null),
+                               Optional.ofNullable(toDate).map(date -> date.get().toLocalDateTime().toDate()).orElse(null),
                                formatId, replicaStatus, start, count);
   }
 
