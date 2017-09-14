@@ -6,7 +6,13 @@ package org.gbif.d1.mn.auth;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringReader;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.PublicKey;
+import java.security.SignatureException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
@@ -44,7 +50,7 @@ public final class CertificateUtils {
   private static final String REQ_X509CERTIFICATE = "javax.servlet.request.X509Certificate";
   private static final JAXBContext SUBJECT_INFO_CONTEXT = initJaxbContext(); // confirmed threadsafe
 
-  private static final Session PUBLIC_SESSION = Session.builder()
+  public static final Session PUBLIC_SESSION = Session.builder()
                                                   .withSubject(Subject.builder().withValue("Public").build())
                                                   .build();
 
@@ -76,6 +82,27 @@ public final class CertificateUtils {
   }
 
   /**
+   * Checks whether given X.509 certificate is self-signed.
+   */
+  public static boolean isSelfSigned(X509Certificate cert)  {
+    try {
+      // Try to verify certificate signature with its own public key
+      PublicKey key = cert.getPublicKey();
+      cert.verify(key);
+      return true;
+    } catch (SignatureException sigEx) {
+      // Invalid signature --> not self-signed
+      return false;
+    } catch (InvalidKeyException keyEx) {
+      // Invalid key --> not self-signed
+      return false;
+    } catch (NoSuchAlgorithmException | NoSuchProviderException | CertificateException ex){
+      throw new RuntimeException(ex);
+    }
+  }
+
+
+  /**
    * Builds a new session from the given request
    *
    * @param request The HTTP request; must be present and hold a single certificate
@@ -91,11 +118,13 @@ public final class CertificateUtils {
       X509Certificate x509Cert = (X509Certificate) certs[0];
       LOG.info("Certificate found {}", x509Cert);
       return newSession(x509Cert);
-    } else if (certs != null && certs.length > 1) {
+    }
+    if (certs != null && certs.length > 1) {
       LOG.info("One certificate expected in the request");
       throw new NotAuthorized("One certificate expected in the request, found " + certs.length);
-    } else if(strict) {
-      LOG.info("No certificate found in the request");
+    }
+    LOG.info("No certificate found in the request");
+    if(strict) {
       throw new NotAuthorized("No certificate found in the request");
     }
     return PUBLIC_SESSION;
@@ -156,6 +185,9 @@ public final class CertificateUtils {
   Session newSession(X509Certificate x509Cert) {
     Session.Builder<Void> session = Session.builder();
     X500Principal principal = x509Cert.getSubjectX500Principal();
+    if (principal.equals(x509Cert.getIssuerX500Principal())) {
+      throw new NotAuthorized("Self-signed certificates are not allowed");
+    }
     String dn = principal.getName(X500Principal.RFC2253); // LDAPv3 format
     Subject subject = Subject.builder().withValue(dn).build();
     session.withSubject(subject);

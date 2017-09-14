@@ -18,11 +18,13 @@ import org.gbif.d1.mn.provider.TierSupportFilter;
 import org.gbif.d1.mn.resource.ArchiveResource;
 import org.gbif.d1.mn.resource.CapabilitiesResource;
 import org.gbif.d1.mn.resource.ChecksumResource;
+import org.gbif.d1.mn.resource.ErrorResource;
 import org.gbif.d1.mn.resource.GenerateResource;
 import org.gbif.d1.mn.resource.LogResource;
 import org.gbif.d1.mn.resource.MetaResource;
 import org.gbif.d1.mn.resource.MonitorResource;
 import org.gbif.d1.mn.resource.ObjectResource;
+import org.gbif.d1.mn.resource.ReplicaResource;
 import org.gbif.datarepo.inject.DataRepoFsModule;
 import org.gbif.datarepo.store.fs.conf.DataRepoConfiguration;
 import org.gbif.discovery.lifecycle.DiscoveryLifeCycle;
@@ -37,7 +39,9 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.dataone.ns.service.apis.v1.CoordinatingNode;
 import org.dataone.ns.service.types.v1.Node;
+import org.dataone.ns.service.types.v1.NodeList;
 import org.dataone.ns.service.types.v1.NodeReference;
+import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Service;
 import org.dataone.ns.service.types.v1.Services;
 import org.dataone.ns.service.types.v1.Subject;
@@ -108,7 +112,9 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     environment.jersey().register(new GenerateResource(auth, backend));
     environment.jersey().register(new MonitorResource(backend));
     environment.jersey().register(new LogResource(new ElasticsearchLogSearchService(configuration.getElasticSearch().buildEsClient(),
-                                                  configuration.getElasticSearch().getIdx())));
+                                                  configuration.getElasticSearch().getIdx()), auth));
+    environment.jersey().register(new ErrorResource(auth));
+    environment.jersey().register(new ReplicaResource(backend, auth));
 
     // health checks
     environment.healthChecks().register("backend", new BackendHealthCheck(backend));

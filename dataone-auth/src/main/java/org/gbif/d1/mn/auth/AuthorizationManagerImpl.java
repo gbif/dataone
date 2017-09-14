@@ -80,12 +80,12 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
 
   @Override
   public Session checkIsAuthorized(HttpServletRequest request, String id, Permission permission) {
-    return checkIsAuthorized(certificateUtils.newSession(request, true), id, permission);
+    return checkIsAuthorized(certificateUtils.newSession(request, false), id, permission);
   }
 
   @Override
   public Session checkIsAuthorized(HttpServletRequest request, Permission permission) {
-    return checkIsAuthorized(certificateUtils.newSession(request, true), permission);
+    return checkIsAuthorized(certificateUtils.newSession(request, false), permission);
   }
 
   @Override
@@ -119,16 +119,17 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
     // if the original request comes from a CN then it is granted
     try {
       for (Node node : cn.listNodes().getNode()) {
+        LOG.info("Contacting Node {} to validate access rights", node.getBaseURL());
         if (NodeType.CN == node.getType()
             && contains(node.getSubject(), session.getSubject().toString())) {
-          LOG.debug("Request received from a known alias[{}] of a CN[{}]", session.getSubject(), node.getSubject());
+          LOG.info("Request received from a known alias[{}] of a CN[{}]", session.getSubject(), node.getSubject());
           return session;
         }
       }
     } catch (ServiceFailure e) {
       throw new ServiceFailure("Unable to call the CN for the list of nodes", e);
     }
-
+    LOG.warn("Session with subject {} tried to access a restricted resource", session.getSubject().getValue());
     throw new NotAuthorized("Only coordinating nodes are permitted to perform this action");
   }
 

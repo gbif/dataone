@@ -1,5 +1,6 @@
 package org.gbif.d1.mn.resource;
 
+import org.gbif.d1.mn.auth.AuthorizationManager;
 import org.gbif.d1.mn.logging.LogSearchService;
 import org.gbif.d1.mn.provider.Authenticate;
 import org.gbif.d1.mn.exception.DataONE;
@@ -32,6 +33,7 @@ import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Log;
 import org.dataone.ns.service.types.v1.LogEntry;
 import org.dataone.ns.service.types.v1.NodeReference;
+import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.Subject;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -42,6 +44,8 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortOrder;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Operations relating to querying of audit log entries.
@@ -61,11 +65,15 @@ import org.joda.time.DateTime;
 @Singleton
 public final class LogResource {
 
+  private static final Logger LOG = LoggerFactory.getLogger(LogResource.class);
 
   private final LogSearchService logSearchService;
 
-  public LogResource(LogSearchService logSearchService) {
+  private final AuthorizationManager auth;
+
+  public LogResource(LogSearchService logSearchService, AuthorizationManager auth) {
     this.logSearchService = logSearchService;
+    this.auth = auth;
   }
 
 
@@ -84,6 +92,7 @@ public final class LogResource {
                            @QueryParam("toDate") DateTimeParam toDate, @QueryParam("event") Event event,
                            @QueryParam("idFilter") @Nullable String pidFilter, @QueryParam("start") @Nullable Integer start,
                            @QueryParam("count") @Nullable Integer count) {
+    LOG.info("Session {}", session);
     return logSearchService.getLogRecords(Optional.ofNullable(fromDate).map(DateTimeParam::get).orElse(null),
                                           Optional.ofNullable(toDate).map(DateTimeParam::get).orElse(null),
                                           event, pidFilter, start, count);

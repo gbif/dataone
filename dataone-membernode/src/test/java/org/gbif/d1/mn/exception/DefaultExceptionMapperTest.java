@@ -1,10 +1,6 @@
 package org.gbif.d1.mn.exception;
 
-import org.gbif.d1.mn.exception.DataONE;
 import org.gbif.d1.mn.exception.DataONE.Method;
-import org.gbif.d1.mn.exception.DefaultExceptionMapper;
-import org.gbif.d1.mn.exception.DetailCodes;
-import org.gbif.d1.mn.exception.HttpCodes;
 
 import javax.ws.rs.core.Response;
 
@@ -15,11 +11,7 @@ import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.exceptions.UnsupportedMetadataType;
-import org.glassfish.jersey.server.ExtendedUriInfo;
-import org.glassfish.jersey.server.model.Invocable;
-import org.glassfish.jersey.server.model.ResourceMethod;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -34,7 +26,7 @@ public class DefaultExceptionMapperTest {
   public void testDetailCode() {
     DefaultExceptionMapper mapper = new DefaultExceptionMapper(NODE_ID);
 
-    DataONE annotation = Mockito.mock(DataONE.class);
+    DataONE annotation = mock(DataONE.class);
     when(annotation.value()).thenReturn(Method.CREATE);
 
     String fail = DetailCodes.codeFor(Method.CREATE, ServiceFailure.class);

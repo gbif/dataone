@@ -1,5 +1,6 @@
 package org.gbif.d1.mn.exception;
 
+import java.util.Collections;
 import java.util.regex.Pattern;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -64,7 +65,8 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable> {
         .getHandlingMethod().getAnnotation(DataONE.class);
 
       if (dataONE != null) {
-        return toResponse(exception, dataONE);
+        Response response = toResponse(exception, dataONE);
+        return response;
       } else {
         // swallow gracefully
         LOG.warn("Expected a DataONE annotation on method linked to {}", uriInfo);
@@ -78,25 +80,30 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable> {
 
   @VisibleForTesting
   Response toResponse(Throwable exception, DataONE dataONE) {
-    // all exceptions are coorced to DataONE exceptions for serialization
+    // all exceptions are coerced to DataONE exceptions for serialization
     DataONEException d1e = coerce(exception);
     String detailCode = detailCode(dataONE, d1e);
 
     // HTTP code is mapped 1:1 with the DataONEException
     int code = httpCode(d1e);
-    return Response
-      .status(code)
-      .type(MediaType.APPLICATION_XML)
-      .entity(new ExceptionDetail(
-        d1e.getClass().getSimpleName(), code, detailCode, d1e.getMessage(), nodeId, d1e.getPid())
-      )
-      .build();
+    Response.ResponseBuilder response = Response.status(code);
+    if (DataONE.Method.DESCRIBE == dataONE.value()) {
+      response.type(MediaType.TEXT_XML);
+      d1e.toHeaderMap().forEach(response::header);
+      response.header("DataONE-Exception-DetailCode", detailCode);
+    } else {
+      response.type(MediaType.APPLICATION_XML);
+    }
+    response.entity(new ExceptionDetail(
+      d1e.getClass().getSimpleName(), code, detailCode, d1e.getMessage(), nodeId, d1e.getPid())
+    );
+    return response.build();
   }
 
   /**
    * Coerces the exception into a DataONEException defaulting as a ServiceFailure if required.
    */
-  private DataONEException coerce(Throwable exception) {
+  private static DataONEException coerce(Throwable exception) {
     if (exception instanceof DataONEException) {
       return (DataONEException) exception;
 
@@ -109,6 +116,7 @@ public class DefaultExceptionMapper implements ExceptionMapper<Throwable> {
       return new InvalidRequest(exception.getMessage(), exception);
 
     } else {
+      LOG.error("Fatal Error", exception);
       // we default as a service failure
       return new ServiceFailure(exception.getMessage(), exception);
     }

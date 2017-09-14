@@ -63,6 +63,9 @@ import org.slf4j.LoggerFactory;
 public class DataRepoBackend implements MNBackend {
 
   public static final int MAX_PAGE_SIZE = 20;
+  public static final String TAG_PREFIX = "DataOne";
+
+
   private static final Logger LOG = LoggerFactory.getLogger(DataRepoBackend.class);
 
   private static final String CHECKSUM_ALGORITHM  = "MD5";
@@ -90,6 +93,10 @@ public class DataRepoBackend implements MNBackend {
    */
   private static Checksum dataPackageChecksum(DataPackage dataPackage) {
     return Checksum.builder().withValue(dataPackage.getChecksum()).withAlgorithm(CHECKSUM_ALGORITHM).build();
+  }
+
+  private static String toDataOneTag(String value) {
+    return TAG_PREFIX + ':' + value;
   }
 
   /**
@@ -215,6 +222,11 @@ public class DataRepoBackend implements MNBackend {
       dataPackage.setCreatedBy(session.getSubject().getValue());
       dataPackage.setTitle(pid.getValue());
       dataPackage.addAlternativeIdentifier(alternativeIdentifier);
+      //formatId is added as Tag to be later used during search
+      Optional.ofNullable(sysmeta.getFormatId())
+        .map(DataRepoBackend::toDataOneTag)
+        .ifPresent(dataPackage::addTag);
+
       DOI doi = doiRegistrationService.generate(DoiType.DATA_PACKAGE);
       String metadataXML = toDataRepoMetadata(doi, session, sysmeta);
       doiRegistrationService.register(DoiRegistration.builder()
@@ -295,7 +307,9 @@ public class DataRepoBackend implements MNBackend {
                                                     Optional.ofNullable(count)
                                                       .map(value -> Integer.min(value, MAX_PAGE_SIZE))
                                                       .orElse(MAX_PAGE_SIZE));
-    PagingResponse<DataPackage> response = dataRepository.list(null, pagingRequest, fromDate, toDate, false);
+    List<String> tags  = Optional.ofNullable(formatId)
+                          .map(value -> Collections.singletonList(toDataOneTag(value))).orElse(null);
+    PagingResponse<DataPackage> response = dataRepository.list(null, pagingRequest, fromDate, toDate, false, tags);
     return ObjectList.builder().withCount(response.getLimit())
       .withStart(Long.valueOf(response.getOffset()).intValue())
       .withTotal(response.getCount().intValue())

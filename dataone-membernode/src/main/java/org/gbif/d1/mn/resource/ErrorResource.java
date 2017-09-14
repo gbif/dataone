@@ -61,10 +61,9 @@ public final class ErrorResource {
    * @throws NotAuthorized if the credentials presented do not have permission to perform the action
    */
   @POST
-  @Path("error")
   @DataONE(DataONE.Method.SYNCHRONIZATION_FAILED)
   @Timed
-  public boolean synchronizationFailed(@Authenticate Session session, ExceptionDetail detail)
+  public boolean synchronizationFailed(@Authenticate(optional = false) Session session, ExceptionDetail detail)
     throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure {
     checkNotNull(detail, "The exception detail is required");
     auth.checkIsAuthorized(request, Permission.CHANGE_PERMISSION);

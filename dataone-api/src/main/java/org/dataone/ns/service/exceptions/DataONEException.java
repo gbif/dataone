@@ -16,10 +16,13 @@
 
 package org.dataone.ns.service.exceptions;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 
 /**
  * A DataONEException is the root of all DataONE service class exception messages.
@@ -56,9 +59,9 @@ public class DataONEException extends RuntimeException {
   // Note: deliberately limiting options in construction as it is very easy to misuse String order
   protected DataONEException(String message) {
     super(message);
-    this.detailCode = null;
-    this.nodeId = null;
-    this.pid = null;
+    detailCode = null;
+    nodeId = null;
+    pid = null;
   }
 
   protected DataONEException(String message, String detailCode, String nodeId, String pid) {
@@ -77,9 +80,9 @@ public class DataONEException extends RuntimeException {
 
   protected DataONEException(String message, Throwable cause) {
     super(message, cause);
-    this.detailCode = null;
-    this.nodeId = null;
-    this.pid = null;
+    detailCode = null;
+    nodeId = null;
+    pid = null;
   }
 
   public String getDetailCode() {
@@ -107,10 +110,20 @@ public class DataONEException extends RuntimeException {
   @Override
   public String toString() {
     // append to super to inherit the familiar default "classname: message" format first
-    return super.toString() + Objects.toStringHelper(this)
+    return super.toString() + MoreObjects.toStringHelper(this)
       .add("detailCode", detailCode)
       .add("pid", pid)
-      .add("nodeId", nodeId)
-      .toString();
+      .add("nodeId", nodeId);
+  }
+
+  public Map<String, String> toHeaderMap() {
+    Map<String, String> headers = new HashMap<>();
+    headers.put("DataONE-Exception-Name", getClass().getSimpleName());
+    Optional.ofNullable(detailCode)
+      .ifPresent(detailCodeValue -> headers.put("DataONE-Exception-DetailCode", detailCodeValue));
+    Optional.ofNullable(pid).ifPresent(pidValue ->headers.put("DataONE-Exception-PID", pid));
+    Optional.ofNullable(getMessage())
+      .ifPresent(message ->headers.put("DataONE-Exception-Description", message));
+    return headers;
   }
 }

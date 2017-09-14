@@ -1,5 +1,7 @@
 package org.gbif.d1.mn.resource;
 
+import org.gbif.d1.mn.auth.AuthorizationManager;
+import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.exception.DataONE;
 import org.gbif.d1.mn.provider.Authenticate;
 
@@ -14,8 +16,14 @@ import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
+import org.dataone.ns.service.types.v1.Event;
 import org.dataone.ns.service.types.v1.Identifier;
+import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static org.gbif.d1.mn.logging.EventLogging.log;
 
 /**
  * Operations relating to retrieval of a replica object.
@@ -34,12 +42,26 @@ import org.dataone.ns.service.types.v1.Session;
 @Path("/mn/v1/replica")
 @Singleton
 public final class ReplicaResource {
+
+  private final MNBackend backend;
+  private final AuthorizationManager auth;
+
+  private static final Logger LOG = LoggerFactory.getLogger(ReplicaResource.class);
+
+  public ReplicaResource(MNBackend backend, AuthorizationManager auth) {
+    this.backend = backend;
+    this.auth = auth;
+  }
+
   @GET
-  @Path("replica/{pid}")
+  @Path("{pid}")
   @DataONE(DataONE.Method.GET_REPLICA)
   @Timed
-  public InputStream getReplica(@Authenticate Session session, @PathParam("pid") Identifier pid) {
-    return null;
+  public InputStream getReplica(@Authenticate(optional = false) Session session, @PathParam("pid") Identifier pid) {
+    auth.checkIsAuthorized(session, pid.getValue(), Permission.READ);
+    InputStream replica = backend.get(pid);
+    log(LOG, session, pid, Event.REPLICATE, "Replicating object");
+    return replica;
   }
 
 }

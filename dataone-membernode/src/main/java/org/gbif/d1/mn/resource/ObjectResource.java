@@ -168,7 +168,7 @@ public final class ObjectResource {
   @HEAD
   @Path("{pid}")
   @DataONE(DataONE.Method.DESCRIBE)
-  @Produces(MediaType.APPLICATION_OCTET_STREAM)
+  @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.TEXT_XML})
   @Timed
   public DescribeResponse describe(@Authenticate(optional = true) Session session, @PathParam("pid") Identifier pid) {
     return backend.describe(pid);

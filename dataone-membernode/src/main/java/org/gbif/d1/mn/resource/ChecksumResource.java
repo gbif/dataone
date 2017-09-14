@@ -75,7 +75,6 @@ public final class ChecksumResource {
   @Produces(MediaType.APPLICATION_XML)
   public Checksum getChecksum(@Authenticate Session session, @PathParam("pid") Identifier pid,
                               @QueryParam("checksumAlgorithm") String checksumAlgorithm) {
-    checkNotNull(checksumAlgorithm, "Query parameter[checksumAlgorithm] is required");
     auth.checkIsAuthorized(request, pid.getValue(), Permission.READ);
     return backend.checksum(pid, checksumAlgorithm);
   }
