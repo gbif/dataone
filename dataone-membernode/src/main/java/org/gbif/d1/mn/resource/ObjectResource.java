@@ -106,7 +106,7 @@ public final class ObjectResource {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @DataONE(DataONE.Method.CREATE)
   @Timed
-  public Identifier create(@Authenticate Session session, @FormDataParam("pid") String pid,
+  public Identifier create(@Authenticate(optional = false) Session session, @FormDataParam("pid") String pid,
                            @FormDataParam("object") InputStream object,
                            @FormDataParam("sysmeta") SystemMetadata sysmeta) {
     checkNotNull(pid, "Form parameter[pid] is required");
@@ -148,7 +148,7 @@ public final class ObjectResource {
   @Path("{pid}")
   @DataONE(DataONE.Method.DELETE)
   @Timed
-  public Identifier delete(@Authenticate Session session, @PathParam("pid") Identifier pid) {
+  public Identifier delete(@Authenticate(optional = false) Session session, @PathParam("pid") Identifier pid) {
     auth.checkIsAuthorized(session, pid.getValue(), Permission.WRITE);
     backend.delete(session, pid);
     log(LOG, session, pid, Event.DELETE, "Deleting resource");
@@ -170,7 +170,7 @@ public final class ObjectResource {
   @DataONE(DataONE.Method.DESCRIBE)
   @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.TEXT_XML})
   @Timed
-  public DescribeResponse describe(@Authenticate(optional = true) Session session, @PathParam("pid") Identifier pid) {
+  public DescribeResponse describe(@Authenticate Session session, @PathParam("pid") Identifier pid) {
     return backend.describe(pid);
   }
 
@@ -188,7 +188,7 @@ public final class ObjectResource {
   @DataONE(DataONE.Method.GET)
   @Timed
   public InputStream get(@Authenticate Session session, @PathParam("pid") Identifier pid) {
-    auth.checkIsAuthorized(request, pid.getValue(), Permission.READ);
+    auth.checkIsAuthorized(session, pid.getValue(), Permission.READ);
     InputStream inputStream = backend.get(pid);
     log(LOG, session, pid, Event.READ, "Resource read");
     return  inputStream;
@@ -259,7 +259,7 @@ public final class ObjectResource {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @DataONE(DataONE.Method.UPDATE)
   @Timed
-  public Identifier update(@Authenticate Session session, @PathParam("pid") Identifier pid,
+  public Identifier update(@Authenticate(optional = false) Session session, @PathParam("pid") Identifier pid,
                            @FormDataParam("object") InputStream object, @FormDataParam("newPid") Identifier newPid,
                            @FormDataParam("sysmeta") SystemMetadata sysmeta) {
     checkNotNull(pid, "Form parameter[file] is required");

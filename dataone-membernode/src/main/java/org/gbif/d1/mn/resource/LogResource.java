@@ -88,11 +88,10 @@ public final class LogResource {
   @GET
   @DataONE(DataONE.Method.GET_LOG_RECORDS)
   @Timed
-  public Log getLogRecords(@Authenticate(optional = true) Session session, @QueryParam("fromDate") DateTimeParam fromDate,
+  public Log getLogRecords(@Authenticate Session session, @QueryParam("fromDate") DateTimeParam fromDate,
                            @QueryParam("toDate") DateTimeParam toDate, @QueryParam("event") Event event,
                            @QueryParam("idFilter") @Nullable String pidFilter, @QueryParam("start") @Nullable Integer start,
                            @QueryParam("count") @Nullable Integer count) {
-    LOG.info("Session {}", session);
     return logSearchService.getLogRecords(Optional.ofNullable(fromDate).map(DateTimeParam::get).orElse(null),
                                           Optional.ofNullable(toDate).map(DateTimeParam::get).orElse(null),
                                           event, pidFilter, start, count);

@@ -32,6 +32,7 @@ import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERUTF8String;
 import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
+import org.dataone.ns.service.types.v1.Group;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.Subject;
 import org.dataone.ns.service.types.v1.SubjectInfo;
@@ -51,7 +52,11 @@ public final class CertificateUtils {
   private static final JAXBContext SUBJECT_INFO_CONTEXT = initJaxbContext(); // confirmed threadsafe
 
   public static final Session PUBLIC_SESSION = Session.builder()
-                                                  .withSubject(Subject.builder().withValue("Public").build())
+                                                  .withSubject(Subject.builder().withValue("public").build())
+                                                  .withSubjectInfo(SubjectInfo.builder()
+                                                                     .withGroup(Group.builder()
+                                                                                  .withGroupName("public").build())
+                                                                     .build())
                                                   .build();
 
   private final List<String> extensionOIDs;
@@ -110,23 +115,22 @@ public final class CertificateUtils {
    * @throws InvalidToken Should it be impossible to create a session from the given request
    * @throws NullPointerException If the request is null
    */
-  public Session newSession(HttpServletRequest request, boolean strict) {
+  public Session newSession(HttpServletRequest request, boolean optional) {
     Preconditions.checkNotNull(request, "A request must be provided"); // indicates invalid use
     Certificate[] certs = (Certificate[]) request.getAttribute(REQ_X509CERTIFICATE);
     if (certs != null && certs.length == 1) {
       // session subject is the primary principle of the certificate
       X509Certificate x509Cert = (X509Certificate) certs[0];
-      LOG.info("Certificate found {}", x509Cert);
       return newSession(x509Cert);
     }
     if (certs != null && certs.length > 1) {
       LOG.info("One certificate expected in the request");
       throw new NotAuthorized("One certificate expected in the request, found " + certs.length);
     }
-    LOG.info("No certificate found in the request");
-    if(strict) {
+    if (!optional) {
       throw new NotAuthorized("No certificate found in the request");
     }
+    LOG.info("No certificate found in the request, default to public session");
     return PUBLIC_SESSION;
   }
 
@@ -189,6 +193,7 @@ public final class CertificateUtils {
       throw new NotAuthorized("Self-signed certificates are not allowed");
     }
     String dn = principal.getName(X500Principal.RFC2253); // LDAPv3 format
+    LOG.info("DNCertificate {}", dn);
     Subject subject = Subject.builder().withValue(dn).build();
     session.withSubject(subject);
 

@@ -66,7 +66,7 @@ public final class ErrorResource {
   public boolean synchronizationFailed(@Authenticate(optional = false) Session session, ExceptionDetail detail)
     throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure {
     checkNotNull(detail, "The exception detail is required");
-    auth.checkIsAuthorized(request, Permission.CHANGE_PERMISSION);
+    auth.checkIsAuthorized(session, Permission.CHANGE_PERMISSION);
     logError(LOG, detail, session, "Error synchronizing resources");
     return true; // pointless, but the specification mandates it
   }

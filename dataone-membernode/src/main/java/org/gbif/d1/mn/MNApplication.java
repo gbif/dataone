@@ -39,9 +39,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.dataone.ns.service.apis.v1.CoordinatingNode;
 import org.dataone.ns.service.types.v1.Node;
-import org.dataone.ns.service.types.v1.NodeList;
 import org.dataone.ns.service.types.v1.NodeReference;
-import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Service;
 import org.dataone.ns.service.types.v1.Services;
 import org.dataone.ns.service.types.v1.Subject;
@@ -76,7 +74,6 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
 
   @Override
   public final void run(DataRepoBackendConfiguration configuration, Environment environment) {
-    LOG.info("Starting");
     //Can be discovered in zookeeper
     if (configuration.getService().isDiscoverable()) {
       environment.lifecycle().manage(new DiscoveryLifeCycle(configuration.getService()));

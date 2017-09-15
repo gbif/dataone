@@ -80,12 +80,12 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
 
   @Override
   public Session checkIsAuthorized(HttpServletRequest request, String id, Permission permission) {
-    return checkIsAuthorized(certificateUtils.newSession(request, false), id, permission);
+    return checkIsAuthorized(certificateUtils.newSession(request, true), id, permission);
   }
 
   @Override
   public Session checkIsAuthorized(HttpServletRequest request, Permission permission) {
-    return checkIsAuthorized(certificateUtils.newSession(request, false), permission);
+    return checkIsAuthorized(certificateUtils.newSession(request, true), permission);
   }
 
   @Override

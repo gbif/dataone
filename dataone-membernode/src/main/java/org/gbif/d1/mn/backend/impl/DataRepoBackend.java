@@ -224,8 +224,7 @@ public class DataRepoBackend implements MNBackend {
       dataPackage.addAlternativeIdentifier(alternativeIdentifier);
       //formatId is added as Tag to be later used during search
       Optional.ofNullable(sysmeta.getFormatId())
-        .map(DataRepoBackend::toDataOneTag)
-        .ifPresent(dataPackage::addTag);
+        .ifPresent(formatId -> dataPackage.addTag(toDataOneTag(formatId)));
 
       DOI doi = doiRegistrationService.generate(DoiType.DATA_PACKAGE);
       String metadataXML = toDataRepoMetadata(doi, session, sysmeta);

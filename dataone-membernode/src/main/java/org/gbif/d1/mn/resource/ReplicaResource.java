@@ -7,9 +7,11 @@ import org.gbif.d1.mn.provider.Authenticate;
 
 import java.io.InputStream;
 import javax.inject.Singleton;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Context;
 
 import com.codahale.metrics.annotation.Timed;
 import org.dataone.ns.service.exceptions.InvalidToken;
@@ -46,6 +48,9 @@ public final class ReplicaResource {
   private final MNBackend backend;
   private final AuthorizationManager auth;
 
+  @Context
+  private HttpServletRequest request;
+
   private static final Logger LOG = LoggerFactory.getLogger(ReplicaResource.class);
 
   public ReplicaResource(MNBackend backend, AuthorizationManager auth) {
@@ -57,7 +62,9 @@ public final class ReplicaResource {
   @Path("{pid}")
   @DataONE(DataONE.Method.GET_REPLICA)
   @Timed
-  public InputStream getReplica(@Authenticate(optional = false) Session session, @PathParam("pid") Identifier pid) {
+  public InputStream getReplica(Session session, @PathParam("pid") Identifier pid) {
+    Session session1 = auth.checkIsAuthorized(request,pid.getValue(), Permission.READ);
+    LOG.info("Replicating with session {}",session1);
     auth.checkIsAuthorized(session, pid.getValue(), Permission.READ);
     InputStream replica = backend.get(pid);
     log(LOG, session, pid, Event.REPLICATE, "Replicating object");
