@@ -5,6 +5,7 @@ import org.gbif.d1.mn.provider.Authenticate;
 import org.gbif.d1.mn.exception.DataONE;
 
 import java.util.Date;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -53,6 +54,7 @@ public final class DirtySystemMetadataResource {
 
   private final AuthorizationManager auth;
 
+  @Inject
   public DirtySystemMetadataResource(EventBus eventBus, AuthorizationManager auth) {
     this.eventBus = eventBus;
     this.auth = auth;
@@ -75,7 +77,7 @@ public final class DirtySystemMetadataResource {
    * @throws NotImplemented if the operation is unsupported
    */
   @POST
-  @Path("dirtySystemMetadata")
+  @Path("/")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @DataONE(DataONE.Method.SYSTEM_METADATA_CHANGED)
   @Timed
@@ -86,6 +88,7 @@ public final class DirtySystemMetadataResource {
     checkNotNull(serialVersion, "Form parameter[serialVersion] is required");
     checkNotNull(dateSystemMetadataLastModified, "Form parameter[dateSystemMetadataLastModified] is required");
     auth.checkIsAuthorized(request, pid.getValue(), Permission.CHANGE_PERMISSION);
+    eventBus.post(new DirtyMetadataListener.SystemMetadataChangeEvent(pid, session));
     return true;
   }
 }

@@ -13,13 +13,17 @@ import org.gbif.d1.mn.logging.impl.ElasticsearchLogSearchService;
 import org.gbif.d1.mn.provider.DescribeResponseHeaderProvider;
 import org.gbif.d1.mn.provider.EventProvider;
 import org.gbif.d1.mn.provider.IdentifierProvider;
+import org.gbif.d1.mn.provider.PermissionProvider;
 import org.gbif.d1.mn.provider.SessionProvider;
 import org.gbif.d1.mn.provider.TierSupportFilter;
 import org.gbif.d1.mn.resource.ArchiveResource;
 import org.gbif.d1.mn.resource.CapabilitiesResource;
 import org.gbif.d1.mn.resource.ChecksumResource;
+import org.gbif.d1.mn.resource.DirtyMetadataListener;
+import org.gbif.d1.mn.resource.DirtySystemMetadataResource;
 import org.gbif.d1.mn.resource.ErrorResource;
 import org.gbif.d1.mn.resource.GenerateResource;
+import org.gbif.d1.mn.resource.IsAuthorizedResource;
 import org.gbif.d1.mn.resource.LogResource;
 import org.gbif.d1.mn.resource.MetaResource;
 import org.gbif.d1.mn.resource.MonitorResource;
@@ -31,6 +35,7 @@ import org.gbif.discovery.lifecycle.DiscoveryLifeCycle;
 
 
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
+import com.google.common.eventbus.EventBus;
 import io.dropwizard.Application;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.forms.MultiPartBundle;
@@ -78,7 +83,7 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     if (configuration.getService().isDiscoverable()) {
       environment.lifecycle().manage(new DiscoveryLifeCycle(configuration.getService()));
     }
-
+    EventBus metadataChangeBus = new EventBus();
 
     Node self = self(configuration);
     CertificateUtils certificateUtils = CertificateUtils.newInstance();
@@ -96,6 +101,7 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     environment.jersey().register(new IdentifierProvider());
     environment.jersey().register(new DescribeResponseHeaderProvider());
     environment.jersey().register(new EventProvider());
+    environment.jersey().register(new PermissionProvider());
 
     // RESTful resources
     CoordinatingNode cn = coordinatingNode(configuration, environment);
@@ -112,6 +118,10 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
                                                   configuration.getElasticSearch().getIdx()), auth));
     environment.jersey().register(new ErrorResource(auth));
     environment.jersey().register(new ReplicaResource(backend, auth));
+    environment.jersey().register(new IsAuthorizedResource(auth, backend));
+
+    metadataChangeBus.register(new DirtyMetadataListener(cn, backend));
+    environment.jersey().register(new DirtySystemMetadataResource(metadataChangeBus, auth));
 
     // health checks
     environment.healthChecks().register("backend", new BackendHealthCheck(backend));

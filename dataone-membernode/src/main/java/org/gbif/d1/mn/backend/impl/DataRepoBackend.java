@@ -1,6 +1,7 @@
 package org.gbif.d1.mn.backend.impl;
 
 import org.gbif.api.model.common.DOI;
+import org.gbif.api.model.common.paging.Pageable;
 import org.gbif.api.model.common.paging.PagingRequest;
 import org.gbif.api.model.common.paging.PagingResponse;
 import org.gbif.api.vocabulary.IdentifierType;
@@ -43,6 +44,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import org.dataone.ns.service.exceptions.IdentifierNotUnique;
 import org.dataone.ns.service.exceptions.InvalidSystemMetadata;
+import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.Checksum;
@@ -151,6 +153,12 @@ public class DataRepoBackend implements MNBackend {
   private void assertNotExists(Identifier pid) {
     if (dataRepository.getByAlternativeIdentifier(pid.getValue()).isPresent()) {
       throw new IdentifierNotUnique("Identifier already exists", pid.getValue());
+    }
+  }
+
+  private static void assertIsAuthotized(Session session, DataPackage dataPackage) {
+    if (!isAuthorized(session,dataPackage, Permission.WRITE)) {
+      throw new NotAuthorized("Subject is not authorized to perform this action");
     }
   }
 
@@ -275,9 +283,9 @@ public class DataRepoBackend implements MNBackend {
     return getAndConsume(identifier, dataPackage -> {
                                       SystemMetadata systemMetadata = systemMetadata(identifier);
                                       return new DescribeResponse(systemMetadata.getFormatId(),
-                                                                  BigInteger.valueOf(dataPackage.getSize()),
+                                                                  systemMetadata.getSize(),
                                                                   dataPackage.getModified(),
-                                                                  dataPackageChecksum(dataPackage),
+                                                                  systemMetadata.getChecksum(),
                                                                   systemMetadata.getSerialVersion());
                                       });
   }
@@ -302,8 +310,8 @@ public class DataRepoBackend implements MNBackend {
   @Override
   public ObjectList listObjects(NodeReference self, Date fromDate, @Nullable Date toDate, @Nullable String formatId,
                                 @Nullable Boolean replicaStatus, @Nullable Integer start, @Nullable Integer count) {
-    PagingRequest pagingRequest = new PagingRequest(Optional.ofNullable(start).orElse(0),
-                                                    Optional.ofNullable(count)
+    Pageable pagingRequest = new PagingRequest(Optional.ofNullable(start).orElse(0),
+                                               Optional.ofNullable(count)
                                                       .map(value -> Integer.min(value, MAX_PAGE_SIZE))
                                                       .orElse(MAX_PAGE_SIZE));
     List<String> tags  = Optional.ofNullable(formatId)
@@ -313,35 +321,41 @@ public class DataRepoBackend implements MNBackend {
       .withStart(Long.valueOf(response.getOffset()).intValue())
       .withTotal(response.getCount().intValue())
       .withObjectInfo(response.getResults().stream()
-                        .map(dataPackage -> ObjectInfo.builder()
+                        .map(dataPackage -> { SystemMetadata systemMetadata = systemMetadata(dataPackage.getDoi());
+                                              return ObjectInfo.builder()
                                               .withIdentifier(Identifier.builder()
                                                                 .withValue(dataPackage.getAlternativeIdentifiers().get(0).getIdentifier()).build())
-                                              .withChecksum(dataPackageChecksum(dataPackage))
+                                              .withChecksum(systemMetadata.getChecksum())
                                               .withDateSysMetadataModified(toXmlGregorianCalendar(dataPackage
                                                                                                     .getModified()))
-                                              .withSize(BigInteger.valueOf(dataPackage.getSize()))
-                                              .build())
+                                              .withSize(systemMetadata.getSize())
+                                              .build();
+                        })
                         .collect(Collectors.toList()))
       .build();
   }
 
   @Override
   public SystemMetadata systemMetadata(Identifier identifier) {
-    return getAndConsume(identifier,  dataPackage ->
-              dataRepository.getFileInputStream(dataPackage.getDoi(), SYS_METADATA_FILE)
-                .map(file -> {
-                  try {
-                    SystemMetadata metadata = (SystemMetadata)JAXB_CONTEXT.createUnmarshaller().unmarshal(file);
-                    if (metadata.getSerialVersion() == null) {
-                      return metadata.newCopyBuilder().withSerialVersion(BigInteger.ONE).build();
-                    }
-                    return metadata;
-                  } catch (JAXBException ex) {
-                    LOG.error("Error reading XML system metadata", ex);
-                    throw new InvalidSystemMetadata("Error reading system metadata");
+    return getAndConsume(identifier,  dataPackage -> Optional.ofNullable(systemMetadata(dataPackage.getDoi())))
+            .orElseThrow(() -> new NotFound("Metadata Not Found for Identifier", identifier.getValue()));
+  }
+
+
+  public SystemMetadata systemMetadata(DOI doi) {
+    return  dataRepository.getFileInputStream(doi, SYS_METADATA_FILE)
+              .map(file -> {
+                try {
+                  SystemMetadata metadata = (SystemMetadata)JAXB_CONTEXT.createUnmarshaller().unmarshal(file);
+                  if (metadata.getSerialVersion() == null) {
+                    return metadata.newCopyBuilder().withSerialVersion(BigInteger.ONE).build();
                   }
-                })
-           ).orElseThrow(() -> new NotFound("Metadata Not Found for Identifier", identifier.getValue()));
+                  return metadata;
+                } catch (JAXBException ex) {
+                  LOG.error("Error reading XML system metadata", ex);
+                  throw new InvalidSystemMetadata("Error reading system metadata");
+                }
+              }).orElseThrow(() -> new NotFound("Metadata Not Found for DOI", doi.getDoiName()));
   }
 
   /**
@@ -392,9 +406,13 @@ public class DataRepoBackend implements MNBackend {
     return getAndConsume(pid, dataPackage -> {
             validateUpdateMetadata(sysmeta, pid);
             assertNotExists(newPid);
+            assertIsAuthotized(session, dataPackage);
             SystemMetadata obsoletedMetadata = getSystemMetadata(session, pid);
             validateIsObsoleted(obsoletedMetadata);
             XMLGregorianCalendar now = toXmlGregorianCalendar(new Date());
+            if(dataPackage.getDeleted() != null) {
+              throw new NotFound("Deleted objects can't be updated", pid.getValue());
+            }
             dataRepository.update(dataPackage,
                                   wrapInInputStream(addAlternateIdentifiersMetadata(dataPackage.getDoi(), newPid)),
                                   Collections.singletonList(toFileContent(obsoletedMetadata.newCopyBuilder()
@@ -411,22 +429,65 @@ public class DataRepoBackend implements MNBackend {
   }
 
   @Override
+  public boolean updateMetadata(Session session, Identifier pid, SystemMetadata sysmeta) {
+    return getAndConsume(pid, dataPackage -> {
+      try {
+        validateUpdateMetadata(sysmeta, pid);
+        assertIsAuthotized(session, dataPackage);
+        if (dataPackage.getDeleted() != null) {
+          throw new NotFound("Deleted objects can't be updated", pid.getValue());
+        }
+        dataRepository.update(dataPackage,
+                              wrapInInputStream(toDataRepoMetadata(dataPackage.getDoi(), session, sysmeta)),
+                              Collections.singletonList(toFileContent(sysmeta.newCopyBuilder()
+                                                                        .withDateSysMetadataModified(
+                                                                          toXmlGregorianCalendar(new Date()))
+                                                                        .build())),
+                              DataRepository.UpdateMode.APPEND);
+        return Boolean.TRUE;
+      } catch (InvalidMetadataException ex) {
+        LOG.error("Error processing metadata", ex);
+        throw new InvalidSystemMetadata("Error registering data package metadata");
+      }
+    });
+
+  }
+
+  @Override
   public SystemMetadata getSystemMetadata(Session session, Identifier identifier) {
     return systemMetadata(identifier);
   }
 
   @Override
-  public void archive(Identifier identifier) {
-    getAndConsume(identifier, dataPackage -> { dataRepository.archive(dataPackage.getDoi()); return Void.TYPE;});
+  public void archive(Session session, Identifier identifier) {
+    getAndConsume(identifier, dataPackage -> {
+      try {
+        assertIsAuthotized(session, dataPackage);
+        SystemMetadata metadata = systemMetadata(dataPackage.getDoi()).newCopyBuilder()
+                                                  .withArchived(Boolean.TRUE)
+                                                  .withDateSysMetadataModified(toXmlGregorianCalendar(new Date())).build();
+        dataRepository.update(dataPackage,
+                              wrapInInputStream(toDataRepoMetadata(dataPackage.getDoi(), session, metadata)),
+                              Collections.singletonList(toFileContent(metadata)),
+                              DataRepository.UpdateMode.APPEND);
+        dataRepository.archive(dataPackage.getDoi());
+        return Void.TYPE;
+      } catch (InvalidMetadataException ex) {
+        LOG.error("Error processing metadata", ex);
+        throw new InvalidSystemMetadata("Error registering data package metadata");
+      }
+    });
   }
 
   @Override
   public boolean isAuthorized(Session session, Identifier identifier, Permission action) {
-    return getAndConsume(identifier, dataPackage ->
-      (action == Permission.READ) ||
-      ((action == Permission.WRITE || action == Permission.CHANGE_PERMISSION)
-       && dataPackage.getCreatedBy().equals(session.getSubject().getValue()))
-    );
+    return getAndConsume(identifier, dataPackage -> isAuthorized(session,dataPackage, action));
+  }
+
+  private static boolean isAuthorized(Session session, DataPackage dataPackage, Permission action) {
+    return (action == Permission.READ) ||
+           ((action == Permission.WRITE || action == Permission.CHANGE_PERMISSION)
+            && dataPackage.getCreatedBy().equals(session.getSubject().getValue()));
   }
 
   @Override

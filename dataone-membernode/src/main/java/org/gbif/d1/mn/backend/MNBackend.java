@@ -73,7 +73,7 @@ public interface MNBackend extends SystemMetadataProvider {
    * @param identifier for the object
    * @return the stream or null if not found
    */
-  void archive(Identifier identifier);
+  void archive(Session session, Identifier identifier);
 
   /**
    * Test if the client identified by the session is allowed to perform an operation at the stated permission level on
@@ -104,7 +104,22 @@ public interface MNBackend extends SystemMetadataProvider {
    */
   SystemMetadata systemMetadata(Identifier identifier);
 
+  /**
+   *
+   * @param session
+   * @param pid
+   * @param object
+   * @param newPid
+   * @param sysmeta
+   * @return
+   */
   Identifier update(Session session, Identifier pid, InputStream object, Identifier newPid, SystemMetadata sysmeta);
 
+  /**
+   * Gives a estimate of the remaining storage capacity.
+   * @return store capacity
+   */
   long getEstimateCapacity();
+
+  boolean updateMetadata(Session session, Identifier pid, SystemMetadata sysmeta);
 }

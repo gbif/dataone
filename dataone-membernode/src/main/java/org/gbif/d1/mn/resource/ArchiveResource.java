@@ -4,6 +4,7 @@ import org.gbif.d1.mn.auth.AuthorizationManager;
 import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.exception.DataONE;
 import org.gbif.d1.mn.exception.DataONE.Method;
+import org.gbif.d1.mn.provider.Authenticate;
 
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
@@ -20,6 +21,7 @@ import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
+import org.dataone.ns.service.types.v1.Event;
 import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
@@ -27,6 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.gbif.d1.mn.logging.EventLogging.log;
+import static org.gbif.d1.mn.util.D1Preconditions.checkNotNull;
+
 /**
  * Operations related to the archival (hiding) of objects in DataONE.
  * <p>
@@ -81,11 +85,12 @@ public final class ArchiveResource {
   @Path("{id}")
   @DataONE(Method.ARCHIVE)
   @Timed
-  public Identifier archive(@PathParam("id") String encodedId) {
+  public Identifier archive(@Authenticate(optional = false) Session session, @PathParam("id") String encodedId) {
+    LOG.info("Session subject {}", session.getSubject().getValue());
+    checkNotNull(encodedId, "encodedId is required");
     Identifier id = Identifier.builder().withValue(URLDecoder.decode(encodedId)).build();
-    Session session = auth.checkIsAuthorized(request, id.getValue(), Permission.CHANGE_PERMISSION);
-    log(LOG, session, id, Method.ARCHIVE.name().toLowerCase(), "Archiving");
-    backend.archive(id);
+    log(LOG, session, id, Event.DELETE, "Archiving");
+    backend.archive(session, id);
     return id;
   }
 

@@ -66,13 +66,12 @@ public final class IsAuthorizedResource {
    * @throws NotImplemented if the operation is unsupported
    */
   @GET
-  @Path("isAuthorized/{pid}")
+  @Path("{pid}")
   @DataONE(DataONE.Method.IS_AUTHORIZED)
   @Timed
   public boolean isAuthorized(@Authenticate Session session, @PathParam("pid") String encodedId,
                               @QueryParam("action") Permission action) {
     String id = URLDecoder.decode(encodedId);
-    auth.checkIsAuthorized(request, id, Permission.CHANGE_PERMISSION);
     return backend.isAuthorized(session, Identifier.builder().withValue(id).build(), action);
   }
 

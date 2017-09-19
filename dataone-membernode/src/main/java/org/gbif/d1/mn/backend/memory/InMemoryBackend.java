@@ -237,7 +237,7 @@ public class InMemoryBackend implements MNBackend {
   }
 
   @Override
-  public void archive(Identifier identifier) {
+  public void archive(Session session, Identifier identifier) {
     delete(null, identifier);
   }
 
@@ -249,5 +249,10 @@ public class InMemoryBackend implements MNBackend {
   @Override
   public long getEstimateCapacity() {
     return Runtime.getRuntime().freeMemory();
+  }
+
+  @Override
+  public boolean updateMetadata(Session session, Identifier pid, SystemMetadata sysmeta) {
+    return true;
   }
 }
