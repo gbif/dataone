@@ -121,11 +121,10 @@ public final class CertificateUtils {
     if (certs != null && certs.length == 1) {
       // session subject is the primary principle of the certificate
       X509Certificate x509Cert = (X509Certificate) certs[0];
-      LOG.info("Certificate {}", x509Cert);
       return newSession(x509Cert);
     }
     if (certs != null && certs.length > 1) {
-      LOG.info("One certificate expected in the request");
+      LOG.debug("One certificate expected in the request");
       throw new NotAuthorized("One certificate expected in the request, found " + certs.length);
     }
     if (!optional) {

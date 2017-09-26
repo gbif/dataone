@@ -113,7 +113,6 @@ final class Subjects {
    */
   static ImmutableSet<String> allSubjects(Session session) {
     Preconditions.checkNotNull(session, "Session required to extract subjects");
-    LOG.info("Session {}", session.getSubjectInfo());
     // public symbolic subject is always added
     Set<String> subjects = Sets.newHashSet(PUBLIC_SUBJECT);
 

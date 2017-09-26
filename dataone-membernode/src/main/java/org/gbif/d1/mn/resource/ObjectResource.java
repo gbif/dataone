@@ -272,7 +272,6 @@ public final class ObjectResource {
     checkNotNull(newPid, "Form parameter[newPid] is required");
     checkNotNull(sysmeta, "Form parameter[sysmeta] is required");
     checkSystemCapacity();
-    LOG.info("SessionUpdate {}", session.getSubject().getValue());
     auth.checkIsAuthorized(session, pid.getValue(), Permission.WRITE);
     Identifier identifier = backend.update(session, pid, object, newPid, sysmeta);
     log(LOG, session, pid, Event.UPDATE, "Resource updated");

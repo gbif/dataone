@@ -3,6 +3,7 @@ package org.gbif.d1.cn.client;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -10,6 +11,7 @@ import javax.ws.rs.core.Response;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import org.apache.http.client.methods.RequestBuilder;
 import org.dataone.ns.service.apis.v1.cn.CoordinatingNode;
 import org.dataone.ns.service.exceptions.ExceptionDetail;
 import org.dataone.ns.service.exceptions.InvalidToken;
@@ -18,6 +20,7 @@ import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.Identifier;
+import org.dataone.ns.service.types.v1.Node;
 import org.dataone.ns.service.types.v1.NodeList;
 import org.dataone.ns.service.types.v1.Subject;
 import org.dataone.ns.service.types.v1.SystemMetadata;
@@ -33,8 +36,20 @@ public class CNClient implements CoordinatingNode {
 
   //This string literal is used only to access the cache
   private static final String NODES_CACHE = "nodes";
+
   //This cache avoids contacting the coordinating node each time the list of nodes is required
   private final LoadingCache<String,NodeList> nodesCache;
+
+
+  private Response execute(Invocation.Builder request) {
+    Response response = request.get(Response.class);
+    Response.Status.Family responseFamily = response.getStatusInfo().getFamily();
+    if (responseFamily == Response.Status.Family.CLIENT_ERROR || responseFamily == Response.Status.Family.SERVER_ERROR) {
+      ExceptionDetail exceptionDetail = response.readEntity(ExceptionDetail.class);
+      throw new ServiceFailure(exceptionDetail.getDescription(), exceptionDetail.getDetailCode(), exceptionDetail.getNodeId());
+    }
+    return response;
+  }
 
   /**
    * Builds a CN client instance.
@@ -73,20 +88,15 @@ public class CNClient implements CoordinatingNode {
 
   @Override
   public boolean isNodeAuthorized(Subject targetNodeSubject, String pid) {
-    try {
-      Response response = node.path("replicaAuthorizations/" + pid)
-        .queryParam("targetNodeSubject", targetNodeSubject.getValue())
-        .request(MediaType.APPLICATION_XML)
-        .get(Response.class);
-      Response.Status.Family responseFamily = response.getStatusInfo().getFamily();
-      if (responseFamily == Response.Status.Family.CLIENT_ERROR || responseFamily == Response.Status.Family.SERVER_ERROR) {
-        ExceptionDetail exceptionDetail = response.readEntity(ExceptionDetail.class);
-        throw new NotAuthorized(exceptionDetail.getDescription(), exceptionDetail.getDetailCode(), exceptionDetail.getNodeId());
-      }
-      return Response.Status.Family.SUCCESSFUL == response.getStatusInfo().getFamily();
-    } catch (Exception ex) {
-      LOG.error("CN Authorization error", ex);
-      throw ex;
-    }
+    return Response.Status.Family.SUCCESSFUL == execute(node.path("replicaAuthorizations/" + pid)
+      .queryParam("targetNodeSubject", targetNodeSubject.getValue())
+      .request(MediaType.APPLICATION_XML)).getStatusInfo().getFamily();
   }
+
+  @Override
+  public Node getNodeCapabilities(String nodeId) {
+    return execute(node.path("/node").path(nodeId).request(MediaType.APPLICATION_XML)).readEntity(Node.class);
+  }
+
+
 }

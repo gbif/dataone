@@ -8,6 +8,7 @@ import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.Identifier;
+import org.dataone.ns.service.types.v1.Node;
 import org.dataone.ns.service.types.v1.NodeList;
 import org.dataone.ns.service.types.v1.Subject;
 import org.dataone.ns.service.types.v1.SystemMetadata;
@@ -24,10 +25,25 @@ import org.dataone.ns.service.types.v1.SystemMetadata;
  */
 public interface CoordinatingNode {
 
-  // TODO: more exceptions
+  /**
+   * Returns a list of nodes that have been registered with the DataONE infrastructure.
+   */
   NodeList listNodes() throws ServiceFailure;
 
+  /**
+   * Returns the system metadata that contains DataONE specific information about the object identified by id.
+   * Authoritative copies of system metadata are only available from the Coordinating Nodes.
+   */
   SystemMetadata getSystemMetadata(Identifier identifier) throws InvalidToken, NotImplemented, NotAuthorized, NotFound, ServiceFailure;
 
+  /**
+   * Verifies that a replication event was initiated by a CN by comparing the target node’s identifiying subject with a
+   * known list of scheduled replication tasks.
+   */
   boolean isNodeAuthorized(Subject targetNodeSubject, String pid);
+
+  /**
+   * For retrieving the capabilities of the specified node if it is registered on the Coordinating Node being called.
+   */
+  Node getNodeCapabilities(String nodeId);
 }

@@ -83,7 +83,6 @@ public class SessionProvider extends AbstractBinder {
         public Session provide() {
           HttpServletRequest request = context.getResource(HttpServletRequest.class);
           if (request != null) {
-            LOG.info("Creating session");
             // may throws Exception if auth fails
             Session session = certificateUtils.newSession(request, authenticate.optional());
             LOG.debug("Successfully authenticated user {}", session.getSubject().getValue());

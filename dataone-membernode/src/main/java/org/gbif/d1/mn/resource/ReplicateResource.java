@@ -1,10 +1,13 @@
 package org.gbif.d1.mn.resource;
 
 import org.gbif.d1.mn.auth.AuthorizationManager;
+import org.gbif.d1.mn.backend.MNBackend;
+import org.gbif.d1.mn.client.MNReadClient;
 import org.gbif.d1.mn.exception.DataONE;
 import org.gbif.d1.mn.exception.DataONE.Method;
 import org.gbif.d1.mn.provider.Authenticate;
 
+import java.util.UUID;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
@@ -19,6 +22,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import io.dropwizard.client.JerseyClientBuilder;
 import org.dataone.ns.service.apis.v1.cn.CoordinatingNode;
+import org.dataone.ns.service.apis.v1.mn.MNRead;
 import org.dataone.ns.service.exceptions.InsufficientResources;
 import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.InvalidToken;
@@ -63,6 +67,8 @@ public final class ReplicateResource {
   private final JerseyClientBuilder clientBuilder;
   private final CoordinatingNode cnClient;
   private final AuthorizationManager authorizationManager;
+  private final MNBackend mnBackend;
+
   @Context
   private HttpServletRequest request;
 
@@ -77,21 +83,23 @@ public final class ReplicateResource {
   }
 
   @Inject
-  public ReplicateResource(EventBus queue, JerseyClientBuilder clientBuilder, CoordinatingNode cnClient,
-                           AuthorizationManager authorizationManager) {
+  public ReplicateResource(EventBus queue, JerseyClientBuilder clientBuilder,
+                           CoordinatingNode cnClient,
+                           AuthorizationManager authorizationManager,
+                           MNBackend mnBackend) {
     this.queue = queue;
     this.clientBuilder = clientBuilder;
     this.cnClient = cnClient;
     this.authorizationManager = authorizationManager;
+    this.mnBackend = mnBackend;
     queue.register(this);
   }
 
-
+  /**
+   * Contacts the coordinating node to get node's capabilities.
+   */
   private Node getSourceNode(String sourceNode) {
-    return cnClient.listNodes().getNode().stream()
-            .filter(node -> sourceNode.equals(node.getName()))
-            .findFirst()
-            .orElseThrow(() -> new InvalidRequest("sourceNode not found"));
+    return cnClient.getNodeCapabilities(sourceNode);
   }
   /**
    * Called by a Coordinating Node to request that the Member Node create a copy of the specified object by retrieving
@@ -123,8 +131,9 @@ public final class ReplicateResource {
     checkIsAuthorized(authorizationManager.isAuthorityNodeOrCN(session.getSubject().getValue(), sysmeta),
                       "Replication has to be triggered by a trusted subject");
     Node sourceMnNode = getSourceNode(sourceNode);
-    queue.post(new ReplicateEvent(sysmeta.getIdentifier().getValue(),
+    queue.post(new ReplicateEvent(sysmeta.getIdentifier(),
                                   sourceMnNode,
+                                  sysmeta,
                                   request.getRemoteAddr(),
                                   request.getHeader("User-Agent"),
                                   session.getSubject()));
@@ -134,29 +143,42 @@ public final class ReplicateResource {
 
   @Subscribe
   final void replicate(ReplicateEvent event) {
-    LOG.info("Received notification to replicate pid[{}] from sourceNode[{}]",
-             event.getIdentifier(),
-             event.getSourceNode());
-    // TODO: the actual replication Ja
+    LOG.info("Replication event received: {}", event);
+    try {
+      MNRead mnRead = new MNReadClient(clientBuilder.build(UUID.randomUUID().toString()), event.getSourceNode().getBaseURL());
+      mnBackend.create(Session.builder().withSubject(event.getSubject()).build(),
+                       event.getIdentifier(),
+                       mnRead.get(event.getIdentifier()),
+                       event.getSystemMetadata());
+    } catch (Exception ex) {
+      LOG.error("Error processing replication event", ex);
+    }
+
   }
 
+  /**
+   * Object used to encapsulate the message sent from a replication request to the actual processing of it.
+   */
   private static class ReplicateEvent {
 
-    private final String identifier;
+    private final Identifier identifier;
     private final Node sourceNode;
+    private final SystemMetadata systemMetadata;
     private final String ip;
     private final String userAgent;
     private final Subject subject;
 
-    ReplicateEvent(String identifier, Node sourceNode, String ip, String userAgent, Subject subject) {
+    ReplicateEvent(Identifier identifier, Node sourceNode, SystemMetadata systemMetadata,
+                   String ip, String userAgent, Subject subject) {
       this.identifier = identifier;
       this.sourceNode = sourceNode;
+      this.systemMetadata = systemMetadata;
       this.ip = ip;
       this.userAgent = userAgent;
       this.subject = subject;
     }
 
-    public String getIdentifier() {
+    public Identifier getIdentifier() {
       return identifier;
     }
 
@@ -168,12 +190,28 @@ public final class ReplicateResource {
       return sourceNode;
     }
 
+    public SystemMetadata getSystemMetadata() {
+      return systemMetadata;
+    }
+
     public Subject getSubject() {
       return subject;
     }
 
     public String getUserAgent() {
       return userAgent;
+    }
+
+    @Override
+    public String toString() {
+      return "ReplicateEvent{" +
+             "identifier=" + identifier +
+             ", sourceNode=" + sourceNode +
+             ", systemMetadata=" + systemMetadata +
+             ", ip='" + ip + '\'' +
+             ", userAgent='" + userAgent + '\'' +
+             ", subject=" + subject +
+             '}';
     }
   }
 }
