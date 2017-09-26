@@ -230,6 +230,8 @@ public class DataRepoBackend implements MNBackend {
       dataPackage.setCreatedBy(session.getSubject().getValue());
       dataPackage.setTitle(pid.getValue());
       dataPackage.addAlternativeIdentifier(alternativeIdentifier);
+      dataPackage.setCreated(sysmeta.getDateSysMetadataModified().toGregorianCalendar().getTime());
+      dataPackage.setModified(sysmeta.getDateSysMetadataModified().toGregorianCalendar().getTime());
       //formatId is added as Tag to be later used during search
       Optional.ofNullable(sysmeta.getFormatId())
         .ifPresent(formatId -> dataPackage.addTag(toDataOneTag(formatId)));
@@ -319,7 +321,7 @@ public class DataRepoBackend implements MNBackend {
     PagingResponse<DataPackage> response = dataRepository.list(null, pagingRequest, fromDate, toDate, false, tags);
     return ObjectList.builder().withCount(response.getLimit())
       .withStart(Long.valueOf(response.getOffset()).intValue())
-      .withTotal(response.getCount().intValue())
+      .withTotal(Optional.ofNullable(response.getCount()).orElse(0L).intValue())
       .withObjectInfo(response.getResults().stream()
                         .map(dataPackage -> { SystemMetadata systemMetadata = systemMetadata(dataPackage.getDoi());
                                               return ObjectInfo.builder()
@@ -477,11 +479,6 @@ public class DataRepoBackend implements MNBackend {
         throw new InvalidSystemMetadata("Error registering data package metadata");
       }
     });
-  }
-
-  @Override
-  public boolean isAuthorized(Session session, Identifier identifier, Permission action) {
-    return getAndConsume(identifier, dataPackage -> isAuthorized(session,dataPackage, action));
   }
 
   private static boolean isAuthorized(Session session, DataPackage dataPackage, Permission action) {

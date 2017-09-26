@@ -15,12 +15,12 @@ import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
-import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.gbif.d1.mn.util.D1Preconditions.checkNotNull;
+import static org.gbif.d1.mn.util.D1Preconditions.checkIsAuthorized;
 import static org.gbif.d1.mn.logging.EventLogging.logError;
 
 /**
@@ -66,7 +66,7 @@ public final class ErrorResource {
   public boolean synchronizationFailed(@Authenticate(optional = false) Session session, ExceptionDetail detail)
     throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure {
     checkNotNull(detail, "The exception detail is required");
-    auth.checkIsAuthorized(session, Permission.CHANGE_PERMISSION);
+    checkIsAuthorized(auth.isCNNode(session.getSubject().getValue()), "Only trusted nodes can trigger this operation");
     logError(LOG, detail, session, "Error synchronizing resources");
     return true; // pointless, but the specification mandates it
   }

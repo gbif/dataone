@@ -3,7 +3,8 @@ package org.gbif.d1.mn.resource;
 import org.gbif.d1.mn.backend.MNBackend;
 
 import com.google.common.eventbus.Subscribe;
-import org.dataone.ns.service.apis.v1.CoordinatingNode;
+import io.dropwizard.jersey.params.DateTimeParam;
+import org.dataone.ns.service.apis.v1.cn.CoordinatingNode;
 import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
@@ -15,10 +16,13 @@ public class DirtyMetadataListener {
   public static class SystemMetadataChangeEvent {
     private final Identifier identifier;
     private final Session session;
+    private final DateTimeParam dateSystemMetadataLastModified;
 
-    public SystemMetadataChangeEvent(Identifier identifier, Session session) {
+    public SystemMetadataChangeEvent(Identifier identifier, Session session,
+                                     DateTimeParam dateSystemMetadataLastModified) {
       this.session = session;
       this.identifier = identifier;
+      this.dateSystemMetadataLastModified = dateSystemMetadataLastModified;
     }
 
     public Identifier getIdentifier() {
@@ -27,6 +31,10 @@ public class DirtyMetadataListener {
 
     public Session getSession() {
       return session;
+    }
+
+    public DateTimeParam getDateSystemMetadataLastModified() {
+      return dateSystemMetadataLastModified;
     }
   }
 

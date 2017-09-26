@@ -8,6 +8,8 @@ import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
+import org.dataone.ns.service.types.v1.Subject;
+import org.dataone.ns.service.types.v1.SystemMetadata;
 
 /**
  * Verifies that the given request is authorized to perform the given permission on the identified object. If the
@@ -40,11 +42,43 @@ public interface AuthorizationManager {
    */
   String DEFAULT_OID_SUBJECT_INFO = "1.3.6.1.4.1.34998.2.1";
 
+  /**
+   * Have the credentials of this request a specific permission on the object represented by this identifier?
+   */
   Session checkIsAuthorized(HttpServletRequest request, String identifier, Permission permission);
 
+  /**
+   * Have the credentials of this request a specific permission?
+   */
   Session checkIsAuthorized(HttpServletRequest request, Permission permission);
 
+  /**
+   * Has this session a specific permission?
+   */
   Session checkIsAuthorized(Session session, Permission permission);
 
+  /**
+   * Has the session a particular permission on a object represented by this identifier?
+   */
   Session checkIsAuthorized(Session session, String identifier, Permission permission);
+
+  /**
+   * Has the session a particular permission on a object represented by this metadata?
+   */
+  boolean checkIsAuthorized(Session session, SystemMetadata sysMetadata, Permission permission);
+
+  /**
+   * Is the subject coming from an Authority Node or a Coordinating Node where the metadata was issued.
+   */
+  boolean isAuthorityNodeOrCN(String subject, SystemMetadata sysMetadata);
+
+  /**
+   * Is this subject a Coordinating Node subject?
+   */
+  boolean isCNNode(String subject);
+
+  /**
+   * Can the subject execute a DataONE Method?
+   */
+  boolean isAuthorized(String method, Subject subject);
 }

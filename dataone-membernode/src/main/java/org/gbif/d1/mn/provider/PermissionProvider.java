@@ -10,7 +10,6 @@ import javax.ws.rs.ext.ParamConverter;
 import javax.ws.rs.ext.ParamConverterProvider;
 import javax.ws.rs.ext.Provider;
 
-import org.dataone.ns.service.types.v1.Event;
 import org.dataone.ns.service.types.v1.Permission;
 
 /**
@@ -25,7 +24,7 @@ public class PermissionProvider implements ParamConverterProvider {
 
   @Override
   public <T> ParamConverter<T> getConverter(Class<T> rawType, Type type, Annotation[] annotations) {
-    if (rawType != Event.class) {
+    if (rawType != Permission.class) {
       return null;
     }
     return (ParamConverter<T>) PARAM_CONVERT_INSTANCE;

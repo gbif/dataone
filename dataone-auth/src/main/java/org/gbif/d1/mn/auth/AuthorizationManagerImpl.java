@@ -1,14 +1,17 @@
 package org.gbif.d1.mn.auth;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import org.dataone.ns.service.apis.v1.CoordinatingNode;
+import org.dataone.ns.service.apis.v1.cn.CoordinatingNode;
 import org.dataone.ns.service.apis.v1.SystemMetadataProvider;
 import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotFound;
@@ -20,6 +23,8 @@ import org.dataone.ns.service.types.v1.Node;
 import org.dataone.ns.service.types.v1.NodeReference;
 import org.dataone.ns.service.types.v1.NodeType;
 import org.dataone.ns.service.types.v1.Permission;
+import org.dataone.ns.service.types.v1.Service;
+import org.dataone.ns.service.types.v1.ServiceMethodRestriction;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.Subject;
 import org.dataone.ns.service.types.v1.SystemMetadata;
@@ -47,6 +52,8 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
   private final CoordinatingNode cn;
   private final Set<String> selfSubjects; // identifying ourselves, a member node
   private final CertificateUtils certificateUtils;
+  //Keeps a map from MethodName to trusted subjects for fast lookup
+  private final Map<String, List<String>> restrictions;
 
   @VisibleForTesting
   AuthorizationManagerImpl(SystemMetadataProvider systemMetadataProvider, CoordinatingNode cn, Node self) {
@@ -75,6 +82,14 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
     this.cn = cn;
     certificateUtils = CertificateUtils.newInstance(subjectInfoExtensionOIDs);
     selfSubjects = Subjects.fromNode(self);
+
+    restrictions = self.getServices().getService()
+                    .stream().map(Service::getRestriction)
+                    .flatMap(List::stream)
+                    .collect(Collectors.toMap(ServiceMethodRestriction::getMethodName,
+                                              serviceMethodRestriction -> serviceMethodRestriction.getSubject().stream()
+                                                                            .map(Subject::getValue)
+                                                                            .collect(Collectors.toList())));
     LOG.debug("MN is configured with subject identifications: {}", selfSubjects);
   }
 
@@ -108,21 +123,20 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
   }
 
   /**
-   * Retir
+   * Validates that the session has the requested permission in the MN.
    */
   @Override
   public Session checkIsAuthorized(Session session, Permission permission) {
     Preconditions.checkNotNull(session, "A session must be provided");
     Preconditions.checkNotNull(permission, "A permission must be provided");
-
+    if (selfSubjects.contains(Subjects.primary(session))) {
+      return session;
+    }
     // call the coordinating node and get a list of all nodes including all their alias subjects
     // if the original request comes from a CN then it is granted
     try {
       for (Node node : cn.listNodes().getNode()) {
-        LOG.info("Contacting Node {} to validate access rights", node.getBaseURL());
-        if (NodeType.CN == node.getType()
-            && contains(node.getSubject(), session.getSubject().toString())) {
-          LOG.info("Request received from a known alias[{}] of a CN[{}]", session.getSubject(), node.getSubject());
+        if (NodeType.CN == node.getType() && contains(node.getSubject(), session.getSubject().toString())) {
           return session;
         }
       }
@@ -158,9 +172,9 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
    * @throws ServiceFailure If it is not possible to connect to the coordinating node
    */
   @VisibleForTesting
-  boolean checkIsAuthorized(Session session, SystemMetadata sysMetadata, Permission permission) {
+  public boolean checkIsAuthorized(Session session, SystemMetadata sysMetadata, Permission permission) {
     String primary = Subjects.primary(session);
-    LOG.info("Subject {}", primary);
+
     // Is this call coming with our own credentials?
     // Perhaps we've got local applications using the same certificate for example.
     if (selfSubjects.contains(primary)) {
@@ -178,7 +192,7 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
 
     // the rights holder is granted permission
     if (isRightsHolder(sysMetadata, subjects)) {
-      LOG.info("The rights holder named in the system metadata[{}] is found in the session[{}]", sysMetadata, session);
+      LOG.debug("The rights holder named in the system metadata[{}] is found in the session[{}]", sysMetadata, session);
       return true;
     }
 
@@ -198,8 +212,8 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
    *
    * @throws ServiceFailure If it is not possible to connect to the coordinating node
    */
-  @VisibleForTesting
-  boolean isAuthorityNodeOrCN(String subject, SystemMetadata sysMetadata) {
+  @Override
+  public boolean isAuthorityNodeOrCN(String subject, SystemMetadata sysMetadata) {
     NodeReference authNode = sysMetadata.getAuthoritativeMemberNode();
     Preconditions.checkNotNull(authNode, "The authoritative member node cannot be null on an object");
     String authoritativeMN = authNode.getValue();
@@ -222,6 +236,25 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
           && contains(node.getSubject(), subject)) {
           LOG.debug("Request received from a known alias[{}] of the listed authoritative MN[{}]", subject,
                     node.getSubject());
+          return true;
+        }
+      }
+    } catch (ServiceFailure e) {
+      throw new ServiceFailure("Unable to call the CN for the list of nodes", e);
+    }
+    return false;
+  }
+
+  @Override
+  public boolean isCNNode(String subject) {
+
+    // call the coordinating node and get a list of all nodes including all their alias subjects
+    // if the original request comes from a CN or the named authoritative MN then it is granted
+    try {
+      for (Node node : cn.listNodes().getNode()) {
+        if (NodeType.CN == node.getType()
+            && contains(node.getSubject(), subject)) {
+          LOG.debug("Request received from a known alias[{}] of a CN[{}]", subject, node.getSubject());
           return true;
         }
       }
@@ -262,5 +295,15 @@ final class AuthorizationManagerImpl implements AuthorizationManager {
       }
     }
     return false;
+  }
+
+  /**
+   * Checks that a subject is authorized to invoke a DataOne method.
+   */
+  @Override
+  public boolean isAuthorized(String method, Subject subject) {
+    return Optional.ofNullable(restrictions.get(method))
+            .map(methodRestrictions -> methodRestrictions.contains(subject.getValue()))
+            .orElse(Boolean.TRUE);
   }
 }

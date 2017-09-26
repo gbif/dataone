@@ -86,8 +86,8 @@ public final class ArchiveResource {
   @DataONE(Method.ARCHIVE)
   @Timed
   public Identifier archive(@Authenticate(optional = false) Session session, @PathParam("id") String encodedId) {
-    LOG.info("Session subject {}", session.getSubject().getValue());
     checkNotNull(encodedId, "encodedId is required");
+    auth.checkIsAuthorized(session,encodedId,Permission.WRITE);
     Identifier id = Identifier.builder().withValue(URLDecoder.decode(encodedId)).build();
     log(LOG, session, id, Event.DELETE, "Archiving");
     backend.archive(session, id);

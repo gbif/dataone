@@ -11,7 +11,6 @@ import org.dataone.ns.service.types.v1.DescribeResponse;
 import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.NodeReference;
 import org.dataone.ns.service.types.v1.ObjectList;
-import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
 
@@ -74,12 +73,6 @@ public interface MNBackend extends SystemMetadataProvider {
    * @return the stream or null if not found
    */
   void archive(Session session, Identifier identifier);
-
-  /**
-   * Test if the client identified by the session is allowed to perform an operation at the stated permission level on
-   * the specific object.
-   */
-  boolean isAuthorized(Session session, Identifier identifier, Permission action);
 
   /**
    * A health test for the back-end. The back-end should perform some minimum test to ensure that it is operational.

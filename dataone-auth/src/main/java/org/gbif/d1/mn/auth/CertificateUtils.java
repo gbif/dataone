@@ -121,6 +121,7 @@ public final class CertificateUtils {
     if (certs != null && certs.length == 1) {
       // session subject is the primary principle of the certificate
       X509Certificate x509Cert = (X509Certificate) certs[0];
+      LOG.info("Certificate {}", x509Cert);
       return newSession(x509Cert);
     }
     if (certs != null && certs.length > 1) {
@@ -193,7 +194,6 @@ public final class CertificateUtils {
       throw new NotAuthorized("Self-signed certificates are not allowed");
     }
     String dn = principal.getName(X500Principal.RFC2253); // LDAPv3 format
-    LOG.info("DNCertificate {}", dn);
     Subject subject = Subject.builder().withValue(dn).build();
     session.withSubject(subject);
 

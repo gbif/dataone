@@ -235,4 +235,6 @@ class DetailCodes {
   static String codeFor(DataONE.Method method, Class<? extends DataONEException> exception) {
     return DETAIL_CODES.get(new Key(method, exception));
   }
+
+
 }

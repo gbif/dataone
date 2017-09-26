@@ -6,6 +6,7 @@ import org.gbif.d1.mn.exception.DataONE;
 import org.gbif.d1.mn.provider.Authenticate;
 
 import java.io.InputStream;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
@@ -14,18 +15,19 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 
 import com.codahale.metrics.annotation.Timed;
+import org.dataone.ns.service.apis.v1.cn.CoordinatingNode;
 import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.Event;
 import org.dataone.ns.service.types.v1.Identifier;
-import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.gbif.d1.mn.logging.EventLogging.log;
+import static org.gbif.d1.mn.util.D1Preconditions.checkIsAuthorized;
 
 /**
  * Operations relating to retrieval of a replica object.
@@ -47,25 +49,27 @@ public final class ReplicaResource {
 
   private final MNBackend backend;
   private final AuthorizationManager auth;
+  private final CoordinatingNode cn;
 
   @Context
   private HttpServletRequest request;
 
   private static final Logger LOG = LoggerFactory.getLogger(ReplicaResource.class);
 
-  public ReplicaResource(MNBackend backend, AuthorizationManager auth) {
+  @Inject
+  public ReplicaResource(MNBackend backend, AuthorizationManager auth, CoordinatingNode cn) {
     this.backend = backend;
     this.auth = auth;
+    this.cn = cn;
   }
 
   @GET
   @Path("{pid}")
   @DataONE(DataONE.Method.GET_REPLICA)
   @Timed
-  public InputStream getReplica(Session session, @PathParam("pid") Identifier pid) {
-    Session session1 = auth.checkIsAuthorized(request,pid.getValue(), Permission.READ);
-    LOG.info("Replicating with session {}",session1);
-    auth.checkIsAuthorized(session, pid.getValue(), Permission.READ);
+  public InputStream getReplica(@Authenticate Session session, @PathParam("pid") Identifier pid) {
+    checkIsAuthorized(cn.isNodeAuthorized(session.getSubject(), pid.getValue()),
+                      "Only trusted subject are authorized to get replicas");
     InputStream replica = backend.get(pid);
     log(LOG, session, pid, Event.REPLICATE, "Replicating object");
     return replica;

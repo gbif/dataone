@@ -95,7 +95,7 @@ final class Subjects {
 
         // recurse into equivalent identities (aliases)
         for (Subject alias : person.getEquivalentIdentity()) {
-          if (alias != null && alias.getValue() != null) {
+          if (alias != null && alias.getValue() != null && !subjects.contains(alias.getValue())) {
             // start over, this time using the alias
             recurseAllPeople(people, alias.getValue(), subjects, groupMembership);
           }
@@ -113,7 +113,7 @@ final class Subjects {
    */
   static ImmutableSet<String> allSubjects(Session session) {
     Preconditions.checkNotNull(session, "Session required to extract subjects");
-
+    LOG.info("Session {}", session.getSubjectInfo());
     // public symbolic subject is always added
     Set<String> subjects = Sets.newHashSet(PUBLIC_SUBJECT);
 
@@ -171,12 +171,7 @@ final class Subjects {
           // index each member in the group
           for (Subject member : group.getHasMember()) {
             if (member != null && member.getValue() != null) {
-
-              if (!index.containsKey(member.getValue())) {
-                index.put(member.getValue(), Sets.newHashSet(groupSubject.getValue()));
-              } else {
-                index.get(member.getValue()).add(groupSubject.getValue());
-              }
+              index.computeIfAbsent(member.getValue(), k -> Sets.newHashSet()).add(groupSubject.getValue());
             }
           }
         }

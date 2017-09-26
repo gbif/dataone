@@ -4,6 +4,7 @@ import org.gbif.d1.mn.auth.CertificateUtils;
 import org.gbif.d1.mn.exception.DataONE;
 import org.gbif.d1.mn.exception.DataONE.Method;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
@@ -43,6 +44,7 @@ public final class CapabilitiesResource {
   private final Node self;
   private final CertificateUtils certificateUtils;
 
+  @Inject
   public CapabilitiesResource(Node self, CertificateUtils certificateUtils) {
     this.self = self;
     this.certificateUtils = certificateUtils;

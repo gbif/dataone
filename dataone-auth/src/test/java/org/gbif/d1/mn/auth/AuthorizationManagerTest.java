@@ -1,7 +1,7 @@
 package org.gbif.d1.mn.auth;
 
 import com.google.common.collect.ImmutableSet;
-import org.dataone.ns.service.apis.v1.CoordinatingNode;
+import org.dataone.ns.service.apis.v1.cn.CoordinatingNode;
 import org.dataone.ns.service.apis.v1.SystemMetadataProvider;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.Builders;

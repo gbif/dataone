@@ -5,6 +5,7 @@ import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.exception.DataONE;
 import org.gbif.d1.mn.provider.Authenticate;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
@@ -52,6 +53,7 @@ public final class ChecksumResource {
   private final AuthorizationManager auth;
   private final MNBackend backend;
 
+  @Inject
   public ChecksumResource(AuthorizationManager auth, MNBackend backend) {
     this.auth = auth;
     this.backend = backend;

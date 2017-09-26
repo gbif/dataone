@@ -1,10 +1,11 @@
 package org.gbif.d1.mn.resource;
 
-import org.gbif.d1.mn.auth.CertificateUtils;
+import org.gbif.d1.mn.auth.AuthorizationManager;
 import org.gbif.d1.mn.exception.DataONE;
 import org.gbif.d1.mn.exception.DataONE.Method;
 import org.gbif.d1.mn.provider.Authenticate;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -16,6 +17,8 @@ import javax.ws.rs.core.MediaType;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import io.dropwizard.client.JerseyClientBuilder;
+import org.dataone.ns.service.apis.v1.cn.CoordinatingNode;
 import org.dataone.ns.service.exceptions.InsufficientResources;
 import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.InvalidToken;
@@ -25,6 +28,7 @@ import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.exceptions.UnsupportedType;
 import org.dataone.ns.service.types.v1.Event;
 import org.dataone.ns.service.types.v1.Identifier;
+import org.dataone.ns.service.types.v1.Node;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.Subject;
 import org.dataone.ns.service.types.v1.SystemMetadata;
@@ -34,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import static org.gbif.d1.mn.util.D1Preconditions.checkNotNull;
+import static org.gbif.d1.mn.util.D1Preconditions.checkIsAuthorized;
 
 /**
  * Operations relating to the request to replicate an object which is handled asynchronously.
@@ -55,7 +60,9 @@ public final class ReplicateResource {
 
   private static final Logger LOG = LoggerFactory.getLogger(ReplicateResource.class);
   private final EventBus queue;
-  private final CertificateUtils certificateUtils;
+  private final JerseyClientBuilder clientBuilder;
+  private final CoordinatingNode cnClient;
+  private final AuthorizationManager authorizationManager;
   @Context
   private HttpServletRequest request;
 
@@ -69,12 +76,23 @@ public final class ReplicateResource {
     LOG.info(message);
   }
 
-  public ReplicateResource(EventBus queue, CertificateUtils certificateUtils) {
+  @Inject
+  public ReplicateResource(EventBus queue, JerseyClientBuilder clientBuilder, CoordinatingNode cnClient,
+                           AuthorizationManager authorizationManager) {
     this.queue = queue;
-    this.certificateUtils = certificateUtils;
+    this.clientBuilder = clientBuilder;
+    this.cnClient = cnClient;
+    this.authorizationManager = authorizationManager;
     queue.register(this);
   }
 
+
+  private Node getSourceNode(String sourceNode) {
+    return cnClient.listNodes().getNode().stream()
+            .filter(node -> sourceNode.equals(node.getName()))
+            .findFirst()
+            .orElseThrow(() -> new InvalidRequest("sourceNode not found"));
+  }
   /**
    * Called by a Coordinating Node to request that the Member Node create a copy of the specified object by retrieving
    * it from another Member Node and storing it locally so that it can be made accessible to the DataONE system.
@@ -97,14 +115,16 @@ public final class ReplicateResource {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @DataONE(Method.REPLICATE)
   @Timed
-  public boolean replicate(@Authenticate Session session, @FormDataParam("sysmeta") SystemMetadata sysmeta,
+  public boolean replicate(@Authenticate(optional = false) Session session,
+                           @FormDataParam("sysmeta") SystemMetadata sysmeta,
                            @FormDataParam("sourceNode") String sourceNode) {
     checkNotNull(sysmeta, "Form parameter[sysmeta] is required");
     checkNotNull(sourceNode, "Form parameter[sourceNode] is required");
-
-    // TODO: authorization
+    checkIsAuthorized(authorizationManager.isAuthorityNodeOrCN(session.getSubject().getValue(), sysmeta),
+                      "Replication has to be triggered by a trusted subject");
+    Node sourceMnNode = getSourceNode(sourceNode);
     queue.post(new ReplicateEvent(sysmeta.getIdentifier().getValue(),
-                                  sourceNode,
+                                  sourceMnNode,
                                   request.getRemoteAddr(),
                                   request.getHeader("User-Agent"),
                                   session.getSubject()));
@@ -123,12 +143,12 @@ public final class ReplicateResource {
   private static class ReplicateEvent {
 
     private final String identifier;
-    private final String sourceNode;
+    private final Node sourceNode;
     private final String ip;
     private final String userAgent;
     private final Subject subject;
 
-    ReplicateEvent(String identifier, String sourceNode, String ip, String userAgent, Subject subject) {
+    ReplicateEvent(String identifier, Node sourceNode, String ip, String userAgent, Subject subject) {
       this.identifier = identifier;
       this.sourceNode = sourceNode;
       this.ip = ip;
@@ -144,7 +164,7 @@ public final class ReplicateResource {
       return ip;
     }
 
-    public String getSourceNode() {
+    public Node getSourceNode() {
       return sourceNode;
     }
 

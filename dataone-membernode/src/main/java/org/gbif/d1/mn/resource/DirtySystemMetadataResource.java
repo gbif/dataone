@@ -1,10 +1,10 @@
 package org.gbif.d1.mn.resource;
 
 import org.gbif.d1.mn.auth.AuthorizationManager;
+import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.provider.Authenticate;
 import org.gbif.d1.mn.exception.DataONE;
 
-import java.util.Date;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
@@ -16,6 +16,7 @@ import javax.ws.rs.core.MediaType;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.eventbus.EventBus;
+import io.dropwizard.jersey.params.DateTimeParam;
 import org.dataone.ns.service.exceptions.InvalidRequest;
 import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
@@ -23,11 +24,11 @@ import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.Identifier;
-import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import static org.gbif.d1.mn.util.D1Preconditions.checkNotNull;
+import static org.gbif.d1.mn.util.D1Preconditions.checkIsAuthorized;
 
 /**
  * Operations to handling notification that system metadata has changed.
@@ -53,6 +54,7 @@ public final class DirtySystemMetadataResource {
   private HttpServletRequest request;
 
   private final AuthorizationManager auth;
+
 
   @Inject
   public DirtySystemMetadataResource(EventBus eventBus, AuthorizationManager auth) {
@@ -83,12 +85,13 @@ public final class DirtySystemMetadataResource {
   @Timed
   public boolean systemMetadataChanged(@Authenticate Session session, @FormDataParam("pid") Identifier pid,
                                        @FormDataParam("serialVersion") long serialVersion,
-                                       @FormDataParam("dateSystemMetadataLastModified") Date dateSystemMetadataLastModified) {
+                                       @FormDataParam("dateSysMetaLastModified")
+                                         DateTimeParam dateSysMetaLastModified) {
     checkNotNull(pid, "Form parameter[pid] is required");
     checkNotNull(serialVersion, "Form parameter[serialVersion] is required");
-    checkNotNull(dateSystemMetadataLastModified, "Form parameter[dateSystemMetadataLastModified] is required");
-    auth.checkIsAuthorized(request, pid.getValue(), Permission.CHANGE_PERMISSION);
-    eventBus.post(new DirtyMetadataListener.SystemMetadataChangeEvent(pid, session));
+    checkNotNull(dateSysMetaLastModified, "Form parameter[dateSysMetaLastModified] is required");
+    checkIsAuthorized(auth.isCNNode(session.getSubject().getValue()), "This operation must be called from a trusted subject");
+    eventBus.post(new DirtyMetadataListener.SystemMetadataChangeEvent(pid, session, dateSysMetaLastModified));
     return true;
   }
 }

@@ -3,7 +3,9 @@ package org.gbif.d1.mn.resource;
 import org.gbif.d1.mn.auth.AuthorizationManager;
 import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.exception.DataONE;
+import org.gbif.d1.mn.provider.Authenticate;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -48,6 +50,7 @@ public final class GenerateResource {
   private final AuthorizationManager auth;
   private final MNBackend backend;
 
+  @Inject
   public GenerateResource(AuthorizationManager auth, MNBackend backend) {
     this.auth = auth;
     this.backend = backend;
@@ -62,11 +65,11 @@ public final class GenerateResource {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @DataONE(DataONE.Method.GENERATE_IDENTIFIER)
   @Timed
-  public Identifier generateIdentifier(@FormDataParam("scheme") String scheme,
+  public Identifier generateIdentifier(@Authenticate Session session,
+                                       @FormDataParam("scheme") String scheme,
                                        @FormDataParam("fragment") String fragment) {
     checkNotNull(scheme, "Form parameter[scheme] is required");
     checkNotNull(fragment, "Form parameter[fragment] is required");
-    Session session = auth.checkIsAuthorized(request, Permission.WRITE);
     return backend.generateIdentifier(session, scheme, fragment);
   }
 }

@@ -1,6 +1,5 @@
 package org.gbif.d1.mn.exception;
 
-import java.util.Collections;
 import java.util.regex.Pattern;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;

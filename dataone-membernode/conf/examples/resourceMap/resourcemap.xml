@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF
+  xmlns:cito="http://purl.org/spar/cito/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:dcterms="http://purl.org/dc/terms/"
+  xmlns:foaf="http://xmlns.com/foaf/0.1/"
+  xmlns:ore="http://www.openarchives.org/ore/terms/"
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  xmlns:rdfs1="http://www.w3.org/2001/01/rdf-schema#"
+>
+  <rdf:Description rdf:about="http://foresite-toolkit.googlecode.com/#pythonAgent">
+    <foaf:mbox>foresite@googlegroups.com</foaf:mbox>
+    <foaf:name>Foresite Toolkit (Python)</foaf:name>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/scimeta_id">
+    <cito:documents rdf:resource="https://cn.dataone.org/cn/v1/resolve/scidata_id"/>
+    <dcterms:identifier>scimeta_id</dcterms:identifier>
+    <dcterms:description>A reference to a science metadata document using a DataONE identifier.</dcterms:description>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.openarchives.org/ore/terms/ResourceMap">
+    <rdfs1:isDefinedBy rdf:resource="http://www.openarchives.org/ore/terms/"/>
+    <rdfs1:label>ResourceMap</rdfs1:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/resource_map_id">
+    <dcterms:identifier>resource_map_id</dcterms:identifier>
+    <dcterms:modified>2011-08-12T12:55:16Z</dcterms:modified>
+    <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/ResourceMap"/>
+    <dc:format>application/rdf+xml</dc:format>
+    <ore:describes rdf:resource="https://cn.dataone.org/cn/v1/resolve/aggregation_id"/>
+    <dcterms:created>2011-08-12T12:55:16Z</dcterms:created>
+    <dcterms:creator rdf:resource="http://foresite-toolkit.googlecode.com/#pythonAgent"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.openarchives.org/ore/terms/Aggregation">
+    <rdfs1:isDefinedBy rdf:resource="http://www.openarchives.org/ore/terms/"/>
+    <rdfs1:label>Aggregation</rdfs1:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/aggregation_id">
+    <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/Aggregation"/>
+    <dcterms:title>Simple aggregation of science metadata and data</dcterms:title>
+    <ore:isDescribedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/resource_map_id"/>
+    <ore:aggregates rdf:resource="https://cn.dataone.org/cn/v1/resolve/scidata_id"/>
+    <ore:aggregates rdf:resource="https://cn.dataone.org/cn/v1/resolve/scimeta_id"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/scidata_id">
+    <cito:isDocumentedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/scimeta_id"/>
+    <dcterms:identifier>scidata_id</dcterms:identifier>
+    <dcterms:description>A reference to a science data object using a DataONE identifier</dcterms:description>
+  </rdf:Description>
+</rdf:RDF>

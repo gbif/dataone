@@ -2,7 +2,7 @@
 <ns1:systemMetadata xmlns:ns1="http://ns.dataone.org/service/types/v1">
   <identifier>12811134</identifier>
   <formatId>eml://ecoinformatics.org/eml-2.0.1</formatId>
-  <size>22937</size>
+  <size>40</size>
   <checksum algorithm="MD5">2ec0084d1e11e0d5c9a46ba6a230aa85</checksum>
   <submitter>CN=Dave Vieglais T799,O=Google,C=US,DC=cilogon,DC=org</submitter>
   <rightsHolder>CN=Tim Robertson,O=Internet Widgits Pty Ltd,ST=Some-State,C=AU</rightsHolder>

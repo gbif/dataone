@@ -8,6 +8,7 @@ import org.gbif.d1.mn.provider.Authenticate;
 import java.io.InputStream;
 import java.util.Optional;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import static org.gbif.d1.mn.util.D1Preconditions.checkNotNull;
 import static org.gbif.d1.mn.util.D1Preconditions.checkState;
+import static org.gbif.d1.mn.util.D1Preconditions.checkIsAuthorized;
 import static org.gbif.d1.mn.util.D1Throwables.propagateOrServiceFailure;
 import static org.gbif.d1.mn.logging.EventLogging.log;
 
@@ -79,6 +81,7 @@ public final class ObjectResource {
   private final MNBackend backend;
 
 
+  @Inject
   public ObjectResource(AuthorizationManager auth, MNBackend backend) {
     this.auth = auth;
     this.backend = backend;
@@ -115,8 +118,8 @@ public final class ObjectResource {
     checkState(Objects.equal(pid, sysmeta.getIdentifier().getValue()),
                "System metadata must have the correct identifier");
     checkSystemCapacity();
-    // TODO: How do we decide who can create?
-    // auth.checkIsAuthorized(request, Permission.WRITE);  // will fail, as only CN can create in current implementation
+   checkIsAuthorized(auth.isAuthorized(DataONE.Method.CREATE.name(), session.getSubject()),
+                     "This session is not authorized to access this resource");
     try (InputStream in = object) {
       Identifier identifier = backend.create(session, Identifier.builder().withValue(pid).build(), in, sysmeta);
       log(LOG, session, identifier, Event.CREATE, "Resource created");
@@ -171,6 +174,7 @@ public final class ObjectResource {
   @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.TEXT_XML})
   @Timed
   public DescribeResponse describe(@Authenticate Session session, @PathParam("pid") Identifier pid) {
+    auth.checkIsAuthorized(session, pid.getValue(), Permission.READ);
     return backend.describe(pid);
   }
 
@@ -218,12 +222,14 @@ public final class ObjectResource {
   @Timed
   @Produces(MediaType.APPLICATION_XML)
   public ObjectList listObjects(@Authenticate Session session,
-                                @QueryParam("fromDate") DateTimeParam fromDate,
+                                @QueryParam("fromDate") @Nullable DateTimeParam fromDate,
                                 @QueryParam("toDate") @Nullable DateTimeParam toDate,
                                 @QueryParam("formatId") @Nullable String formatId,
                                 @QueryParam("replicaStatus") @Nullable Boolean replicaStatus,
                                 @QueryParam("start") @Nullable Integer start,
                                 @QueryParam("count") @Nullable Integer count) {
+    checkIsAuthorized(auth.isAuthorized(DataONE.Method.LIST_OBJECTS.name(), session.getSubject()),
+                      "This session is not authorized to access this resource");
     return backend.listObjects(null,
                                Optional.ofNullable(fromDate).map(date -> date.get().toLocalDateTime().toDate()).orElse(null),
                                Optional.ofNullable(toDate).map(date -> date.get().toLocalDateTime().toDate()).orElse(null),
@@ -266,7 +272,8 @@ public final class ObjectResource {
     checkNotNull(newPid, "Form parameter[newPid] is required");
     checkNotNull(sysmeta, "Form parameter[sysmeta] is required");
     checkSystemCapacity();
-    LOG.info("Session subject {}", session.getSubject().getValue());
+    LOG.info("SessionUpdate {}", session.getSubject().getValue());
+    auth.checkIsAuthorized(session, pid.getValue(), Permission.WRITE);
     Identifier identifier = backend.update(session, pid, object, newPid, sysmeta);
     log(LOG, session, pid, Event.UPDATE, "Resource updated");
     return  identifier;

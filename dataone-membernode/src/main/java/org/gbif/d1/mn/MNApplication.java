@@ -1,6 +1,6 @@
 package org.gbif.d1.mn;
 
-import org.gbif.d1.cn.impl.CNClient;
+import org.gbif.d1.cn.client.CNClient;
 import org.gbif.d1.mn.auth.AuthorizationManager;
 import org.gbif.d1.mn.auth.AuthorizationManagers;
 import org.gbif.d1.mn.auth.CertificateUtils;
@@ -29,10 +29,10 @@ import org.gbif.d1.mn.resource.MetaResource;
 import org.gbif.d1.mn.resource.MonitorResource;
 import org.gbif.d1.mn.resource.ObjectResource;
 import org.gbif.d1.mn.resource.ReplicaResource;
+import org.gbif.d1.mn.resource.ReplicateResource;
 import org.gbif.datarepo.inject.DataRepoFsModule;
 import org.gbif.datarepo.store.fs.conf.DataRepoConfiguration;
 import org.gbif.discovery.lifecycle.DiscoveryLifeCycle;
-
 
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 import com.google.common.eventbus.EventBus;
@@ -42,13 +42,8 @@ import io.dropwizard.forms.MultiPartBundle;
 import io.dropwizard.server.AbstractServerFactory;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import org.dataone.ns.service.apis.v1.CoordinatingNode;
+import org.dataone.ns.service.apis.v1.cn.CoordinatingNode;
 import org.dataone.ns.service.types.v1.Node;
-import org.dataone.ns.service.types.v1.NodeReference;
-import org.dataone.ns.service.types.v1.Service;
-import org.dataone.ns.service.types.v1.Services;
-import org.dataone.ns.service.types.v1.Subject;
-import org.glassfish.jersey.filter.LoggingFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,17 +80,17 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     }
     EventBus metadataChangeBus = new EventBus();
 
-    Node self = self(configuration);
-    CertificateUtils certificateUtils = CertificateUtils.newInstance();
+    Node self = configuration.getNode();
+    CertificateUtils certificateUtils = CertificateUtils.newInstance(configuration.getTrustedOIDs());
+
+    //JAXB binding module
     environment.getObjectMapper().registerModules(new JaxbAnnotationModule());
+
     // Replace all exception handling with custom handling required by the DataONE specification
     ((AbstractServerFactory)configuration.getServerFactory()).setRegisterDefaultExceptionMappers(false);
     environment.jersey().register(new DefaultExceptionMapper(self.getIdentifier().getValue()));
 
-    environment.jersey().register(new LoggingFilter(java.util.logging.Logger.getLogger("InboundRequestResponse"), true));
-
     // providers
-    // TODO: read config here to support overwriting OIDs in certificates
     environment.jersey().register(new SessionProvider(certificateUtils));
     environment.jersey().register(new TierSupportFilter(configuration.getTier()));
     environment.jersey().register(new IdentifierProvider());
@@ -103,10 +98,13 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     environment.jersey().register(new EventProvider());
     environment.jersey().register(new PermissionProvider());
 
-    // RESTful resources
+    //Coordinating Node client
     CoordinatingNode cn = coordinatingNode(configuration, environment);
+
     MNBackend backend = getBackend(configuration, environment);
     AuthorizationManager auth = AuthorizationManagers.newAuthorizationManager(backend, cn, self);
+
+    // RESTful resources
     environment.jersey().register(new CapabilitiesResource(self, certificateUtils));
     environment.jersey().register(new ArchiveResource(auth, backend));
     environment.jersey().register(new ObjectResource(auth, backend));
@@ -117,40 +115,20 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     environment.jersey().register(new LogResource(new ElasticsearchLogSearchService(configuration.getElasticSearch().buildEsClient(),
                                                   configuration.getElasticSearch().getIdx()), auth));
     environment.jersey().register(new ErrorResource(auth));
-    environment.jersey().register(new ReplicaResource(backend, auth));
+    environment.jersey().register(new ReplicaResource(backend, auth, cn));
     environment.jersey().register(new IsAuthorizedResource(auth, backend));
 
     metadataChangeBus.register(new DirtyMetadataListener(cn, backend));
     environment.jersey().register(new DirtySystemMetadataResource(metadataChangeBus, auth));
+    environment.jersey().register(new ReplicateResource(metadataChangeBus, new JerseyClientBuilder(environment), cn, auth));
 
     // health checks
     environment.healthChecks().register("backend", new BackendHealthCheck(backend));
   }
 
   private static CoordinatingNode coordinatingNode(MNConfiguration configuration, Environment environment) {
-    return new CNClient(new JerseyClientBuilder(environment).build("CNClient"), configuration.getCoordinatingNodeUrl());
-  }
-
-  /**
-   * Returns a Node representing this installation, based on the provided configuration.
-   * TODO: extract config
-   */
-  private static Node self(DataRepoBackendConfiguration configuration) {
-    // nonsense for now
-    return Node.builder()
-      .addSubject(Subject.builder().withValue("CN=GBIFS Test Member Node").build())
-      .withIdentifier(NodeReference.builder().withValue("urn:node:mnTestGBIF").build())
-      .withName("GBIFS Member Node")
-      .withDescription("GBIFS DataOne Member Node")
-      .withBaseURL(configuration.getExternalUrl())
-      .withContactSubject(Subject.builder().withValue("CN=Informatics, DC=GBIFS, DC=org").build())
-      .withServices(Services.builder()
-        .addService(Service.builder().withAvailable(true).withName("MNCore").withVersion("v1").build())
-        .addService(Service.builder().withAvailable(true).withName("MNRead").withVersion("v1").build())
-        .addService(Service.builder().withAvailable(true).withName("MNAuthorization").withVersion("v1").build())
-        .addService(Service.builder().withAvailable(true).withName("MNStorage").withVersion("v1").build())
-        .addService(Service.builder().withAvailable(true).withName("MNReplication").withVersion("v1").build())
-        .build()).build();
+    return new CNClient(new JerseyClientBuilder(environment).using(configuration.getJerseyClient())
+                          .build("CNClient"), configuration.getCoordinatingNodeUrl());
   }
 
   /**

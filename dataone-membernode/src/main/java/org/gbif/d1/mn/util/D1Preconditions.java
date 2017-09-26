@@ -3,6 +3,7 @@ package org.gbif.d1.mn.util;
 import javax.annotation.Nullable;
 
 import org.dataone.ns.service.exceptions.InvalidRequest;
+import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.types.v1.Identifier;
@@ -73,6 +74,21 @@ public final class D1Preconditions {
   public static void checkState(boolean expression, @Nullable Object errorMessage) {
     if (!expression) {
       throw new InvalidRequest(String.valueOf(errorMessage));
+    }
+  }
+
+
+  /**
+   * Ensures the truth of an expression.
+   *
+   * @param expression a boolean expression
+   * @param errorMessage the exception message to use if the check fails; will be converted to a
+   *        string using {@link String#valueOf(Object)}
+   * @throws InvalidRequest if {@code expression} is false
+   */
+  public static void checkIsAuthorized(boolean expression, @Nullable Object errorMessage) {
+    if (!expression) {
+      throw new NotAuthorized(String.valueOf(errorMessage));
     }
   }
 }

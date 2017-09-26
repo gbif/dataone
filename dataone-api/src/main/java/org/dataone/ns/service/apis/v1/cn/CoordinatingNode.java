@@ -1,4 +1,6 @@
-package org.dataone.ns.service.apis.v1;
+package org.dataone.ns.service.apis.v1.cn;
+
+import java.util.Set;
 
 import org.dataone.ns.service.exceptions.InvalidToken;
 import org.dataone.ns.service.exceptions.NotAuthorized;
@@ -7,6 +9,7 @@ import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.Identifier;
 import org.dataone.ns.service.types.v1.NodeList;
+import org.dataone.ns.service.types.v1.Subject;
 import org.dataone.ns.service.types.v1.SystemMetadata;
 
 /**
@@ -25,4 +28,6 @@ public interface CoordinatingNode {
   NodeList listNodes() throws ServiceFailure;
 
   SystemMetadata getSystemMetadata(Identifier identifier) throws InvalidToken, NotImplemented, NotAuthorized, NotFound, ServiceFailure;
+
+  boolean isNodeAuthorized(Subject targetNodeSubject, String pid);
 }

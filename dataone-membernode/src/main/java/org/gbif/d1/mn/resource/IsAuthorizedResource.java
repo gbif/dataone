@@ -5,6 +5,7 @@ import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.exception.DataONE;
 import org.gbif.d1.mn.provider.Authenticate;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
@@ -48,6 +49,7 @@ public final class IsAuthorizedResource {
 
   private final MNBackend backend;
 
+  @Inject
   public IsAuthorizedResource(AuthorizationManager auth, MNBackend backend) {
     this.auth = auth;
     this.backend = backend;
@@ -71,8 +73,7 @@ public final class IsAuthorizedResource {
   @Timed
   public boolean isAuthorized(@Authenticate Session session, @PathParam("pid") String encodedId,
                               @QueryParam("action") Permission action) {
-    String id = URLDecoder.decode(encodedId);
-    return backend.isAuthorized(session, Identifier.builder().withValue(id).build(), action);
+    return auth.checkIsAuthorized(session, URLDecoder.decode(encodedId), action) != null;
   }
 
 }
