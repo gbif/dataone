@@ -120,7 +120,8 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
 
     metadataChangeBus.register(new DirtyMetadataListener(cn, backend));
     environment.jersey().register(new DirtySystemMetadataResource(metadataChangeBus, auth));
-    environment.jersey().register(new ReplicateResource(metadataChangeBus, new JerseyClientBuilder(environment), cn, auth));
+    environment.jersey().register(new ReplicateResource(metadataChangeBus, new JerseyClientBuilder(environment), cn,
+                                                        auth, backend));
 
     // health checks
     environment.healthChecks().register("backend", new BackendHealthCheck(backend));
