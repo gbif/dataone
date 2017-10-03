@@ -1,7 +1,5 @@
 ### DataONE MemberNode 
 
-> Note: This project is in an immature state
-
 This is a project led by GBIF to help enable adopters to develop Java based DataONE Member Node stacks.
 
 **This project depends on source code that is generated from schemas during build time**

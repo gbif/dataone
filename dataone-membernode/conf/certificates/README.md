@@ -17,10 +17,9 @@ openssl genrsa -des3 -out server.key
 openssl req -new -x509 -key server.key -out server.crt
 [defaults for everything, except FQDN which is "localhost"]
 
-openssl pkcs12 -inkey server.key -in server.crt -export -out server.p12
-["password"]
 
-keytool -import -file server.crt -alias server -keystore truststore.jks
+buildServerStores.sh password server.key server.crt
+["password"]
 
 openssl genrsa -des3 -out client.key
 [password]
@@ -28,8 +27,7 @@ openssl genrsa -des3 -out client.key
 openssl req -new -x509 -key client.key -out client.crt
 [defaults for everything, except FQDN which is "Tim Robertson"]
 
-openssl pkcs12 -inkey client.key -in client.crt -export -out client.p12
-["password"]
+buildClientStores.sh password client.key client.crt
 
-keytool -import -file client.crt -alias client -keystore truststore.jks
+keytool -import -file client.crt -alias client -keystore servertruststore.jks
 ```          (\/)(?!.*\/)(.+)
