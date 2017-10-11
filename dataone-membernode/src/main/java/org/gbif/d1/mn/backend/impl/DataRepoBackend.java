@@ -230,8 +230,9 @@ public class DataRepoBackend implements MNBackend {
       dataPackage.setCreatedBy(session.getSubject().getValue());
       dataPackage.setTitle(pid.getValue());
       dataPackage.addAlternativeIdentifier(alternativeIdentifier);
-      dataPackage.setCreated(sysmeta.getDateSysMetadataModified().toGregorianCalendar().getTime());
-      dataPackage.setModified(sysmeta.getDateSysMetadataModified().toGregorianCalendar().getTime());
+      Date creationDate = sysmeta.getDateSysMetadataModified().toGregorianCalendar().getTime();
+      dataPackage.setCreated(creationDate);
+      dataPackage.setModified(creationDate);
       //formatId is added as Tag to be later used during search
       Optional.ofNullable(sysmeta.getFormatId())
         .ifPresent(formatId -> dataPackage.addTag(toDataOneTag(formatId)));
@@ -318,7 +319,7 @@ public class DataRepoBackend implements MNBackend {
                                                       .orElse(MAX_PAGE_SIZE));
     List<String> tags  = Optional.ofNullable(formatId)
                           .map(value -> Collections.singletonList(toDataOneTag(value))).orElse(null);
-    PagingResponse<DataPackage> response = dataRepository.list(null, pagingRequest, fromDate, toDate, false, tags);
+    PagingResponse<DataPackage> response = dataRepository.list(null, pagingRequest, fromDate, toDate, false, tags, null);
     return ObjectList.builder().withCount(response.getLimit())
       .withStart(Long.valueOf(response.getOffset()).intValue())
       .withTotal(Optional.ofNullable(response.getCount()).orElse(0L).intValue())
@@ -411,10 +412,12 @@ public class DataRepoBackend implements MNBackend {
             assertIsAuthotized(session, dataPackage);
             SystemMetadata obsoletedMetadata = getSystemMetadata(session, pid);
             validateIsObsoleted(obsoletedMetadata);
-            XMLGregorianCalendar now = toXmlGregorianCalendar(new Date());
-            if(dataPackage.getDeleted() != null) {
+            Date dateNow = new Date();
+            XMLGregorianCalendar now = toXmlGregorianCalendar(dateNow);
+            if (dataPackage.getDeleted() != null) {
               throw new NotFound("Deleted objects can't be updated", pid.getValue());
             }
+            dataPackage.setModified(dateNow);
             dataRepository.update(dataPackage,
                                   wrapInInputStream(addAlternateIdentifiersMetadata(dataPackage.getDoi(), newPid)),
                                   Collections.singletonList(toFileContent(obsoletedMetadata.newCopyBuilder()
