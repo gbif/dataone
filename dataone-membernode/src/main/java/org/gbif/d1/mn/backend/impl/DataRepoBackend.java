@@ -122,7 +122,7 @@ public class DataRepoBackend implements MNBackend {
     try {
       StringWriter xmlMetadata = new StringWriter();
       JAXB_CONTEXT.createMarshaller().marshal(sysmeta, xmlMetadata);
-      return new FileInputContent(SYS_METADATA_FILE, wrapInInputStream(xmlMetadata.toString()));
+      return FileInputContent.from(SYS_METADATA_FILE, wrapInInputStream(xmlMetadata.toString()));
     } catch (JAXBException ex) {
       LOG.error("Error reading xml metadata", ex);
       throw new InvalidSystemMetadata("Error reading system metadata");
@@ -133,7 +133,7 @@ public class DataRepoBackend implements MNBackend {
    *  Transforms a object into a FileInputContent.
    */
   private static FileInputContent toFileContent(InputStream object) throws JAXBException {
-    return new FileInputContent(CONTENT_FILE, object);
+    return FileInputContent.from(CONTENT_FILE, object);
   }
 
   /**
