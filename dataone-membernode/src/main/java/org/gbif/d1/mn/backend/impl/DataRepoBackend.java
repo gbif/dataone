@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -197,8 +198,7 @@ public class DataRepoBackend implements MNBackend {
       //formatId is added as Tag to be later used during search
       Optional.ofNullable(sysmeta.getFormatId())
         .ifPresent(formatId -> dataPackage.addTag(toDataOneTag(formatId)));
-
-      dataRepository.create(dataPackage, Lists.newArrayList(toFileContent(object), toFileContent(sysmeta)));
+      dataRepository.create(dataPackage, Lists.newArrayList(toFileContent(object), toFileContent(sysmeta)), false);
       return pid;
     } catch (JAXBException ex) {
       LOG.error("Error processing metadata", ex);
@@ -258,8 +258,9 @@ public class DataRepoBackend implements MNBackend {
                                                Optional.ofNullable(count)
                                                       .map(value -> Integer.min(value, MAX_PAGE_SIZE))
                                                       .orElse(MAX_PAGE_SIZE));
-    List<String> tags  = Optional.ofNullable(formatId)
-                          .map(value -> Collections.singletonList(toDataOneTag(value))).orElse(null);
+    List<String> tags  = new ArrayList<>();
+    tags.add(DATA_ONE_TAG_PREFIX);
+    Optional.ofNullable(formatId).ifPresent(tags::add);
     PagingResponse<DataPackage> response = dataRepository.list(null, pagingRequest, fromDate, toDate, false, tags, null);
     return ObjectList.builder().withCount(response.getLimit())
       .withStart(Long.valueOf(response.getOffset()).intValue())
@@ -411,7 +412,9 @@ public class DataRepoBackend implements MNBackend {
    * Gets a data package and applies the mapper function to it.
    */
   private <T> T getAndConsume(Identifier identifier, Function<DataPackage,T> mapper) {
+    //Only DataPackages tagged as 'DataOne' are shared throw this service
     return dataRepository.getByAlternativeIdentifier(identifier.getValue())
+      .filter(dataPackage -> dataPackage.getTags().stream().anyMatch(tag -> DATA_ONE_TAG_PREFIX.equals(tag.getValue())))
       .map(mapper::apply)
       .orElseThrow(() -> new NotFound("Identifier Not Found", identifier.getValue()));
   }
