@@ -86,7 +86,6 @@
   <properties>
     <!-- GBIF DataRepo -->
     <data-repo-server.version>1.0-SNAPSHOT</data-repo-server.version>
-    <gbif-doi.version>1.5</gbif-doi.version>
     <gbif-api.version>0.55</gbif-api.version>
     <service-discovery.version>0.1</service-discovery.version>
     <data-repo-server.version>1.0-SNAPSHOT</data-repo-server.version>
@@ -196,21 +195,6 @@
         <groupId>org.gbif.dataone</groupId>
         <artifactId>dataone-membernode</artifactId>
         <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.gbif</groupId>
-        <artifactId>gbif-doi</artifactId>
-        <version>${gbif-doi.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>jcl-over-slf4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpcore</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.gbif</groupId>
