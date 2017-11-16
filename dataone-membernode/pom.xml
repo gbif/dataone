@@ -98,11 +98,6 @@
       <artifactId>logback-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-access</artifactId>
-      <version>1.2.3</version>
-    </dependency>
-    <dependency>
       <groupId>janino</groupId>
       <artifactId>janino</artifactId>
       <scope>runtime</scope>
