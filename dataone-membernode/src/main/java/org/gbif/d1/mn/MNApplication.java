@@ -31,7 +31,7 @@ import org.gbif.d1.mn.resource.ObjectResource;
 import org.gbif.d1.mn.resource.ReplicaResource;
 import org.gbif.d1.mn.resource.ReplicateResource;
 import org.gbif.datarepo.inject.DataRepoFsModule;
-import org.gbif.datarepo.store.fs.conf.DataRepoConfiguration;
+import org.gbif.datarepo.impl.conf.DataRepoConfiguration;
 import org.gbif.discovery.lifecycle.DiscoveryLifeCycle;
 
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
