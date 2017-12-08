@@ -185,7 +185,7 @@ public class DataRepoBackend implements MNBackend {
       assertNotExists(pid);
       DataPackage dataPackage = new DataPackage();
       org.gbif.datarepo.api.model.Identifier alternativeIdentifier = new org.gbif.datarepo.api.model.Identifier();
-      alternativeIdentifier.setType(org.gbif.datarepo.api.model.Identifier.Type.UNKNOWN);
+      alternativeIdentifier.setType(org.gbif.datarepo.api.model.Identifier.Type.URL);
       alternativeIdentifier.setIdentifier(pid.getValue());
       alternativeIdentifier.setRelationType(org.gbif.datarepo.api.model.Identifier.RelationType.IsAlternativeOf);
       dataPackage.setCreatedBy(session.getSubject().getValue());
