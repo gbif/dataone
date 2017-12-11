@@ -11,12 +11,12 @@ keytool -importkeystore -srckeystore server.p12 -srcstoretype pkcs12 -destkeysto
 rm -f server.p12
 
 #trust store
-if [$CNSERVER -ne "None"]; then
+if [ $CNSERVER -ne "None" ]; then
   openssl s_client -showcerts -connect $CNSERVER:443 < /dev/null | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > $CNSERVER.crt
   keytool -importcert -file $CNSERVER.crt -alias $CNSERVER -keystore servertruststore.jks -storepass password -noprompt
   rm -f $CNSERVER.crt
 fi
-if [$CNSERVER -ne "None"]; then
+if [ $CNSERVER -ne "None" ]; then
   keytool -import -file $DATAONECERT -alias dataone -keystore servertruststore.jks -storepass password -noprompt
 fi
 keytool -import -file $SERVERCERT -alias servercert -keystore servertruststore.jks -storepass password -noprompt
