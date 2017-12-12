@@ -259,7 +259,6 @@ public class DataRepoBackend implements MNBackend {
                                                       .map(value -> Integer.min(value, MAX_PAGE_SIZE))
                                                       .orElse(MAX_PAGE_SIZE));
     List<String> tags  = new ArrayList<>();
-    tags.add(DATA_ONE_TAG_PREFIX);
     Optional.ofNullable(formatId).ifPresent(tags::add);
     PagingResponse<DataPackage> response = dataRepository.list(null, pagingRequest, fromDate, toDate, false, tags, null);
     return ObjectList.builder().withCount(response.getLimit())
