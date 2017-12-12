@@ -21,8 +21,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -35,12 +37,15 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.dataone.ns.service.exceptions.IdentifierNotUnique;
 import org.dataone.ns.service.exceptions.InvalidSystemMetadata;
 import org.dataone.ns.service.exceptions.NotAuthorized;
 import org.dataone.ns.service.exceptions.NotFound;
 import org.dataone.ns.service.exceptions.NotImplemented;
 import org.dataone.ns.service.exceptions.ServiceFailure;
+import org.dataone.ns.service.types.v1.AccessPolicy;
+import org.dataone.ns.service.types.v1.AccessRule;
 import org.dataone.ns.service.types.v1.Checksum;
 import org.dataone.ns.service.types.v1.DescribeResponse;
 import org.dataone.ns.service.types.v1.Identifier;
@@ -49,6 +54,7 @@ import org.dataone.ns.service.types.v1.ObjectInfo;
 import org.dataone.ns.service.types.v1.ObjectList;
 import org.dataone.ns.service.types.v1.Permission;
 import org.dataone.ns.service.types.v1.Session;
+import org.dataone.ns.service.types.v1.Subject;
 import org.dataone.ns.service.types.v1.SystemMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -242,7 +248,7 @@ public class DataRepoBackend implements MNBackend {
   @Override
   public InputStream get(Identifier identifier) {
     return getAndConsume(identifier, dataPackage ->
-            dataRepository.getFileInputStream(dataPackage.getKey(), CONTENT_FILE)
+            dataRepository.getFileInputStream(dataPackage.getKey(), dataPackage.getFiles().iterator().next().getFileName())
           ).orElseThrow(() -> new NotFound("Content file not found for identifier", identifier.getValue()));
   }
 
@@ -270,10 +276,11 @@ public class DataRepoBackend implements MNBackend {
                             dataRepository.listIdentifiers(null, null, null, dataPackage.getKey(), null,
                                                          org.gbif.datarepo.api.model.Identifier.RelationType.IsAlternativeOf,
                                                          null);
-                          SystemMetadata systemMetadata = systemMetadata(dataPackage.getKey());
+                          SystemMetadata systemMetadata = systemMetadata(dataPackage);
                           return ObjectInfo.builder()
-                          .withIdentifier(Identifier.builder()
-                                            .withValue(identifiers.getResults().get(0).getIdentifier()).build())
+                          .withIdentifier(identifiers.getResults().size() > 0? Identifier.builder()
+                                            .withValue(identifiers.getResults().get(0).getIdentifier()).build() :
+                            systemMetadata.getIdentifier())
                           .withChecksum(systemMetadata.getChecksum())
                           .withDateSysMetadataModified(toXmlGregorianCalendar(dataPackage
                                                                                 .getModified()))
@@ -286,10 +293,29 @@ public class DataRepoBackend implements MNBackend {
 
   @Override
   public SystemMetadata systemMetadata(Identifier identifier) {
-    return getAndConsume(identifier,  dataPackage -> Optional.ofNullable(systemMetadata(dataPackage.getKey())))
+    return getAndConsume(identifier,  dataPackage -> Optional.ofNullable(systemMetadata(dataPackage)))
             .orElseThrow(() -> new NotFound("Metadata Not Found for Identifier", identifier.getValue()));
   }
 
+  public SystemMetadata systemMetadata(DataPackage dataPackage) {
+    if(!dataPackage.getPublishedIn().equalsIgnoreCase(configuration.getDataRepoConfiguration().getDataRepoName())) {
+      return SystemMetadata.builder().withIdentifier(Identifier.builder().withValue(dataPackage.getKey().toString())
+                                                       .build())
+              .withChecksum(Checksum.builder().withValue(dataPackage.getChecksum()).withAlgorithm("MD5").build())
+              .withDateSysMetadataModified(toXmlGregorianCalendar(dataPackage.getModified()))
+              .withDateUploaded(toXmlGregorianCalendar(dataPackage.getCreated()))
+              .withSerialVersion(BigInteger.ONE)
+              .withSize(BigInteger.valueOf(dataPackage.getSize()))
+              .withSubmitter(Subject.builder().withValue(dataPackage.getCreatedBy()).build())
+              .withRightsHolder(Subject.builder().withValue(dataPackage.getCreatedBy()).build())
+              .withAuthoritativeMemberNode(configuration.getNode().getIdentifier())
+              .withAccessPolicy(AccessPolicy.builder()
+                                  .withAllow(AccessRule.builder().withPermission(Permission.READ)
+                                               .withSubject(Subject.builder().withValue("public").build()).build()).build())
+              .build();
+    }
+    return systemMetadata(dataPackage.getKey());
+  }
 
   public SystemMetadata systemMetadata(UUID dataPackageKey) {
     return  dataRepository.getFileInputStream(dataPackageKey, SYS_METADATA_FILE)
@@ -412,10 +438,35 @@ public class DataRepoBackend implements MNBackend {
    */
   private <T> T getAndConsume(Identifier identifier, Function<DataPackage,T> mapper) {
     //Only DataPackages tagged as 'DataOne' are shared throw this service
-    return dataRepository.getByAlternativeIdentifier(identifier.getValue())
-      .filter(dataPackage -> dataPackage.getTags().stream().anyMatch(tag -> DATA_ONE_TAG_PREFIX.equals(tag.getValue())))
-      .map(mapper::apply)
-      .orElseThrow(() -> new NotFound("Identifier Not Found", identifier.getValue()));
+    return asUUID(identifier).map(dataRepository::get).orElseGet(() -> dataRepository.getByAlternativeIdentifier(identifier.getValue()))
+            .filter(dataPackage -> publishingRepos(dataPackage).contains(configuration.getDataRepoConfiguration()
+                                                                           .getDataRepoName()))
+            .map(mapper::apply)
+          .orElseThrow(() -> new NotFound("Identifier Not Found", identifier.getValue()));
+  }
+
+  /**
+   * Creates a list of where the data package is accessible.
+   */
+  private Set<String> publishingRepos(DataPackage dataPackage) {
+    Set<String> repos = new HashSet<>();
+    if(dataPackage.getShareIn() != null) {
+      repos.addAll(dataPackage.getShareIn());
+    }
+    if(dataPackage.getPublishedIn() != null) {
+      repos.add(dataPackage.getPublishedIn());
+    }
+    return repos;
+  }
+  /**
+   * Try to parse the identifier as an UUID.
+   */
+  private Optional<UUID> asUUID(Identifier identifier) {
+    try {
+      return Optional.of(UUID.fromString(identifier.getValue()));
+    } catch (Exception ex) {
+      return Optional.empty();
+    }
   }
 
 }
