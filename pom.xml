@@ -85,11 +85,10 @@
   -->
   <properties>
     <!-- GBIF DataRepo -->
-    <data-repo-server.version>1.0-SNAPSHOT</data-repo-server.version>
-    <gbif-api.version>0.55</gbif-api.version>
+    <data-repo-server.version>1.0</data-repo-server.version>
+    <gbif-api.version>0.58</gbif-api.version>
     <service-discovery.version>0.1</service-discovery.version>
-    <data-repo-server.version>1.0-SNAPSHOT</data-repo-server.version>
-    <gbif-registry.version>2.70</gbif-registry.version>
+    <gbif-registry.version>2.75</gbif-registry.version>
 
     <!-- libs -->
     <dropwizard.version>0.9.2</dropwizard.version>
