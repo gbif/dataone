@@ -9,7 +9,7 @@ import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.backend.impl.DataRepoBackend;
 import org.gbif.d1.mn.backend.impl.DataRepoBackendConfiguration;
 import org.gbif.d1.mn.exception.DefaultExceptionMapper;
-import org.gbif.d1.mn.logging.impl.ElasticsearchLogSearchService;
+import org.gbif.d1.mn.logging.impl.LogbackDBLogSearchService;
 import org.gbif.d1.mn.provider.DescribeResponseHeaderProvider;
 import org.gbif.d1.mn.provider.EventProvider;
 import org.gbif.d1.mn.provider.IdentifierProvider;
@@ -44,8 +44,6 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.dataone.ns.service.apis.v1.cn.CoordinatingNode;
 import org.dataone.ns.service.types.v1.Node;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The main entry point for running the member node.
@@ -53,8 +51,6 @@ import org.slf4j.LoggerFactory;
  * Developers are expected to inherit from this, along with a new configuration object and implement
  */
 public class MNApplication extends Application<DataRepoBackendConfiguration> {
-
-  private static final Logger LOG = LoggerFactory.getLogger(MNApplication.class);
 
   private static final String APPLICATION_NAME = "DataONE Member Node";
 
@@ -101,7 +97,9 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     //Coordinating Node client
     CoordinatingNode cn = coordinatingNode(configuration, environment);
 
-    MNBackend backend = getBackend(configuration, environment);
+    DataRepoFsModule dataRepoFsModule = getDataRepoFsModule(configuration, environment);
+
+    MNBackend backend = getBackend(configuration, environment, dataRepoFsModule);
     AuthorizationManager auth = AuthorizationManagers.newAuthorizationManager(backend, cn, self);
 
     // RESTful resources
@@ -112,8 +110,8 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
     environment.jersey().register(new ChecksumResource(auth, backend));
     environment.jersey().register(new GenerateResource(auth, backend));
     environment.jersey().register(new MonitorResource(backend));
-    environment.jersey().register(new LogResource(new ElasticsearchLogSearchService(configuration.getElasticSearch().buildEsClient(),
-                                                  configuration.getElasticSearch().getIdx()), auth));
+    environment.jersey().register(new LogResource(new LogbackDBLogSearchService(dataRepoFsModule.loggingMapper()),
+                                                  auth));
     environment.jersey().register(new ErrorResource(auth));
     environment.jersey().register(new ReplicaResource(backend, auth, cn));
     environment.jersey().register(new IsAuthorizedResource(auth, backend));
@@ -135,12 +133,21 @@ public class MNApplication extends Application<DataRepoBackendConfiguration> {
   /**
    * Creates the backend using the configuration. Developers implementing custom backends will override this method.
    */
-  protected static MNBackend getBackend(DataRepoBackendConfiguration configuration, Environment environment) {
-    DataRepoConfiguration dataRepoConfiguration = configuration.getDataRepoConfiguration();
-    DataRepoFsModule dataRepoModule = new DataRepoFsModule(dataRepoConfiguration, environment.metrics(),
-                                                           environment.healthChecks());
+  protected static MNBackend getBackend(DataRepoBackendConfiguration configuration, Environment environment,
+                                        DataRepoFsModule dataRepoModule) {
     return new DataRepoBackend(dataRepoModule.dataRepository(environment.getObjectMapper()),
                                dataRepoModule.doiRegistrationService(environment.getObjectMapper()),
                                configuration);
+  }
+
+  /**
+   * Creates the backend using the configuration. Developers implementing custom backends will override this method.
+   */
+  protected static DataRepoFsModule getDataRepoFsModule(DataRepoBackendConfiguration configuration,
+                                                        Environment environment) {
+    DataRepoConfiguration dataRepoConfiguration = configuration.getDataRepoConfiguration();
+    return new DataRepoFsModule(dataRepoConfiguration, environment.metrics(),
+                                environment.healthChecks());
+
   }
 }
