@@ -47,7 +47,7 @@ public class LogbackDBLogSearchService implements LogSearchService {
 
     Map<String,String> mdcParam = toMDCMap(event, pidFilter);
 
-    Long resultCount = loggingMapper.count(fromDate.getMillis(), toDate.getMillis(), mdcParam, pagingRequest);
+    Long resultCount = loggingMapper.count(fromDate.getMillis(), toDate.getMillis(), mdcParam);
     List<DBLoggingEvent> logs = loggingMapper.list(fromDate.getMillis(), toDate.getMillis(), mdcParam, pagingRequest);
 
     return Log.builder()
