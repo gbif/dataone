@@ -43,12 +43,14 @@ public class LogbackDBLogSearchService implements LogSearchService {
   @Override
   public Log getLogRecords(DateTime fromDate, DateTime toDate, Event event, @Nullable String pidFilter,
                            Integer start, @Nullable Integer count) {
+    Long fromDateMillis = Optional.ofNullable(fromDate).map(DateTime::getMillis).orElse(null);
+    Long toDateMillis = Optional.ofNullable(toDate).map(DateTime::getMillis).orElse(null);
     PagingRequest pagingRequest = toPagingRequest(start, count);
 
     Map<String,String> mdcParam = toMDCMap(event, pidFilter);
 
-    Long resultCount = loggingMapper.count(fromDate.getMillis(), toDate.getMillis(), mdcParam);
-    List<DBLoggingEvent> logs = loggingMapper.list(fromDate.getMillis(), toDate.getMillis(), mdcParam, pagingRequest);
+    Long resultCount = loggingMapper.count(fromDateMillis, toDateMillis, mdcParam);
+    List<DBLoggingEvent> logs = loggingMapper.list(fromDateMillis, toDateMillis, mdcParam, pagingRequest);
 
     return Log.builder()
             .withCount(Optional.ofNullable(logs).map(List::size).orElse(0))
