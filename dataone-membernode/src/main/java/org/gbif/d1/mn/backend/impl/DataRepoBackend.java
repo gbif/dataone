@@ -282,6 +282,7 @@ public class DataRepoBackend implements MNBackend {
                           .withIdentifier(identifiers.getResults().isEmpty()? systemMetadata.getIdentifier() :
                                           Identifier.builder()
                                             .withValue(identifiers.getResults().get(0).getIdentifier()).build())
+                          .withFormatId(getFormatId(dataPackage))
                           .withChecksum(systemMetadata.getChecksum())
                           .withDateSysMetadataModified(toXmlGregorianCalendar(dataPackage
                                                                                 .getModified()))
