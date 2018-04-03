@@ -37,7 +37,6 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.dataone.ns.service.exceptions.IdentifierNotUnique;
 import org.dataone.ns.service.exceptions.InvalidSystemMetadata;
 import org.dataone.ns.service.exceptions.NotAuthorized;
@@ -64,8 +63,10 @@ import org.slf4j.LoggerFactory;
  */
 public class DataRepoBackend implements MNBackend {
 
-  public static final int MAX_PAGE_SIZE = 20;
-  public static final String DATA_ONE_TAG_PREFIX = "DataOne";
+  private static final int MAX_PAGE_SIZE = 20;
+  private static final String DATA_ONE_TAG_PREFIX = "DataOne";
+  private static final String DATA_ONE_FORMAT_ID_TAG_PREFIX = DATA_ONE_TAG_PREFIX + ":formatId";
+  private static final String DEFAULT_FORMAT_ID = "data_package";
 
   private static final Logger LOG = LoggerFactory.getLogger(DataRepoBackend.class);
 
@@ -96,8 +97,8 @@ public class DataRepoBackend implements MNBackend {
     return Checksum.builder().withValue(dataPackage.getChecksum()).withAlgorithm(CHECKSUM_ALGORITHM).build();
   }
 
-  private static String toDataOneTag(String value) {
-    return DATA_ONE_TAG_PREFIX + ':' + value;
+  private static String toDataOneFormatIdTag(String value) {
+    return DATA_ONE_FORMAT_ID_TAG_PREFIX + ':' + value;
   }
 
   /**
@@ -203,7 +204,7 @@ public class DataRepoBackend implements MNBackend {
       dataPackage.addTag(DATA_ONE_TAG_PREFIX);
       //formatId is added as Tag to be later used during search
       Optional.ofNullable(sysmeta.getFormatId())
-        .ifPresent(formatId -> dataPackage.addTag(toDataOneTag(formatId)));
+        .ifPresent(formatId -> dataPackage.addTag(toDataOneFormatIdTag(formatId)));
       dataRepository.create(dataPackage, Lists.newArrayList(toFileContent(object), toFileContent(sysmeta)), false);
       return pid;
     } catch (JAXBException ex) {
@@ -278,9 +279,9 @@ public class DataRepoBackend implements MNBackend {
                                                          null);
                           SystemMetadata systemMetadata = systemMetadata(dataPackage);
                           return ObjectInfo.builder()
-                          .withIdentifier(identifiers.getResults().size() > 0? Identifier.builder()
-                                            .withValue(identifiers.getResults().get(0).getIdentifier()).build() :
-                            systemMetadata.getIdentifier())
+                          .withIdentifier(identifiers.getResults().isEmpty()? systemMetadata.getIdentifier() :
+                                          Identifier.builder()
+                                            .withValue(identifiers.getResults().get(0).getIdentifier()).build())
                           .withChecksum(systemMetadata.getChecksum())
                           .withDateSysMetadataModified(toXmlGregorianCalendar(dataPackage
                                                                                 .getModified()))
@@ -297,7 +298,7 @@ public class DataRepoBackend implements MNBackend {
             .orElseThrow(() -> new NotFound("Metadata Not Found for Identifier", identifier.getValue()));
   }
 
-  public SystemMetadata systemMetadata(DataPackage dataPackage) {
+  private SystemMetadata systemMetadata(DataPackage dataPackage) {
     if(!dataPackage.getPublishedIn().equalsIgnoreCase(configuration.getDataRepoConfiguration().getDataRepoName())) {
       return SystemMetadata.builder().withIdentifier(Identifier.builder().withValue(dataPackage.getKey().toString())
                                                        .build())
@@ -309,6 +310,7 @@ public class DataRepoBackend implements MNBackend {
               .withSubmitter(Subject.builder().withValue(dataPackage.getCreatedBy()).build())
               .withRightsHolder(Subject.builder().withValue(dataPackage.getCreatedBy()).build())
               .withAuthoritativeMemberNode(configuration.getNode().getIdentifier())
+              .withFormatId(getFormatId(dataPackage))
               .withAccessPolicy(AccessPolicy.builder()
                                   .withAllow(AccessRule.builder().withPermission(Permission.READ)
                                                .withSubject(Subject.builder().withValue("public").build()).build()).build())
@@ -317,7 +319,21 @@ public class DataRepoBackend implements MNBackend {
     return systemMetadata(dataPackage.getKey());
   }
 
-  public SystemMetadata systemMetadata(UUID dataPackageKey) {
+  /**
+   * Extracts the formatIf from the datapackage.tags, if it is not found DEFAULT_FORMAT_ID is returned.
+   */
+  private static String getFormatId(DataPackage dataPackage) {
+    return dataPackage.getTags().stream()
+      .filter(tag -> tag.getValue().startsWith(DATA_ONE_FORMAT_ID_TAG_PREFIX))
+      .findFirst()
+      .map(tag -> tag.getValue().substring(DATA_ONE_FORMAT_ID_TAG_PREFIX.length()))
+      .orElse(DEFAULT_FORMAT_ID);
+  }
+
+  /**
+   * Extracts the SystemMetadata from the data package UUID.
+   */
+  private SystemMetadata systemMetadata(UUID dataPackageKey) {
     return  dataRepository.getFileInputStream(dataPackageKey, SYS_METADATA_FILE)
               .map(file -> {
                 try {
@@ -458,6 +474,7 @@ public class DataRepoBackend implements MNBackend {
     }
     return repos;
   }
+
   /**
    * Try to parse the identifier as an UUID.
    */
@@ -465,6 +482,7 @@ public class DataRepoBackend implements MNBackend {
     try {
       return Optional.of(UUID.fromString(identifier.getValue()));
     } catch (Exception ex) {
+      LOG.info("Identifier is not an UUID {}", identifier, ex);
       return Optional.empty();
     }
   }
