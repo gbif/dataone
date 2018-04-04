@@ -66,7 +66,7 @@ public class LogbackDBLogSearchService implements LogSearchService {
    */
   private static Map<String,String> toMDCMap(Event event, @Nullable String pidFilter) {
     ImmutableMap.Builder<String,String> mdcBuilder = new ImmutableMap.Builder<>();
-    Optional.ofNullable(event).ifPresent(eventVal -> mdcBuilder.put("event", eventVal.value()));
+    Optional.ofNullable(event).ifPresent(eventVal -> mdcBuilder.put("event", eventVal.name()));
     Optional.ofNullable(pidFilter).ifPresent(pidFilterVal -> mdcBuilder.put("identifier", pidFilterVal));
     return mdcBuilder.build();
   }
@@ -89,7 +89,7 @@ public class LogbackDBLogSearchService implements LogSearchService {
                               .withEntryId(dbLoggingEvent.getEventId().toString());
                             Optional
                               .ofNullable(dbLoggingEvent.getMdc("event"))
-                              .ifPresent(mdcEvent -> logEntryBuilder.withEvent(Event.fromValue(mdcEvent.getValue())));
+                              .ifPresent(mdcEvent -> logEntryBuilder.withEvent(Event.valueOf(mdcEvent.getValue())));
                             Optional
                               .ofNullable(dbLoggingEvent.getMdc("identifier"))
                               .ifPresent(mdcIdentifier -> logEntryBuilder
