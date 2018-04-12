@@ -231,8 +231,8 @@ public final class ObjectResource {
     checkIsAuthorized(auth.isAuthorized(DataONE.Method.LIST_OBJECTS.name(), session.getSubject()),
                       "This session is not authorized to access this resource");
     return backend.listObjects(null,
-                               Optional.ofNullable(fromDate).map(date -> date.get().toLocalDateTime().toDate()).orElse(null),
-                               Optional.ofNullable(toDate).map(date -> date.get().toLocalDateTime().toDate()).orElse(null),
+                               Optional.ofNullable(fromDate).map(date -> date.get().toDate()).orElse(null),
+                               Optional.ofNullable(toDate).map(date -> date.get().toDate()).orElse(null),
                                formatId, replicaStatus, start, count);
   }
 

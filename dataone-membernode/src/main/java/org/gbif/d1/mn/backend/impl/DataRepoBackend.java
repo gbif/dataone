@@ -1,5 +1,6 @@
 package org.gbif.d1.mn.backend.impl;
 
+import org.dataone.ns.service.exceptions.*;
 import org.gbif.api.model.common.paging.Pageable;
 import org.gbif.api.model.common.paging.PagingRequest;
 import org.gbif.api.model.common.paging.PagingResponse;
@@ -37,12 +38,6 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import org.dataone.ns.service.exceptions.IdentifierNotUnique;
-import org.dataone.ns.service.exceptions.InvalidSystemMetadata;
-import org.dataone.ns.service.exceptions.NotAuthorized;
-import org.dataone.ns.service.exceptions.NotFound;
-import org.dataone.ns.service.exceptions.NotImplemented;
-import org.dataone.ns.service.exceptions.ServiceFailure;
 import org.dataone.ns.service.types.v1.AccessPolicy;
 import org.dataone.ns.service.types.v1.AccessRule;
 import org.dataone.ns.service.types.v1.Checksum;
@@ -95,6 +90,15 @@ public class DataRepoBackend implements MNBackend {
    */
   private static Checksum dataPackageChecksum(DataPackage dataPackage) {
     return Checksum.builder().withValue(dataPackage.getChecksum()).withAlgorithm(CHECKSUM_ALGORITHM).build();
+  }
+
+  /**
+   * Validates that the specified checksum algorithm is valid and not null.
+  */
+  private static void validateChecksum(String checksumAlgorithm) {
+    if(!Optional.ofNullable(checksumAlgorithm).filter(CHECKSUM_ALGORITHM::equalsIgnoreCase).isPresent()) {
+      throw new InvalidRequest("Unsupported or absent checksum algorithm");
+    }
   }
 
   private static String toDataOneFormatIdTag(String value) {
@@ -175,9 +179,8 @@ public class DataRepoBackend implements MNBackend {
 
   @Override
   public Checksum checksum(Identifier identifier, String checksumAlgorithm) {
-    return dataRepository.getByAlternativeIdentifier(identifier.getValue())
-          .map(DataRepoBackend::dataPackageChecksum)
-          .orElseThrow(() -> new NotFound("Identifier Not Found", identifier.getValue()));
+    validateChecksum(checksumAlgorithm);
+    return getAndConsume(identifier, DataRepoBackend::dataPackageChecksum);
   }
 
   @Override

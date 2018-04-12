@@ -47,8 +47,6 @@ import static org.gbif.d1.mn.util.D1Preconditions.checkNotNull;
 @Path("/mn/v1/checksum")
 @Singleton
 public final class ChecksumResource {
-  @Context
-  private HttpServletRequest request;
 
   private final AuthorizationManager auth;
   private final MNBackend backend;
@@ -77,7 +75,7 @@ public final class ChecksumResource {
   @Produces(MediaType.APPLICATION_XML)
   public Checksum getChecksum(@Authenticate Session session, @PathParam("pid") Identifier pid,
                               @QueryParam("checksumAlgorithm") String checksumAlgorithm) {
-    auth.checkIsAuthorized(request, pid.getValue(), Permission.READ);
+    auth.checkIsAuthorized(session, pid.getValue(), Permission.READ);
     return backend.checksum(pid, checksumAlgorithm);
   }
 
