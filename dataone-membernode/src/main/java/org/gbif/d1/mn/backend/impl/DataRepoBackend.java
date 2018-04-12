@@ -1,5 +1,6 @@
 package org.gbif.d1.mn.backend.impl;
 
+import com.google.common.base.Strings;
 import org.dataone.ns.service.exceptions.*;
 import org.gbif.api.model.common.paging.Pageable;
 import org.gbif.api.model.common.paging.PagingRequest;
@@ -96,7 +97,8 @@ public class DataRepoBackend implements MNBackend {
    * Validates that the specified checksum algorithm is valid and not null.
   */
   private static void validateChecksum(String checksumAlgorithm) {
-    if(!Optional.ofNullable(checksumAlgorithm).filter(CHECKSUM_ALGORITHM::equalsIgnoreCase).isPresent()) {
+    if(!Optional.ofNullable(Strings.emptyToNull(checksumAlgorithm)).orElse(CHECKSUM_ALGORITHM)
+            .equalsIgnoreCase(CHECKSUM_ALGORITHM)) {
       throw new InvalidRequest("Unsupported or absent checksum algorithm");
     }
   }
