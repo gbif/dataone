@@ -62,7 +62,7 @@ public class DataRepoBackend implements MNBackend {
   private static final int MAX_PAGE_SIZE = 20;
   private static final String DATA_ONE_TAG_PREFIX = "DataOne";
   private static final String DATA_ONE_FORMAT_ID_TAG_PREFIX = DATA_ONE_TAG_PREFIX + ":formatId";
-  private static final String DEFAULT_FORMAT_ID = "data_package";
+  private static final String DEFAULT_FORMAT_ID = "application/octet-stream";
 
   private static final Logger LOG = LoggerFactory.getLogger(DataRepoBackend.class);
 
