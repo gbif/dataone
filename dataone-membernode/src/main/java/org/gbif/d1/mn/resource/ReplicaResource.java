@@ -1,5 +1,6 @@
 package org.gbif.d1.mn.resource;
 
+import org.dataone.ns.service.types.v1.Permission;
 import org.gbif.d1.mn.auth.AuthorizationManager;
 import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.d1.mn.exception.DataONE;
@@ -71,8 +72,7 @@ public final class ReplicaResource {
   @Produces(MediaType.APPLICATION_OCTET_STREAM)
   @Timed
   public InputStream getReplica(@Authenticate Session session, @PathParam("pid") Identifier pid) {
-    checkIsAuthorized(cn.isNodeAuthorized(session.getSubject(), pid.getValue()),
-                      "Only trusted subject are authorized to get replicas");
+    auth.checkIsAuthorized(session, pid.getValue(), Permission.READ);
     InputStream replica = backend.get(pid);
     log(LOG, session, pid, Event.REPLICATE, "Replicating object");
     return replica;
