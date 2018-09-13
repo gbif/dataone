@@ -23,6 +23,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Objects;
@@ -188,14 +189,13 @@ public final class ObjectResource {
    */
   @GET
   @Path("{pid}")
-  @Produces(MediaType.APPLICATION_OCTET_STREAM)
   @DataONE(DataONE.Method.GET)
   @Timed
-  public InputStream get(@Authenticate Session session, @PathParam("pid") Identifier pid) {
+  public Response get(@Authenticate Session session, @PathParam("pid") Identifier pid) {
     auth.checkIsAuthorized(session, pid.getValue(), Permission.READ);
     InputStream inputStream = backend.get(pid);
     log(LOG, session, pid, Event.READ, "Resource read");
-    return  inputStream;
+    return Response.ok(inputStream, backend.systemMetadata(pid).getFormatId()).build();
   }
 
   /**

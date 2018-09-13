@@ -332,7 +332,7 @@ public class DataRepoBackend implements MNBackend {
     return dataPackage.getTags().stream()
       .filter(tag -> tag.getValue().startsWith(DATA_ONE_FORMAT_ID_TAG_PREFIX))
       .findFirst()
-      .map(tag -> tag.getValue().substring(DATA_ONE_FORMAT_ID_TAG_PREFIX.length()))
+      .map(tag -> tag.getValue().substring(DATA_ONE_FORMAT_ID_TAG_PREFIX.concat(":").length()))
       .orElse(DEFAULT_FORMAT_ID);
   }
 
