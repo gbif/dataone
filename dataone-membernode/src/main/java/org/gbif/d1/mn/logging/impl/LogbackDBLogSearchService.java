@@ -9,7 +9,6 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TimeZone;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -108,7 +107,6 @@ public class LogbackDBLogSearchService implements LogSearchService {
   private static XMLGregorianCalendar toXmlGregorianCalendar(long epoch) {
     try {
       GregorianCalendar calendar = new GregorianCalendar();
-      calendar.setTimeZone(TimeZone.getTimeZone("UTC"));
       calendar.setTimeInMillis(epoch);
       return DatatypeFactory.newInstance().newXMLGregorianCalendar(calendar);
     } catch (DatatypeConfigurationException ex) {
