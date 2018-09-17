@@ -26,7 +26,7 @@ public class EventLogging {
    * Writes an event into the events log.
    */
   public static void log(Logger logger, Session session, Identifier identifier, Event event, String message) {
-    log(logger, session, identifier, event.value(), message);
+    log(logger, session, identifier, event.name(), message);
   }
 
   /**
