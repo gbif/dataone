@@ -10,6 +10,7 @@ import org.gbif.d1.mn.backend.Health;
 import org.gbif.d1.mn.backend.MNBackend;
 import org.gbif.datarepo.api.DataRepository;
 import org.gbif.datarepo.api.model.DataPackage;
+import org.gbif.datarepo.api.model.DataPackageFile;
 import org.gbif.datarepo.api.model.FileInputContent;
 import org.gbif.registry.doi.DoiType;
 import org.gbif.registry.doi.registration.DoiRegistrationService;
@@ -19,7 +20,6 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -61,7 +61,6 @@ public class DataRepoBackend implements MNBackend {
 
   private static final int MAX_PAGE_SIZE = 20;
   private static final String DATA_ONE_TAG_PREFIX = "DataOne";
-  private static final String DATA_ONE_FORMAT_ID_TAG_PREFIX = DATA_ONE_TAG_PREFIX + ":formatId";
   private static final String DEFAULT_FORMAT_ID = "application/octet-stream";
 
   private static final Logger LOG = LoggerFactory.getLogger(DataRepoBackend.class);
@@ -101,10 +100,6 @@ public class DataRepoBackend implements MNBackend {
             .equalsIgnoreCase(CHECKSUM_ALGORITHM)) {
       throw new InvalidRequest("Unsupported or absent checksum algorithm");
     }
-  }
-
-  private static String toDataOneFormatIdTag(String value) {
-    return DATA_ONE_FORMAT_ID_TAG_PREFIX + ':' + value;
   }
 
   /**
@@ -207,9 +202,6 @@ public class DataRepoBackend implements MNBackend {
       dataPackage.setCreated(creationDate);
       dataPackage.setModified(creationDate);
       dataPackage.addTag(DATA_ONE_TAG_PREFIX);
-      //formatId is added as Tag to be later used during search
-      Optional.ofNullable(sysmeta.getFormatId())
-        .ifPresent(formatId -> dataPackage.addTag(toDataOneFormatIdTag(formatId)));
       dataRepository.create(dataPackage, Lists.newArrayList(toFileContent(object), toFileContent(sysmeta)), false);
       return pid;
     } catch (JAXBException ex) {
@@ -270,9 +262,7 @@ public class DataRepoBackend implements MNBackend {
                                                Optional.ofNullable(count)
                                                       .map(value -> Integer.min(value, MAX_PAGE_SIZE))
                                                       .orElse(MAX_PAGE_SIZE));
-    List<String> tags  = new ArrayList<>();
-    Optional.ofNullable(formatId).ifPresent(tags::add);
-    PagingResponse<DataPackage> response = dataRepository.list(null, pagingRequest, fromDate, toDate, false, tags, null);
+    PagingResponse<DataPackage> response = dataRepository.list(null, pagingRequest, fromDate, toDate, false, null, null);
     return ObjectList.builder().withCount(Optional.ofNullable(response.getResults()).map(List::size).orElse(0))
       .withStart(Long.valueOf(response.getOffset()).intValue())
       .withTotal(Optional.ofNullable(response.getCount()).orElse(0L).intValue())
@@ -329,11 +319,7 @@ public class DataRepoBackend implements MNBackend {
    * Extracts the formatIf from the datapackage.tags, if it is not found DEFAULT_FORMAT_ID is returned.
    */
   private static String getFormatId(DataPackage dataPackage) {
-    return dataPackage.getTags().stream()
-      .filter(tag -> tag.getValue().startsWith(DATA_ONE_FORMAT_ID_TAG_PREFIX))
-      .findFirst()
-      .map(tag -> tag.getValue().substring(DATA_ONE_FORMAT_ID_TAG_PREFIX.concat(":").length()))
-      .orElse(DEFAULT_FORMAT_ID);
+    return dataPackage.getFiles().stream().findFirst().map(DataPackageFile::getFormat).orElse(DEFAULT_FORMAT_ID);
   }
 
   /**
