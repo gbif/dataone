@@ -68,7 +68,7 @@ public final class LogResource {
   @Timed
   public Log getLogRecords(@Authenticate Session session, @QueryParam("fromDate") DateTimeParam fromDate,
                            @QueryParam("toDate") DateTimeParam toDate, @QueryParam("event") Event event,
-                           @QueryParam("pidFilter") @Nullable String pidFilter, @QueryParam("start") @Nullable Integer start,
+                           @QueryParam("idFilter") @Nullable String pidFilter, @QueryParam("start") @Nullable Integer start,
                            @QueryParam("count") @Nullable Integer count) {
     return logSearchService.getLogRecords(Optional.ofNullable(fromDate).map(DateTimeParam::get).orElse(null),
                                           Optional.ofNullable(toDate).map(DateTimeParam::get).orElse(null),
