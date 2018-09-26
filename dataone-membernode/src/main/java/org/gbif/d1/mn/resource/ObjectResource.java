@@ -45,6 +45,7 @@ import org.dataone.ns.service.types.v1.ObjectList;
 import org.dataone.ns.service.types.v1.Session;
 import org.dataone.ns.service.types.v1.SystemMetadata;
 import org.dataone.ns.service.types.v1.Permission;
+import org.gbif.datarepo.impl.util.MimeTypesUtil;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -195,7 +196,8 @@ public final class ObjectResource {
     auth.checkIsAuthorized(session, pid.getValue(), Permission.READ);
     InputStream inputStream = backend.get(pid);
     log(LOG, session, pid, Event.READ, "Resource read");
-    return Response.ok(inputStream, backend.systemMetadata(pid).getFormatId()).build();
+    return Response.ok(inputStream,
+            MimeTypesUtil.convertFormatIdToMimetype(backend.systemMetadata(pid).getFormatId())).build();
   }
 
   /**
