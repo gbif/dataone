@@ -262,7 +262,8 @@ public class DataRepoBackend implements MNBackend {
                                                Optional.ofNullable(count)
                                                       .map(value -> Integer.min(value, MAX_PAGE_SIZE))
                                                       .orElse(MAX_PAGE_SIZE));
-    PagingResponse<DataPackage> response = dataRepository.list(null, pagingRequest, fromDate, toDate, false, null, null);
+    PagingResponse<DataPackage> response =
+            dataRepository.list(null, pagingRequest, fromDate, toDate, false, null, null, formatId);
     return ObjectList.builder().withCount(Optional.ofNullable(response.getResults()).map(List::size).orElse(0))
       .withStart(Long.valueOf(response.getOffset()).intValue())
       .withTotal(Optional.ofNullable(response.getCount()).orElse(0L).intValue())
