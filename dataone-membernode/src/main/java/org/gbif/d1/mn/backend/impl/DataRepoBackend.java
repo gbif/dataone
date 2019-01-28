@@ -311,6 +311,7 @@ public class DataRepoBackend implements MNBackend {
               .withAccessPolicy(AccessPolicy.builder()
                                   .withAllow(AccessRule.builder().withPermission(Permission.READ)
                                                .withSubject(Subject.builder().withValue("public").build()).build()).build())
+              .withOriginMemberNode(configuration.getNode().getIdentifier())
               .build();
     }
     return systemMetadata(dataPackage.getKey());
